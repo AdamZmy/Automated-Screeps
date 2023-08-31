@@ -26,28 +26,32 @@ const roleCarrier = {
         }
         // If the creep is not full, move to the energy source and collect it
         else {
-            let energySources = creep.room.find(FIND_DROPPED_RESOURCES, {
-                filter: (resource) => resource.resourceType === RESOURCE_ENERGY
-            });
-            let energySource = _.max(energySources, 'amount');
-
-            if (energySource) {
-                if (creep.pickup(energySource) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(energySource);
-                }
-            } else {
-                energySource = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
-                });
-                if (energySource) {
-                    if (creep.withdraw(energySource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(energySource);
-                    }
-                }
+          // check if there are any dropped resources with more than carrier capacity
+          const droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
+            filter: (resource) => {
+              return resource.amount > creep.store.getFreeCapacity();
             }
+          });
+    
+          // if there are, go collect the closest one
+          if (droppedResources.length > 0) {
+            const closestResource = creep.pos.findClosestByRange(droppedResources);
+            if (creep.pickup(closestResource) === ERR_NOT_IN_RANGE) {
+              creep.moveTo(closestResource, {visualizePathStyle: {stroke: '#ffffff'}});
+            }
+          } else { // otherwise, collect the largest dropped energy
+            const largestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+              filter: (resource) => {
+                return resource.resourceType === RESOURCE_ENERGY;
+              },
+              orderBy: ['amount']
+            });
+            if (creep.pickup(largestResource) === ERR_NOT_IN_RANGE) {
+              creep.moveTo(largestResource, {visualizePathStyle: {stroke: '#ffffff'}});
+            }
+          }
         }
     },
-
 };
 
 module.exports = roleCarrier;
