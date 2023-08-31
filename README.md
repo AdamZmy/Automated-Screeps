@@ -1,2 +1,2 @@
 # Automated-Screeps
-Screeps Code generated from LLM
+Screeps Code generated solely from LLM
