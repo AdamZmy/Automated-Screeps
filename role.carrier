@@ -1,0 +1,53 @@
+const roleCarrier = {
+    run: function (creep) {
+        // Check if the creep is carrying energy
+        if (creep.memory.carrying && creep.store[RESOURCE_ENERGY] === 0) {
+            creep.memory.carrying = false;
+            creep.say('🔄 collecting');
+        }
+        // Check if the creep is full of energy
+        if (!creep.memory.carrying && creep.store.getFreeCapacity() === 0) {
+            creep.memory.carrying = true;
+            creep.say('⚡ storing');
+        }
+
+        // If the creep is full, move to the spawn or extension and transfer it
+        if (creep.memory.carrying) {
+            let target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) =>
+                    (structure.structureType === STRUCTURE_SPAWN || structure.structureType === STRUCTURE_EXTENSION) &&
+                    structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            });
+            if (target) {
+                if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(target);
+                }
+            }
+        }
+        // If the creep is not full, move to the energy source and collect it
+        else {
+            let energySources = creep.room.find(FIND_DROPPED_RESOURCES, {
+                filter: (resource) => resource.resourceType === RESOURCE_ENERGY
+            });
+            let energySource = _.max(energySources, 'amount');
+
+            if (energySource) {
+                if (creep.pickup(energySource) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(energySource);
+                }
+            } else {
+                energySource = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
+                });
+                if (energySource) {
+                    if (creep.withdraw(energySource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energySource);
+                    }
+                }
+            }
+        }
+    },
+
+};
+
+module.exports = roleCarrier;
