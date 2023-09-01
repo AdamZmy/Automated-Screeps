@@ -1,16 +1,7 @@
 const roleWorker = {
   run: function (creep) {
-    // Check if the worker is currently working and has no energy left
-    if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
-      // Set the worker to not working and make it say "🔄 harvest"
-      creep.memory.working = false;
-      creep.say('🔄 harvest');
-    }
-    // Check if the worker is not currently working and has full energy capacity
-    if (!creep.memory.working && creep.store.getFreeCapacity() === 0) {
-      // Set the worker to working and make it say "🚧 build" or "⚡ upgrade" or "🔧 repair"
-      creep.memory.working = true;
-      let targets = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
+    // Check the worker's current task
+    if (!creep.memory.task) {
       let numBuilders = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'build');
       let numUpgraders = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'upgrade');
       let numRepairers = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'repair');
@@ -24,6 +15,18 @@ const roleWorker = {
         creep.memory.task = 'repair';
         creep.say('🔧 repair');
       }
+    }
+
+    // Check if the worker is currently working and has no energy left
+    if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
+      // Set the worker to not working and make it say "🔄 harvest"
+      creep.memory.working = false;
+      creep.say('🔄 harvest');
+    }
+    // Check if the worker is not currently working and has full energy capacity
+    if (!creep.memory.working && creep.store.getFreeCapacity() === 0) {
+      // Set the worker to working and make it say "🚧 build" or "⚡ upgrade" or "🔧 repair"
+      creep.memory.working = true;
     }
 
     // If the worker is currently working
@@ -74,10 +77,21 @@ const roleWorker = {
 
     // If the worker is not currently working, move to the closest energy source and collect energy
     else {
-      let target = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
-      if (creep.harvest(target) === ERR_NOT_IN_RANGE) {
-        creep.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
-      }
+            // Find the closest spawn, extension or container with energy
+            var target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_CONTAINER) &&
+                        structure.store[RESOURCE_ENERGY] > 0;
+                }
+            });
+            
+            if (target) {
+                // Withdraw energy from the closest spawn, extension or container with energy
+                if (creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    // If the spawn, extension or container is too far away, move towards it
+                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+                }
+            }
     }
   }
 };
