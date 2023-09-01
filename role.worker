@@ -31,16 +31,22 @@ const roleWorker = {
       // Check the worker's current task
       switch (creep.memory.task) {
         case 'build':
-          // Find all the construction sites in the room
-          let targets = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
-          // If there are any construction sites
-          if (targets.length) {
-            // Build the first construction site in the list
-            if (creep.build(targets[0]) === ERR_NOT_IN_RANGE) {
-              // If the construction site is too far away, move towards it
-              creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+            // Find all the construction sites in the room
+            var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+            // If there are any construction sites
+            if (targets.length) {
+                // Build the first construction site in the list
+                if (creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
+                    // If the construction site is too far away, move towards it
+                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+                }
+            } else {
+                // If there are no construction sites, go to upgrade the controller
+                if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+                    // If the controller is too far away, move towards it
+                    creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
+                }
             }
-          }
           break;
         case 'upgrade':
           // Upgrade the controller of the current room
