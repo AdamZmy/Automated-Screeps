@@ -1,31 +1,9 @@
+const{roleconfig} = require('roleconfig')
 var roleHarvester = require('role.harvester');
-var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
 var roleCarrier = require('role.carrier');
+const roleWork = require('role.worker');
+const constructionTower = require('construction.tower');
 var observation = require('observation');
-
-const roles = [
-    {
-        role: 'upgrader',
-        body: [WORK, CARRY, MOVE],
-        minimum: 2
-    },
-    {
-        role: 'builder',
-        body: [WORK, CARRY, MOVE],
-        minimum: 1
-    },
-    {
-        role: 'carrier',
-        body: [CARRY, CARRY, MOVE],
-        minimum: 3
-    },
-    {
-        role: 'harvester',
-        body: [WORK, WORK, MOVE],
-        minimum: 4
-    }
-];
 
 module.exports.loop = function () {
     // 检查每个room的状态，更新warning变量
@@ -33,6 +11,9 @@ module.exports.loop = function () {
         observation.checkRoomStatus(Game.rooms[name]);
     }    
     
+    // 运行tower控制模块
+    constructionTower.run(Game.spawns['Spawn1'].room);
+
     // Clean up memory of dead creeps
     for (let name in Memory.creeps) {
         if (!Game.creeps[name]) {
@@ -40,17 +21,17 @@ module.exports.loop = function () {
         }
     }
 
-    // Automatically spawn creeps if necessary
-    for (let role of roles) {
+    // 自动生成creep
+    for (let role of roleconfig) {
         let creeps = _.filter(Game.creeps, (creep) => creep.memory.role === role.role);
-        if (creeps.length < role.minimum) {
+        if (creeps.length < role.mininum) {
             let newName = role.role + Game.time;
             Game.spawns['Spawn1'].spawnCreep(role.body, newName, { memory: { role: role.role } });
         }
     }
 
-    // Run each creep's role
-    for (let role of roles) {
+    // Run每个creep的角色
+    for (let role of roleconfig) {
         let creeps = _.filter(Game.creeps, (creep) => creep.memory.role === role.role);
         for (let creep of creeps) {
             require(`role.${role.role}`).run(creep);
