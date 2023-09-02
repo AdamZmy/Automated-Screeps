@@ -1,57 +1,96 @@
 const roleCarrier = {
-    run: function (creep) {
-        // Check if the creep is carrying energy
-        if (creep.memory.carrying && creep.store[RESOURCE_ENERGY] === 0) {
-            creep.memory.carrying = false;
-            creep.say('🔄 collecting');
-        }
-        // Check if the creep is full of energy
-        if (!creep.memory.carrying && creep.store.getFreeCapacity() === 0) {
-            creep.memory.carrying = true;
-            creep.say('⚡ storing');
-        }
+  run: function (creep) {
+    // 检查 creep 是否携带能量
+    if (creep.memory.carrying && creep.store[RESOURCE_ENERGY] === 0) {
+      creep.memory.carrying = false;
+      creep.say('🔄 收集');
+    }
+    // 检查 creep 是否携带满能量
+    if (!creep.memory.carrying && creep.store.getFreeCapacity() === 0) {
+      creep.memory.carrying = true;
+      creep.say('⚡ 存储');
+    }
 
-        // If the creep is full, move to the spawn or extension and transfer it
-        if (creep.memory.carrying) {
-            let target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                filter: (structure) =>
-                    (structure.structureType === STRUCTURE_SPAWN || structure.structureType === STRUCTURE_EXTENSION) &&
-                    structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-            });
-            if (target) {
-                if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target);
-                }
-            }
+    // 如果 creep 携带满了能量，则移动到最近的塔或 Spawn/Extension 并转移能量
+    if (creep.memory.carrying) {
+      // 查找最近的塔，如果有塔需要能量，则将其转移
+      let tower = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+        filter: (structure) =>
+          structure.structureType === STRUCTURE_TOWER &&
+          structure.energy < structure.energyCapacity
+      });
+      if (tower) {
+        if (creep.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+          creep.moveTo(tower);
         }
-        // If the creep is not full, move to the energy source and collect it
-        else {
-          // check if there are any dropped resources with more than carrier capacity
-          const droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
-            filter: (resource) => {
-              return resource.amount > creep.store.getFreeCapacity();
-            }
+      }
+      // 如果没有塔需要能量，则将其转移到最近的 Spawn 或 Extension
+      else {
+        let target = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+          filter: (structure) =>
+            (structure.structureType === STRUCTURE_SPAWN || structure.structureType === STRUCTURE_EXTENSION) &&
+            structure.energy < structure.energyCapacity
+        });
+        if (target) {
+          if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(target);
+          }
+        }
+      }
+    }
+
+    // 如果 creep 没有携带能量
+    else {
+      // <1> 查找最近的已满容器
+      let overloadcontainers = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) =>
+          structure.structureType === STRUCTURE_CONTAINER &&
+          structure.store[RESOURCE_ENERGY] === structure.storeCapacity
+      });
+      if (overloadcontainers.length > 0) {
+        // 从最大的容器中提取能量
+        let closestContainer = creep.pos.findClosestByRange(overloadcontainers);
+        if (creep.withdraw(closestContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+          creep.moveTo(closestContainer);
+        }
+      } else {
+        // <2> 查找最近的能量量大于载重量的掉落资源
+        let droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
+          filter: (resource) => resource.amount > creep.store.getFreeCapacity()
+        });
+        if (droppedResources.length > 0) {
+          let closestResource = creep.pos.findClosestByRange(droppedResources);
+          if (creep.pickup(closestResource) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(closestResource);
+          }
+        } else {
+          // <3> 查找最近的容器里的能量量大于载重量
+          let containers = creep.room.find(FIND_STRUCTURES, {
+            filter: (structure) =>
+              structure.structureType === STRUCTURE_CONTAINER &&
+              structure.store[RESOURCE_ENERGY] > creep.store.getFreeCapacity()
           });
-    
-          // if there are, go collect the closest one
-          if (droppedResources.length > 0) {
-            const closestResource = creep.pos.findClosestByRange(droppedResources);
-            if (creep.pickup(closestResource) === ERR_NOT_IN_RANGE) {
-              creep.moveTo(closestResource, {visualizePathStyle: {stroke: '#ffffff'}});
+          if (containers.length > 0) {
+            let closestContainer = creep.pos.findClosestByRange(containers);
+            if (creep.withdraw(closestContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+              creep.moveTo(closestContainer);
             }
-          } else { // otherwise, collect the largest dropped energy
-            const largestResource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
-              filter: (resource) => {
-                return resource.resourceType === RESOURCE_ENERGY;
-              },
-              orderBy: ['amount']
+          } else {
+            // <4> 查找其他掉落资源
+            const energyDrops = creep.room.find(FIND_DROPPED_RESOURCES, {
+              filter: (drop) => drop.resourceType === RESOURCE_ENERGY
             });
-            if (creep.pickup(largestResource) === ERR_NOT_IN_RANGE) {
-              creep.moveTo(largestResource, {visualizePathStyle: {stroke: '#ffffff'}});
+            const maxEnergyDrop = _.max(energyDrops, (drop) => drop.amount);
+            if (maxEnergyDrop) {
+              if (creep.pickup(maxEnergyDrop) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(maxEnergyDrop);
+              }
             }
           }
         }
-    },
+      }
+    }
+  }
 };
 
 module.exports = roleCarrier;
