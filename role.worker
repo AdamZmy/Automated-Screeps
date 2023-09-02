@@ -1,20 +1,29 @@
+var observation = require('observation');
+
 const roleWorker = {
   run: function (creep) {
+
     // Check the worker's current task
     if (!creep.memory.task) {
       let numBuilders = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'build');
       let numUpgraders = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'upgrade');
       let numRepairers = _.sum(Game.creeps, (c) => c.memory.role === 'worker' && c.memory.task === 'repair');
-      if (numBuilders < 2) {
+      if (numBuilders < 3) {
         creep.memory.task = 'build';
         creep.say('🚧 build');
-      } else if (numBuilders >= 2 && numUpgraders < 2) {
+      } else if (numBuilders >= 3 && numUpgraders < 2) {
         creep.memory.task = 'upgrade';
         creep.say('⚡ upgrade');
       } else {
         creep.memory.task = 'repair';
         creep.say('🔧 repair');
       }
+    }
+
+    // 检查observation中的warning状态
+    if (observation.warning) {
+        creep.say('Warning! Pausing construction');
+        return;
     }
 
     // Check if the worker is currently working and has no energy left
@@ -70,6 +79,12 @@ const roleWorker = {
               // If the structure is too far away, move towards it
               creep.moveTo(damagedStructures[0], {visualizePathStyle: {stroke: '#ffffff'}});
             }
+          } else {
+                    // If there are no construction sites, go to upgrade the controller
+                    if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+                    // If the controller is too far away, move towards it
+                    creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
+                }
           }
           break;
       }
