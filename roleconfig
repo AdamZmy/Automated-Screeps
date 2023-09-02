@@ -1,0 +1,22 @@
+// 定义角色配置列表
+const roleconfig = [
+    {
+        role: 'harvester',
+        body: [WORK,WORK,MOVE],
+        mininum: 1
+    },{
+        role: 'carrier',
+        body: [CARRY,CARRY,MOVE],
+        mininum: 1
+    },{
+        role: 'worker',
+        body: [WORK,CARRY,MOVE],
+        mininum: 0
+    }
+
+];
+
+// 导出角色配置列表为一个模块
+module.exports = {
+  roleconfig
+};
