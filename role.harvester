@@ -2,24 +2,20 @@ var roleHarvester = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
-        // 如果没有记住要采集的source，就去找
+        // 如果 creep 中没有 sourceId，则查找路径Path最近的 source 并将其 id 存储到 memory 中
         if(!creep.memory.sourceId) {
-            // 找到所有能量源
             var sources = creep.room.find(FIND_SOURCES_ACTIVE);
-            // 使用findClosestByPath方法找到距离最近的源
             var closestSource = creep.pos.findClosestByPath(sources);
-            // 将source的id存储在creep的memory中
             creep.memory.sourceId = closestSource.id;
         } else {
-            // 通过id获取到存储在memory中的source对象
+            // 否则获取当前存储在 memory 中的 source id，然后移动到该 source 并采集能量
             var source = Game.getObjectById(creep.memory.sourceId);
-            // 如果creep当前位置和source位置不同，则移动到source附近进行采集
             if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
-                // 使用visualizePathStyle可视化路径
                 creep.moveTo(source, {visualizePathStyle: {stroke: '#ffffff'}});
             }
         }
     }
 };
 
+// 导出角色 harvester
 module.exports = roleHarvester;
