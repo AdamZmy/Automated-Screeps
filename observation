@@ -1,3 +1,5 @@
+const{roleconfig} = require('roleconfig')
+
 var observation = {
     // 定义warning变量
     warning: false,
