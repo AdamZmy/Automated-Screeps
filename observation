@@ -1,31 +1,16 @@
 var observation = {
     // 定义warning变量
     warning: false,
-    // 定义全局roles列表
-    roles: {
-        harvester: {
-            body: [WORK, WORK, MOVE],
-            minimum: 4
-        },
-        builder: {
-            body: [WORK, CARRY, MOVE],
-            minimum: 2
-        },
-        upgrader: {
-            body: [WORK, CARRY, MOVE],
-            minimum: 2
-        }
-        // 可以添加更多的creep类型
-    },
 
     // 检查当前room的状态，更新warning变量
     checkRoomStatus: function(room) {
-        var energyAvailable = room.energyAvailable;
-        var energyCapacity = room.energyCapacityAvailable;
-        var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
-        if(energyAvailable < 200 && harvesters.length < this.roles.harvester.minimum) {
+        const energyAvailable = room.energyAvailable;
+        const energyCapacity = room.energyCapacityAvailable;
+        const harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
+        const harvesterMinimum = _.find(roleconfig, (role) => role.role == 'harvester').mininum;
+
+        if (energyAvailable < 200 && harvesters.length < harvesterMinimum) {
             this.warning = true;
-            console.log('WARNING: Energy reserves are low and there are not enough harvesters!');
         } else {
             this.warning = false;
         }
