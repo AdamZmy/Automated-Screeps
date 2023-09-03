@@ -1,7 +1,7 @@
 const{roleconfig} = require('roleconfig')
 var roleHarvester = require('role.harvester');
 var roleCarrier = require('role.carrier');
-const roleWork = require('role.worker');
+const roleWorker = require('role.worker');
 const constructionTower = require('construction.tower');
 var observation = require('observation');
 
