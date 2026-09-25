@@ -140,11 +140,15 @@ def reference_url(value, label):
         raise InspectionError(f"{label}: invalid URL") from None
     require(parsed.scheme == "https" and parsed.username is None and parsed.password is None and port is None, f"{label}: HTTPS without credentials or port required")
     decoded = parsed.path
-    for _ in range(4):
-        decoded = unquote(decoded)
+    try:
+        for _ in range(4):
+            require(not re.search(r"%(?![0-9a-fA-F]{2})", decoded), f"{label}: invalid URL encoding")
+            decoded = unquote(decoded, errors="strict")
+    except UnicodeError:
+        raise InspectionError(f"{label}: invalid URL encoding") from None
     require(not any(part in {".", ".."} for part in decoded.split("/")) and "\\" not in decoded and not any(ord(c) < 32 for c in decoded), f"{label}: unsafe URL path")
     repo_path = "/AdamZmy/Automated-Screeps"
-    require((parsed.netloc == "github.com" and (decoded == repo_path or decoded.startswith(repo_path + "/"))) or parsed.netloc == MONITOR_HOST, f"{label}: URL is outside the repository and monitoring site")
+    require((parsed.netloc == "github.com" and (parsed.path == repo_path or parsed.path.startswith(repo_path + "/")) and (decoded == repo_path or decoded.startswith(repo_path + "/"))) or parsed.netloc == MONITOR_HOST, f"{label}: URL is outside the repository and monitoring site")
 
 
 def encode_json(value):
@@ -159,12 +163,12 @@ def validate_record(data):
     if game is not None:
         exact_keys(game, {"shard", "rooms", "version", "tick", "fetchedAt"}, "game")
         if game["shard"] is not None:
-            string(game["shard"], "game.shard", 40, True)
+            string(game["shard"], "game.shard", 32, True)
             require(re.fullmatch(r"[A-Za-z0-9_-]+", game["shard"]), "game.shard: invalid shard")
         if game["rooms"] is not None:
             array(game["rooms"], "game.rooms", 100)
             for room in game["rooms"]:
-                require(type(room) is str and re.fullmatch(r"(?:[WE]\d{1,5}[NS]\d{1,5}|sim)", room), "game.rooms: invalid room name")
+                require(type(room) is str and re.fullmatch(r"[WE]\d{1,5}[NS]\d{1,5}", room), "game.rooms: invalid room name")
             require(len(set(game["rooms"])) == len(game["rooms"]), "game.rooms: duplicate room")
         if game["version"] is not None:
             string(game["version"], "game.version", 240, True)

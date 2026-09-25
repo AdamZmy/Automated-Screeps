@@ -6,6 +6,13 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.3.1 — 2026-09-25
+
+- Align journal-writer validation with the deployed reader for malformed URL
+  encodings, shard-name length and World room names, so locally accepted records
+  cannot fail these same field checks on the website. Journal regressions pass.
+- No game behavior or deployed website assets changed in this validation patch.
+
 ## 0.3.0 — 2026-09-25
 
 - Add one GitHub-backed journal per inspection, including unchanged, blocked,

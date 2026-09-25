@@ -225,6 +225,7 @@ class InspectionLogTests(unittest.TestCase):
             "https://github.com.evil.test/AdamZmy/Automated-Screeps", "https://github.com@evil.test/AdamZmy/Automated-Screeps",
             "https://user:pass@github.com/AdamZmy/Automated-Screeps", "https://github.com:443/AdamZmy/Automated-Screeps",
             log.REPOSITORY + "/../other", log.REPOSITORY + "/%252e%252e/other", "javascript:alert(1)",
+            log.REPOSITORY + "/%zz", log.REPOSITORY + "/%ff", "https://github.com/AdamZmy%2FAutomated-Screeps/issues/1",
             "https://" + log.MONITOR_HOST + "/%0aevil", "https://" + log.MONITOR_HOST + '.evil.test',
         ):
             with self.subTest(url=url):
