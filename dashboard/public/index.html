@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a111b">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Screeps 殖民地能量账本：用实际采样追踪能量产出、运营消耗与有效成长。">
+  <title>Screeps · 殖民地能量账本</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/layout.css">
+  <script src="/app.js" defer></script>
+  <script src="/layout.js" defer></script>
+</head>
+<body>
+  <a href="#overview" class="skip-link">跳到数据面板</a>
+  <aside class="rail" aria-label="面板导航">
+    <a class="brand-mark" href="#overview" aria-label="Screeps 能量账本">S<span>›</span></a>
+    <a href="#overview" class="rail-link active" aria-label="总览"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg><span>总览</span></a>
+    <a href="#trend-section" class="rail-link" aria-label="趋势"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 14l4-5 4 3 5-7"/></svg><span>趋势</span></a>
+    <a href="#operations" class="rail-link" aria-label="运营"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 5v8l-8 5-8-5V8zm0 0v9m-8 4 8-4 8 4"/></svg><span>运营</span></a>
+    <a href="#layout" class="rail-link" aria-label="房间布局"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h18v18H3zM3 9h18M9 3v18M15 9v12M9 15h12"/></svg><span>布局</span></a>
+    <a href="#definitions" class="rail-link" aria-label="指标口径"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 11v6m0-11v2"/></svg><span>口径</span></a>
+    <div class="rail-end"><span class="rail-dot"></span><span>READ ONLY</span></div>
+  </aside>
+  <div class="workspace">
+    <header class="masthead">
+      <div class="wordmark">SCREEPS <span>/</span> <span>ENERGY OBSERVATORY</span></div>
+      <div class="masthead-right"><span class="read-only"><span class="tiny-dot"></span>只读遥测</span><span id="shard-label" class="mono">WORLD</span></div>
+    </header>
+    <main id="overview">
+      <div class="page-heading">
+        <div><div class="eyebrow">COLONY ECONOMICS</div><h1>殖民地能量账本<span class="title-dot">.</span></h1><p class="subtitle">从开采到成长，追踪每一份能量的去向。</p></div>
+        <div class="heading-actions"><a class="layout-jump" href="#layout">房间蓝图 ↗</a><div id="status-chip" class="status-chip neutral" role="status"><span class="status-dot"></span><span id="status-text">等待采样</span></div><button type="button" id="refresh-button" class="icon-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 11-2l3 3M4 16l3 3a7 7 0 0 0 11-2"/></svg><span>刷新</span></button></div>
+      </div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section class="toolbar" aria-label="遥测筛选">
+        <div class="colony-control"><label for="room-select">殖民地</label><div class="select-wrap"><select id="room-select" aria-label="选择殖民地"><option value="">等待数据</option></select></div><span id="rcl-badge" class="small-badge">RCL —</span></div>
+        <div class="window-control"><span id="window-label">统计窗口</span><div class="segmented" role="group" aria-labelledby="window-label"><button type="button" data-window="300" aria-pressed="false">300<span> ticks</span></button><button type="button" data-window="1500" aria-pressed="true">1,500<span> ticks</span></button><button type="button" data-window="6000" aria-pressed="false">6,000<span> ticks</span></button></div></div>
+        <div class="tick-summary"><span>GAME TICK</span><strong id="game-tick">—</strong></div>
+      </section>
+      <section class="hero panel" aria-labelledby="growth-title">
+        <div class="hero-main"><div class="metric-label"><span class="metric-symbol">U</span><h2 id="growth-title">有效用能速率</h2><span id="window-quality" class="subtle-badge">等待账本</span></div><div class="hero-value"><span id="utilization-value">—</span><span class="metric-unit">energy / tick</span></div><p id="growth-note" class="metric-note">等待有效的能量统计窗口。</p><div class="coverage-line"><span id="coverage-label">总用能采样 —</span><div class="coverage-track"><span id="coverage-bar"></span></div><span id="coverage-value" class="mono">—</span></div><div class="growth-comparison"><span>发展投入 G <strong id="growth-value">—</strong> e/t</span><span>发展转化率 η <strong id="growth-efficiency">—</strong></span><small id="growth-coverage">发展样本 —</small><p id="efficiency-ceiling">发展转化率的续代估算上限 — · 等待数据</p></div></div>
+        <div class="hero-efficiency"><div class="metric-label"><span class="metric-symbol teal">U/P</span><h2>总用能率</h2></div><div class="efficiency-body"><div class="efficiency-gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge-track" cx="60" cy="60" r="49"/><circle id="efficiency-ring" class="gauge-fill" cx="60" cy="60" r="49" pathLength="100"/></svg><div><strong id="efficiency-value">—</strong><span>of theoretical</span></div></div><div class="efficiency-copy"><p id="efficiency-note">发展投入 + 运营支出<br>占理论供给的比例</p><span id="utilization-theoretical" class="mono muted">理论供给 — e/t</span><span id="sample-range" class="mono muted">— → —</span></div></div><div class="efficiency-target"><strong>长期目标 ≥90%</strong><span id="efficiency-gap">距目标 — · 等待有效采样</span><p>费用合理性须单独检查；库存积累、链路损耗和规划外建设不计入。</p></div></div>
+      </section>
+      <section class="metrics-grid" aria-label="能量分项">
+        <article class="metric-card panel"><div class="metric-card-top"><h2>实际开采</h2><span class="color-dot amber"></span></div><div class="card-value"><strong id="harvest-value">—</strong><span>e/t</span></div><div class="card-foot"><span id="harvest-detail">理论上限 — e/t</span><span id="harvest-efficiency" class="mono">—</span></div><div class="micro-track"><span id="harvest-bar"></span></div></article>
+        <article class="metric-card panel"><div class="metric-card-top"><h2>控制器升级</h2><span class="color-dot teal-bg"></span></div><div class="card-value"><strong id="upgrade-value">—</strong><span>e/t</span></div><div class="card-foot"><span>升级投入</span><span id="upgrade-total" class="mono">— energy</span></div></article>
+        <article class="metric-card panel"><div class="metric-card-top"><h2>基础设施建设</h2><span class="color-dot blue"></span></div><div class="card-value"><strong id="build-value">—</strong><span>e/t</span></div><div class="card-foot"><span>规划内建设投入</span><span id="build-total" class="mono">— energy</span></div></article>
+        <article class="metric-card panel"><div class="metric-card-top"><h2>运营消耗</h2><span class="color-dot gray"></span></div><div class="card-value"><strong id="operating-value">—</strong><span>e/t</span></div><div class="card-foot"><span id="operating-detail">孵化 · 维修 · 塔 · 其他</span></div></article>
+        <article class="metric-card panel"><div class="metric-card-top"><h2>库存净变化</h2><span class="delta-glyph">Δ</span></div><div class="card-value"><strong id="stock-value">—</strong><span>e/t</span></div><div class="card-foot"><span id="stock-detail">正值表示能量积累</span></div></article>
+      </section>
+      <section class="panel economy-panel" aria-labelledby="economy-title"><div class="panel-heading"><div><span class="section-index">COSTS &amp; BUDGETS</span><h2 id="economy-title">运营成本与用能预算</h2></div><span class="panel-meta">真实支出 · 当前计划</span></div><div class="economy-grid"><div><h3>支出分项</h3><div id="cost-breakdown"></div><p id="cost-coverage" class="economy-note">等待分项覆盖数据。</p></div><div><h3>预算与实际投入</h3><div id="budget-breakdown"></div><p class="economy-note">储备是未来需求，尚未花掉的能量单列库存，不提前计入有效用能。预算为当前计划，实际为所选窗口均值。</p></div></div></section>
+      <section class="panel economy-panel" id="cpu-panel" aria-labelledby="cpu-title"><div class="panel-heading"><div><span class="section-index">CPU &amp; MOVEMENT</span><h2 id="cpu-title">计算开销</h2></div><span id="cpu-samples" class="panel-meta">等待性能采样</span></div><div class="economy-grid"><div><h3>最近性能窗口</h3><div id="cpu-summary"></div><p class="economy-note">全账号 CPU，包含持久数据解析与本轮游戏逻辑。目标切换和重算为窗口内累计次数。</p></div><div><h3>开销分布</h3><div id="cpu-stages"></div><p class="economy-note">均值按同一性能窗口的 ticks 计算；不随上方能源窗口切换。</p></div></div></section>
+      <div class="analysis-grid">
+        <section id="trend-section" class="panel trend-panel" aria-labelledby="trend-title"><div class="panel-heading"><div><span class="section-index">01 / HISTORY</span><h2 id="trend-title">用能与供给</h2></div><span id="history-count" class="panel-meta">— 个采样点</span></div><div class="chart-legend"><span><i class="legend-line amber"></i>实际开采</span><span><i class="legend-line teal-bg"></i>发展投入 G</span><span><i class="legend-line violet"></i>有效用能 U</span><span><i class="legend-line gray dashed"></i>理论供给</span><span class="chart-unit">energy / tick</span></div><div id="trend-chart" class="trend-chart"><div class="empty-state">等待历史采样<span>至少需要两个有效数据点来呈现趋势。</span></div></div><div class="chart-caption"><span id="trend-caption">图表仅绘制已采集的数据。</span><span>tick →</span></div></section>
+        <section class="panel flow-panel" aria-labelledby="flow-title"><div class="panel-heading"><div><span class="section-index">02 / ENERGY FLOW</span><h2 id="flow-title">能量去向</h2></div><span class="panel-meta">e/t</span></div><div id="flow-content" class="flow-content"></div><div class="flow-explainer"><span class="info-dot">i</span><p>各项按有效观测时长计算。库存增减参与平衡；带符号的残差不等同于已测得的损耗。</p></div></section>
+      </div>
+      <section id="operations" class="operations-section" aria-label="生产与基础设施"><div class="section-heading"><div><span class="section-index">03 / OPERATIONS</span><h2>生产现场</h2></div><span class="panel-meta">最近一次遥测快照</span></div><div class="operations-grid">
+        <article class="panel mining-panel"><div class="panel-heading"><h3>矿点与积压</h3><span id="mining-count" class="panel-meta">— SOURCES</span></div><div id="mining-content"></div></article>
+        <article class="panel hauling-panel"><div class="panel-heading"><h3>物流状态</h3><span class="tiny-icon">↗</span></div><div id="hauling-content"></div></article>
+        <article class="panel infrastructure-panel"><div class="panel-heading"><h3>道路与建设</h3><span class="tiny-icon">⌘</span></div><div id="infrastructure-content"></div></article>
+      </div></section>
+      <section id="layout" class="layout-section panel" aria-labelledby="layout-title">
+        <div class="layout-heading">
+          <div><span class="section-index">04 / ROOM BLUEPRINT</span><h2 id="layout-title">从落地到 RCL 8</h2><p>一张地图，看清主房的完整建造计划。</p></div>
+          <div class="layout-room-control"><label for="layout-room">房间</label><select id="layout-room"><option value="">读取布局中</option></select><span id="layout-current-rcl" class="small-badge">当前 RCL —</span></div>
+        </div>
+        <div id="layout-notice" class="layout-notice" role="status">正在载入公开布局快照…</div>
+        <div id="layout-content" hidden>
+          <div class="layout-stage-heading"><span>查看计划等级</span><span id="layout-plan-version"></span></div>
+          <div id="layout-levels" class="layout-levels" role="group" aria-label="选择计划等级 RCL 1 至 8"></div>
+          <div class="layout-controls">
+            <div class="segmented" role="group" aria-label="建筑显示模式"><button type="button" data-layout-mode="cumulative" aria-pressed="true">累计规划</button><button type="button" data-layout-mode="new" aria-pressed="false">本级新增</button></div>
+            <label class="layout-type-control" for="layout-type">类型<select id="layout-type"><option value="all">全部建筑</option></select></label>
+            <label class="layout-check"><input id="layout-roads" type="checkbox" checked>道路</label>
+            <label class="layout-check"><input id="layout-protection" type="checkbox" checked>防护</label>
+          </div>
+          <div id="layout-summary" class="layout-summary" aria-live="polite"></div>
+          <div class="layout-workbench">
+            <div class="layout-map-column">
+              <div class="layout-map-toolbar"><span id="layout-map-caption" class="mono"></span><div class="layout-zoom-controls" role="group" aria-label="地图缩放"><button id="layout-core" type="button">聚焦核心</button><button id="layout-fit" type="button">全图</button><button id="layout-zoom-out" type="button" aria-label="缩小地图">−</button><output id="layout-zoom-label">100%</output><button id="layout-zoom-in" type="button" aria-label="放大地图">＋</button></div></div>
+              <div id="layout-map-scroll" class="layout-map-scroll"><div id="layout-map" class="layout-map"></div></div>
+              <p class="layout-map-help">点击格子查看叠层 · 聚焦地图后可用方向键移动 · 小屏可横向滚动 / 缩放</p>
+              <div id="layout-legend" class="layout-legend" aria-label="地图图例"></div>
+            </div>
+            <aside class="layout-inspector" aria-label="地块与建筑详情">
+              <div class="layout-inspector-heading"><span>地块详情</span><span id="layout-cell-coordinate" class="mono">—</span></div>
+              <div id="layout-cell-detail" aria-live="polite"></div>
+              <div class="layout-snapshot"><h3>建造状态快照</h3><p id="layout-snapshot-time"></p><p id="layout-telemetry-time"></p><p>已建 / 工地 / 未建均对应上述快照；遥测刷新只更新当前 RCL 与最近 tick。</p></div>
+            </aside>
+          </div>
+          <div class="layout-list-heading"><div><h3>建筑清单</h3><p id="layout-list-caption">点击坐标，在地图中定位。</p></div><span id="layout-list-count" class="mono"></span></div>
+          <div id="layout-building-list" class="layout-building-list"></div>
+          <div class="layout-planning-note"><span class="info-dot">i</span><div><p><strong>RCL 是最早计划等级。</strong>升到该等级不代表立即施工；建造仍受储备、优先级和工地额度约束。清单统计按建筑计数，同一地块的道路与防护分别计入。</p><ul id="layout-plan-notes"></ul></div></div>
+        </div>
+        <noscript><p class="layout-notice">请启用 JavaScript 查看交互地图。</p></noscript>
+      </section>
+      <section class="panel diagnostics-panel" aria-labelledby="diagnostics-title"><div class="panel-heading"><div><span class="section-index">05 / DIAGNOSTICS</span><h2 id="diagnostics-title">持续异常与诊断</h2></div><span id="alert-count" class="subtle-badge">等待数据</span></div><div id="diagnostics-content"><div class="empty-state compact">尚未收到诊断数据</div></div></section>
+      <section id="definitions" class="definitions"><details><summary><span><span class="section-index">REFERENCE</span>指标口径与数据边界</span><span class="expand-sign">＋</span></summary><div class="definition-grid"><div><h3>总用能率 U / P</h3><p>U =（升级 + 规划内建设 + 孵化 + 维修 + 塔耗能）÷ 同一完整样本的 ticks；总用能率 = U ÷ 该样本理论供给。目标 ≥90%。该统计不证明每笔费用都合理；还需观察发展投入和成本分项。</p></div><div><h3>发展投入 G</h3><p id="definition-growth">G =（实际升级能量 + 规划内有效建设能量）÷ 已观测 ticks。运营支出单列，不在 G 中重复扣除。</p></div><div><h3>发展转化率 η</h3><p id="definition-efficiency">η = G ÷ 理论供给速率，仅统计升级与规划建设，保留原有口径。理论供给来自能量源的容量与再生周期，不是矿工 WORK 数。消耗先前库存时可能超过 100%。</p></div><div><h3>运营与库存</h3><p>有效用能计入真实孵化、维修与塔耗能；链路损耗和规划外建设在支出中单列，不计入 U。库存覆盖己方房间内结构、单位、掉落物和残骸，不含源中能量与外矿生产。积累库存不视为浪费，也不提前视为已使用；正常运输的内部转账不会重复记账，运输单位孵化成本已包含在孵化项。</p></div><div><h3>覆盖率与账本残差</h3><p>覆盖率反映已记录时长占所选窗口的比例。残差为收支与库存变化之差：正值为未归因流出，负值为未归因流入。各项可能有不同有效观测时长，不能直接将残差当作损耗。</p></div><div><h3>理论供给</h3><p>采用服务端报告的能量源理论供给。矿工当前 WORK 数量代表当下开采能力，与能量源长期供给上限不同。</p></div><div><h3>刷新与新鲜度</h3><p>页面可见时每 60 秒请求一次，服务端通常缓存 2 分钟。刷新时间是采集时间；只有 game tick 推进才代表新增游戏快照。</p></div></div></details></section>
+      <footer><div><span class="footer-mark">S›</span><span>SCREEPS ENERGY OBSERVATORY</span></div><div class="footer-data"><span id="fetched-at">采集时间 —</span><span id="version-label">账本 —</span><span id="polling-label">每 60 秒检查</span></div></footer>
+    </main>
+  </div>
+</body>
+</html>

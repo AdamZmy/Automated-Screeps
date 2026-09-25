@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+.vercel/
+.env
+.env.*
+*.log
+new-colony/state/
+new-colony/backups/
+new-colony/research/planner-sources/
+new-colony/research/mincut-demo/
+dashboard/test-output/
+**/auth-token
+**/credentials*

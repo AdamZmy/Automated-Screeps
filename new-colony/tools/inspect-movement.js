@@ -1,0 +1,1 @@
+Memory.frontier.movementProbe={tick:Game.time,units:Object.values(Game.creeps).map(c=>({name:c.name,room:c.room.name,x:c.pos.x,y:c.pos.y,ttl:c.ticksToLive,energy:c.store.energy,fatigue:c.fatigue,memory:c.memory})),mining:Object.values(Game.creeps).filter(c=>c.memory.role==='miner').map(c=>[c.name,c.memory.source,c.memory.replaces,c.ticksToLive,c.spawning])}

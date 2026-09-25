@@ -1,0 +1,940 @@
+{
+  "snapshotTick": 73929558,
+  "source": "Overmind/src/roomPlanner/layouts/bunker.ts",
+  "method": "Exact upstream RCL8 footprint, all 8 rotations/mirrors; first-spawn anchor fixed to current spawn, then all interior positions. Natural-wall roads are rejected. This is a placement test, not logistics/defense validation.",
+  "stampPlacements": 131,
+  "fixedSpawn": [
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 16,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 20,
+          "y": 23
+        },
+        {
+          "type": "road",
+          "x": 22,
+          "y": 25
+        },
+        {
+          "type": "road",
+          "x": 18,
+          "y": 22
+        },
+        {
+          "type": "road",
+          "x": 19,
+          "y": 22
+        },
+        {
+          "type": "road",
+          "x": 23,
+          "y": 26
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "nuker",
+          "x": 16,
+          "y": 27
+        },
+        {
+          "type": "powerSpawn",
+          "x": 16,
+          "y": 29
+        },
+        {
+          "type": "road",
+          "x": 21,
+          "y": 32
+        },
+        {
+          "type": "extension",
+          "x": 16,
+          "y": 23
+        },
+        {
+          "type": "extension",
+          "x": 20,
+          "y": 31
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": true,
+      "wallPlacements": 35,
+      "naturalCollisions": 1,
+      "builtConflicts": 2,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 22,
+          "y": 23
+        },
+        {
+          "type": "road",
+          "x": 20,
+          "y": 25
+        },
+        {
+          "type": "road",
+          "x": 28,
+          "y": 33
+        },
+        {
+          "type": "road",
+          "x": 26,
+          "y": 22
+        },
+        {
+          "type": "road",
+          "x": 24,
+          "y": 22
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "road",
+          "x": 20,
+          "y": 31
+        },
+        {
+          "type": "road",
+          "x": 21,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": false,
+      "wallPlacements": 48,
+      "naturalCollisions": 2,
+      "builtConflicts": 3,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0,
+      "wallExamples": [
+        {
+          "type": "storage",
+          "x": 21,
+          "y": 23
+        },
+        {
+          "type": "terminal",
+          "x": 21,
+          "y": 25
+        },
+        {
+          "type": "nuker",
+          "x": 22,
+          "y": 23
+        },
+        {
+          "type": "tower",
+          "x": 21,
+          "y": 22
+        },
+        {
+          "type": "tower",
+          "x": 19,
+          "y": 24
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "road",
+          "x": 16,
+          "y": 27
+        },
+        {
+          "type": "extension",
+          "x": 16,
+          "y": 23
+        },
+        {
+          "type": "extension",
+          "x": 25,
+          "y": 25
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": true,
+      "wallPlacements": 32,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 21,
+          "y": 35
+        },
+        {
+          "type": "road",
+          "x": 22,
+          "y": 34
+        },
+        {
+          "type": "road",
+          "x": 25,
+          "y": 33
+        },
+        {
+          "type": "road",
+          "x": 24,
+          "y": 37
+        },
+        {
+          "type": "road",
+          "x": 26,
+          "y": 35
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "tower",
+          "x": 19,
+          "y": 32
+        },
+        {
+          "type": "tower",
+          "x": 23,
+          "y": 32
+        },
+        {
+          "type": "link",
+          "x": 20,
+          "y": 31
+        },
+        {
+          "type": "road",
+          "x": 16,
+          "y": 29
+        },
+        {
+          "type": "spawn",
+          "x": 25,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": false,
+      "wallPlacements": 35,
+      "naturalCollisions": 1,
+      "builtConflicts": 4,
+      "retainedExisting": 2,
+      "existingEssential": 15,
+      "retainedExtensions": 1,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 26,
+          "y": 32
+        },
+        {
+          "type": "road",
+          "x": 20,
+          "y": 25
+        },
+        {
+          "type": "road",
+          "x": 22,
+          "y": 23
+        },
+        {
+          "type": "road",
+          "x": 24,
+          "y": 24
+        },
+        {
+          "type": "road",
+          "x": 28,
+          "y": 33
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "road",
+          "x": 20,
+          "y": 31
+        },
+        {
+          "type": "road",
+          "x": 21,
+          "y": 32
+        },
+        {
+          "type": "lab",
+          "x": 23,
+          "y": 32
+        },
+        {
+          "type": "spawn",
+          "x": 25,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": true,
+      "wallPlacements": 18,
+      "naturalCollisions": 0,
+      "builtConflicts": 6,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 22,
+          "y": 25
+        },
+        {
+          "type": "road",
+          "x": 20,
+          "y": 23
+        },
+        {
+          "type": "road",
+          "x": 18,
+          "y": 24
+        },
+        {
+          "type": "road",
+          "x": 23,
+          "y": 26
+        },
+        {
+          "type": "road",
+          "x": 19,
+          "y": 22
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "nuker",
+          "x": 16,
+          "y": 29
+        },
+        {
+          "type": "powerSpawn",
+          "x": 16,
+          "y": 27
+        },
+        {
+          "type": "road",
+          "x": 21,
+          "y": 32
+        },
+        {
+          "type": "lab",
+          "x": 19,
+          "y": 32
+        },
+        {
+          "type": "lab",
+          "x": 20,
+          "y": 31
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": false,
+      "wallPlacements": 31,
+      "naturalCollisions": 0,
+      "builtConflicts": 4,
+      "retainedExisting": 6,
+      "existingEssential": 15,
+      "retainedExtensions": 5,
+      "wallExamples": [
+        {
+          "type": "road",
+          "x": 22,
+          "y": 34
+        },
+        {
+          "type": "road",
+          "x": 21,
+          "y": 35
+        },
+        {
+          "type": "road",
+          "x": 24,
+          "y": 37
+        },
+        {
+          "type": "road",
+          "x": 26,
+          "y": 35
+        },
+        {
+          "type": "road",
+          "x": 22,
+          "y": 26
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "tower",
+          "x": 23,
+          "y": 32
+        },
+        {
+          "type": "tower",
+          "x": 19,
+          "y": 32
+        },
+        {
+          "type": "road",
+          "x": 16,
+          "y": 29
+        },
+        {
+          "type": "spawn",
+          "x": 20,
+          "y": 31
+        }
+      ]
+    },
+    {
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": true,
+      "wallPlacements": 47,
+      "naturalCollisions": 2,
+      "builtConflicts": 2,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0,
+      "wallExamples": [
+        {
+          "type": "storage",
+          "x": 21,
+          "y": 23
+        },
+        {
+          "type": "terminal",
+          "x": 21,
+          "y": 25
+        },
+        {
+          "type": "nuker",
+          "x": 20,
+          "y": 23
+        },
+        {
+          "type": "tower",
+          "x": 21,
+          "y": 22
+        },
+        {
+          "type": "tower",
+          "x": 23,
+          "y": 24
+        }
+      ],
+      "conflictExamples": [
+        {
+          "type": "road",
+          "x": 16,
+          "y": 27
+        },
+        {
+          "type": "extension",
+          "x": 16,
+          "y": 23
+        }
+      ]
+    }
+  ],
+  "fixedSpawnTerrainFits": 0,
+  "fixedAnySpawnSlot": [
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 16,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": true,
+      "wallPlacements": 35,
+      "naturalCollisions": 1,
+      "builtConflicts": 2,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": false,
+      "wallPlacements": 48,
+      "naturalCollisions": 2,
+      "builtConflicts": 3,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": true,
+      "wallPlacements": 32,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": false,
+      "wallPlacements": 35,
+      "naturalCollisions": 1,
+      "builtConflicts": 4,
+      "retainedExisting": 2,
+      "existingEssential": 15,
+      "retainedExtensions": 1
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": true,
+      "wallPlacements": 18,
+      "naturalCollisions": 0,
+      "builtConflicts": 6,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": false,
+      "wallPlacements": 31,
+      "naturalCollisions": 0,
+      "builtConflicts": 4,
+      "retainedExisting": 6,
+      "existingEssential": 15,
+      "retainedExtensions": 5
+    },
+    {
+      "slotIndex": 0,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": true,
+      "wallPlacements": 47,
+      "naturalCollisions": 2,
+      "builtConflicts": 2,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 26,
+      "naturalCollisions": 0,
+      "builtConflicts": 4,
+      "retainedExisting": 8,
+      "existingEssential": 15,
+      "retainedExtensions": 6
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": true,
+      "wallPlacements": 33,
+      "naturalCollisions": 2,
+      "builtConflicts": 6,
+      "retainedExisting": 6,
+      "existingEssential": 15,
+      "retainedExtensions": 5
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": false,
+      "wallPlacements": 31,
+      "naturalCollisions": 1,
+      "builtConflicts": 4,
+      "retainedExisting": 6,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": true,
+      "wallPlacements": 23,
+      "naturalCollisions": 0,
+      "builtConflicts": 3,
+      "retainedExisting": 9,
+      "existingEssential": 15,
+      "retainedExtensions": 7
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": false,
+      "wallPlacements": 33,
+      "naturalCollisions": 1,
+      "builtConflicts": 7,
+      "retainedExisting": 3,
+      "existingEssential": 15,
+      "retainedExtensions": 2
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": true,
+      "wallPlacements": 31,
+      "naturalCollisions": 1,
+      "builtConflicts": 6,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": false,
+      "wallPlacements": 32,
+      "naturalCollisions": 1,
+      "builtConflicts": 6,
+      "retainedExisting": 6,
+      "existingEssential": 15,
+      "retainedExtensions": 5
+    },
+    {
+      "slotIndex": 1,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": true,
+      "wallPlacements": 31,
+      "naturalCollisions": 1,
+      "builtConflicts": 7,
+      "retainedExisting": 3,
+      "existingEssential": 15,
+      "retainedExtensions": 2
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 33,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 0,
+      "mirror": true,
+      "wallPlacements": 31,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": false,
+      "wallPlacements": 17,
+      "naturalCollisions": 0,
+      "builtConflicts": 6,
+      "retainedExisting": 4,
+      "existingEssential": 15,
+      "retainedExtensions": 3
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 90,
+      "mirror": true,
+      "wallPlacements": 16,
+      "naturalCollisions": 0,
+      "builtConflicts": 5,
+      "retainedExisting": 5,
+      "existingEssential": 15,
+      "retainedExtensions": 4
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": false,
+      "wallPlacements": 49,
+      "naturalCollisions": 2,
+      "builtConflicts": 3,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 180,
+      "mirror": true,
+      "wallPlacements": 47,
+      "naturalCollisions": 2,
+      "builtConflicts": 2,
+      "retainedExisting": 1,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": false,
+      "wallPlacements": 33,
+      "naturalCollisions": 1,
+      "builtConflicts": 3,
+      "retainedExisting": 3,
+      "existingEssential": 15,
+      "retainedExtensions": 2
+    },
+    {
+      "slotIndex": 2,
+      "spawn": {
+        "x": 21,
+        "y": 28
+      },
+      "rotation": 270,
+      "mirror": true,
+      "wallPlacements": 33,
+      "naturalCollisions": 1,
+      "builtConflicts": 4,
+      "retainedExisting": 2,
+      "existingEssential": 15,
+      "retainedExtensions": 1
+    }
+  ],
+  "fixedAnySpawnSlotTerrainFits": 0,
+  "terrainFitCountElsewhere": 352,
+  "elsewhereExamples": [
+    {
+      "spawn": {
+        "x": 38,
+        "y": 7
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 0,
+      "naturalCollisions": 0,
+      "builtConflicts": 0,
+      "retainedExisting": 0,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "spawn": {
+        "x": 39,
+        "y": 7
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 0,
+      "naturalCollisions": 0,
+      "builtConflicts": 0,
+      "retainedExisting": 0,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "spawn": {
+        "x": 40,
+        "y": 7
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 0,
+      "naturalCollisions": 0,
+      "builtConflicts": 0,
+      "retainedExisting": 0,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "spawn": {
+        "x": 41,
+        "y": 7
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 0,
+      "naturalCollisions": 0,
+      "builtConflicts": 0,
+      "retainedExisting": 0,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    },
+    {
+      "spawn": {
+        "x": 42,
+        "y": 7
+      },
+      "rotation": 0,
+      "mirror": false,
+      "wallPlacements": 0,
+      "naturalCollisions": 0,
+      "builtConflicts": 0,
+      "retainedExisting": 0,
+      "existingEssential": 15,
+      "retainedExtensions": 0
+    }
+  ],
+  "caveat": "Elsewhere fits do not retain the existing RCL3 room or prove safe migration. No candidate was installed."
+}

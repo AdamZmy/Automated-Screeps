@@ -1,0 +1,1 @@
+Memory.frontier.energyProbe={tick:Game.time,events:Game.rooms.W21N26.getEventLog(),cpu:Game.cpu.getUsed(),spawns:Object.values(Game.spawns).map(s=>({name:s.name,spawning:s.spawning})),errors:Memory.frontier.errors||null};

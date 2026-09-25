@@ -1,0 +1,1 @@
+[[require('monitor'),'tick','monitor'],[require('ledger'),'observe','ledger'],[require('planner'),'run','planner'],[require('expansion'),'tick','strategy'],[require('expansion'),'run','expansion']].forEach(a=>global.__cpuWrap(...a))

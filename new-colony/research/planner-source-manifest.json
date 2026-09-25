@@ -1,0 +1,38 @@
+[
+  {
+    "name": "tooangel",
+    "repository": "https://github.com/TooAngel/screeps.git",
+    "commit": "87645a0b933360224737cca3b18ae9d112f46fef",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/tooangel"
+  },
+  {
+    "name": "63bot",
+    "repository": "https://github.com/an-stu/Screeps-63bot.git",
+    "commit": "65e8206be07f3c1b27a61e0681f13ac254b9e72d",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/63bot"
+  },
+  {
+    "name": "kasami",
+    "repository": "https://github.com/kasami/kasamibot.git",
+    "commit": "6830e7be851385249ad53cac5aaf259fad2b60e6",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/kasami"
+  },
+  {
+    "name": "layout-generator",
+    "repository": "https://github.com/jedislight/screeps_room_layout_generator.git",
+    "commit": "0cf098af09fbe8ae34ef3108d298ec5b7b435e20",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/layout-generator"
+  },
+  {
+    "name": "overmind",
+    "repository": "https://github.com/bencbartlett/Overmind.git",
+    "commit": "5eca49a0d988a1f810a11b9c73d4d8961efca889",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/overmind"
+  },
+  {
+    "name": "international",
+    "repository": "https://github.com/The-International-Screeps-Bot/The-International-Open-Source.git",
+    "commit": "7e5106eebffb9627cf08cf893b6846012d970b90",
+    "path": "/Users/zmy/screepsworld/new-colony/research/planner-sources/international"
+  }
+]
