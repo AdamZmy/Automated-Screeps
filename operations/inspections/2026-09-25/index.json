@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T14:20:49.064Z",
+  "updatedAt": "2026-09-25T15:37:58.724Z",
   "day": "2026-09-25",
   "runs": [
     {
@@ -38,11 +38,11 @@
       "id": "2026-09-25T14-18-41Z-run-fe88d1144ec7",
       "kind": "scheduled",
       "startedAt": "2026-09-25T14:18:41.279Z",
-      "updatedAt": "2026-09-25T14:20:40.460Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-25T15:37:58.724Z",
+      "completedAt": "2026-09-25T15:37:58.681Z",
+      "status": "skipped",
       "title": "周期巡检：既有协调者运行中",
-      "summary": "既有协调者及相关Issue负责人仍在运行；本轮只记录跳过原因，保留既有文件归属。",
+      "summary": "本轮已跳过：既有协调者及Issue #1/#4负责人仍active/inProgress。未采集新tick、未接管代码或部署；保留原Issue与短状态，结束日志单独提交发布。",
       "tick": null,
       "issueNumbers": [
         1,
