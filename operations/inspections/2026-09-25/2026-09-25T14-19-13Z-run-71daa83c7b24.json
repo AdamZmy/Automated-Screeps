@@ -3,7 +3,7 @@
   "id": "2026-09-25T14-19-13Z-run-71daa83c7b24",
   "kind": "scheduled",
   "startedAt": "2026-09-25T14:19:13.323Z",
-  "updatedAt": "2026-09-25T15:39:32.646Z",
+  "updatedAt": "2026-09-25T15:40:06.756Z",
   "completedAt": "2026-09-25T15:39:32.600Z",
   "status": "skipped",
   "title": "巡检跳过：原协调者仍活动",
@@ -68,10 +68,10 @@
       "result": "未调用游戏API、未改游戏代码、Issue、CURRENT_STATE或LIVE_STATUS，未重复派工或部署网站。"
     },
     {
-      "at": "2026-09-25T15:39:32.600Z",
+      "at": "2026-09-25T15:40:06.728Z",
       "description": "发布本轮skipped结束日志。",
-      "status": "in-progress",
-      "result": "本条记录随后以显式路径提交和推送；最终结果以Git历史及自动化memory为准。"
+      "status": "done",
+      "result": "skipped结束记录已在bef769719ea19f2650f4b39b9c94798aade6775d提交并推送origin/main；此修订补记实际发布结果。"
     }
   ],
   "checks": [
@@ -89,6 +89,11 @@
       "name": "开始日志发布",
       "result": "passed",
       "detail": "cd12b994864065f4e91048816058c9a6cd554b4f 已推送origin/main；仅包含本轮JSON/Markdown和已提交历史生成的两个索引，发布档案验证14轮/1天通过。"
+    },
+    {
+      "name": "结束日志发布",
+      "result": "passed",
+      "detail": "bef769719ea19f2650f4b39b9c94798aade6775d已推送；发布档案15轮/1天校验通过，本地全部18轮/1天校验通过。其他任务未发布内容未混入本轮提交。"
     }
   ],
   "next": [
@@ -112,6 +117,10 @@
     {
       "label": "开始日志提交",
       "url": "https://github.com/AdamZmy/Automated-Screeps/commit/cd12b994864065f4e91048816058c9a6cd554b4f"
+    },
+    {
+      "label": "结束日志提交",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/bef769719ea19f2650f4b39b9c94798aade6775d"
     }
   ]
 }
