@@ -104,7 +104,7 @@ function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++
  const f=fixture();f.structure(C.STRUCTURE_STORAGE,'storage',20,20,1000,1000000);
  const c=f.creep('haul','hauler',21,20,0,100,[C.CARRY,C.MOVE]);haul(c);
  assert.equal(c.actions.length,0,'idle hauler must not withdraw storage just to return it');
- const builder=f.creep('builder','builder',21,21);work(builder);assert.equal(builder.actions.length,0,'idle builder must not recycle storage energy');
+ const builder=f.creep('builder','builder',21,21);work(builder);assert.equal(builder.memory.role,'upgrader','idle builder uses its WORK for upgrading instead of storage hauling');
  delete ctx.Game.creeps.builder;
  const sp=f.structure(C.STRUCTURE_SPAWN,'spawn',22,20,0,300);haul(c);assert.deepEqual(c.actions.pop(),['withdraw','storage']);
  c.store[C.RESOURCE_ENERGY]=100;sp.store[C.RESOURCE_ENERGY]=300;haul(c);
@@ -121,7 +121,7 @@ function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++
  const st=f.structure(C.STRUCTURE_STORAGE,'storage',20,20,1000,1000000);
  delete ctx.Game.creeps.upgrader;const a=f.creep('a','upgrader',16,22,50,50,Array(4).fill(C.WORK));const b=f.creep('b','upgrader',17,22,50,50,Array(6).fill(C.WORK));
  let used=0;for(let tick=0;tick<10;tick++){ctx.Game.time=tick;for(const c of [a,b])if(upgradeAllowed(c))used+=c.getActiveBodyparts(C.WORK);}
- assert.equal(used/10,6,'existing 10 WORK cohort must average 6 WORK while rebuilding reserve');
+ assert.equal(used/10,10,'a reserve staffing target does not throttle the existing fueled10WORK cohort');
  st.store[C.RESOURCE_ENERGY]=16000;assert.equal(upgradePolicy(f.room).target,10);
  st.store[C.RESOURCE_ENERGY]=31000;assert.equal(upgradePolicy(f.room).target,16);
  ctx.Memory.frontier.expansion={home:f.room.name,state:'stabilizing'};assert.equal(upgradePolicy(f.room).target,6);
@@ -234,7 +234,7 @@ console.log('PASS: adjacent miner requests worker yield, empty and partial-load 
  for(const c of ups)work(c);
  assert.deepEqual(ups[0].actions[0],['upgrade']);assert.deepEqual(ups[1].actions[0],['upgrade']);
  for(const c of ups.slice(2))assert.deepEqual(c.actions[0],['build','source-container'],'source containers take priority over road and extension work');
- f.room.sites=f.room.sites.filter(s=>s.structureType!==C.STRUCTURE_CONTAINER);
+ ctx.Game.time++;f.room.sites=f.room.sites.filter(s=>s.structureType!==C.STRUCTURE_CONTAINER);
  for(const c of ups.slice(2))c.pos=f.pos(20,27);
  for(const c of ups.slice(2)){c.actions.length=0;work(c);assert.deepEqual(c.actions[0],['build','started-extension'],'same-type work must finish the started extension first');}
  ups[0].pos=f.pos(40,40);ups[5].pos=f.pos(16,22);ctx.Game.time++;
@@ -248,7 +248,7 @@ console.log('PASS: adjacent miner requests worker yield, empty and partial-load 
  farMiner.spawning=true;assert.equal(upgradePolicy(f.room).mode,'infrastructure');farMiner.spawning=false;
  farMiner.pos=f.pos(20,38);assert.equal(upgradePolicy(f.room).mode,'infrastructure','replacement must reach the source before the phase ends');farMiner.pos=f.pos(17,41);
  assert.equal(upgradePolicy(f.room).mode,'growth');assert.equal(upgradePolicy(f.room).target,10);
- ups[2].actions.length=0;work(ups[2]);assert.deepEqual(ups[2].actions[0],['upgrade']);assert.equal(ups[2].memory.role,'upgrader','temporary builders must retain and resume their original role');
+ ctx.Game.time++;ups[2].actions.length=0;work(ups[2]);assert.deepEqual(ups[2].actions[0],['upgrade']);assert.equal(ups[2].memory.role,'upgrader','temporary builders must retain and resume their original role');
  f.room.controller.level=3;assert.equal(upgradePolicy(f.room).mode,'infrastructure');f.room.energyCapacityAvailable=800;
  nearParts.unshift(C.WORK);farParts.unshift(C.WORK);assert.equal(upgradePolicy(f.room).mode,'growth');
  f.room.controller.level=1;assert.equal(upgradePolicy(f.room).target,2);assert.equal(upgradePolicy(f.room).mode,'bootstrap');
@@ -342,8 +342,8 @@ function deliveryFixture(){
  f.room.sites=[site('access-road',C.STRUCTURE_ROAD,18,299),site('extension',C.STRUCTURE_EXTENSION,19,1000),site('plain-road',C.STRUCTURE_ROAD,20,200),site('swamp-road',C.STRUCTURE_ROAD,22),site('container',C.STRUCTURE_CONTAINER,23),site('tower',C.STRUCTURE_TOWER,24)];
  ctx.Memory.frontier.rooms[f.room.name]={plan:{structures:[{type:C.STRUCTURE_ROAD,x:18,y:28,roadClass:'access'},{type:C.STRUCTURE_ROAD,x:20,y:28,roadClass:'economy',roadSwamp:false,roadOrder:1},{type:C.STRUCTURE_ROAD,x:22,y:28,roadClass:'economy',roadSwamp:true,roadOrder:5}]}};
  const builder=f.creep('builder','builder',21,28,100,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
- for(const id of ['tower','container','swamp-road','plain-road','extension','access-road']){builder.actions.length=0;work(builder);assert.deepEqual(builder.actions[0],['build',id]);f.room.sites=f.room.sites.filter(s=>s.id!==id);}
- f.room.sites=[site('plain-road',C.STRUCTURE_ROAD,20),site('extension',C.STRUCTURE_EXTENSION,19,1000)];
+ for(const id of ['tower','container','swamp-road','plain-road','extension','access-road']){ctx.Game.time++;builder.actions.length=0;work(builder);assert.deepEqual(builder.actions[0],['build',id]);f.room.sites=f.room.sites.filter(s=>s.id!==id);}
+ ctx.Game.time++;f.room.sites=[site('plain-road',C.STRUCTURE_ROAD,20),site('extension',C.STRUCTURE_EXTENSION,19,1000)];
  f.creep('up0','upgrader',16,22,100,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);const helper=f.creep('up1','upgrader',21,27,100,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);work(helper);
  assert.deepEqual(helper.actions[0],['build','plain-road'],'infrastructure support upgraders must recognize economic roads');
 }
@@ -434,8 +434,7 @@ console.log('PASS: live-shaped sustained hauling bottleneck, route/swamp budget,
 {
  const f=pipelineFixture();const policy=updateEconomy(f.room),builder=ctx.Game.creeps.builder;builder.memory.loaded=true;let spent=0;
  for(let i=0;i<100;i++){ctx.Game.time=1000+i;builder.actions.length=0;work(builder);work(ctx.Game.creeps.upgrader);finishDevelopment(f.room);if(builder.actions.some(a=>a[0]==='build'))spent+=builder.getActiveBodyparts(C.WORK)*C.BUILD_POWER;}
- assert(spent/100<=policy.buildEnergyTarget+.15,'existing builder cohorts must respect the energy budget across a complete duty cycle');
- assert(spent/100>=policy.buildEnergyTarget-.2,'duty control should use the allocated construction budget when work and supply are available');
+ assert.equal(spent/100,15,'ready3WORK construction cohort works each tick despite a lower planning rate');
  const low=pipelineFixture();low.room.sites=[];low.structure(C.STRUCTURE_STORAGE,'storage',20,20,1000,1000000);
  low.ledger({harvestRate:16});const before=updateEconomy(low.room).target;
  ctx.Game.time+=100;low.ledger({eligible:false,blocked:['stock-drawdown'],inventoryDelta:-900});
@@ -483,15 +482,13 @@ console.log('PASS: reserve exit at 18000, growth entry below 12000, 100-tick cad
   work(ctx.Game.creeps.upgrader);finishDevelopment(f.room);
   retired.actions.length=0;work(retired);assert.deepEqual(retired.actions[0],['move',16,33,3],'retired miner must travel toward the selected construction site on every tick, including duty-off ticks');
  }
- assert(spent/100<=control.buildEnergyTarget,'actionable builders must retain the actual construction spending upper bound');
- assert(spent/100>=11.8,'out-of-range retired and empty workers must not suppress the active three WORK to about five energy/tick');
+ assert.equal(spent/100,15,'out-of-range and empty workers do not suppress ready construction actions');
  // Once the retired miner reaches work range with energy, its WORK shares the same cap.
  retired.pos=f.pos(16,36);let allSpent=0;
  for(let i=0;i<100;i++){ctx.Game.time=1100+i;for(const c of [primary,helper,retired])c.actions.length=0;for(const c of [primary,helper,retired])work(c);work(ctx.Game.creeps.upgrader);finishDevelopment(f.room);for(const c of [primary,helper,retired])if(c.actions.some(a=>a[0]==='build'))allSpent+=c.getActiveBodyparts(C.WORK)*C.BUILD_POWER;}
- assert(allSpent/100<=control.buildEnergyTarget,'arrival of extra workers must not multiply the room construction allowance');
- assert(allSpent/100>=control.buildEnergyTarget-.35,'full-cohort duty allocation should still use the available spending allowance');
+ assert.equal(allSpent/100,35,'arriving fueled builders immediately contribute their real WORK');
 }
-console.log('PASS: in-range fueled builders retain budget despite retired miner travel and empty peers, unrestricted site travel, arriving extra WORK shares the construction cap');
+console.log('PASS: in-range fueled builders keep working despite retired miner travel and empty peers; extra ready WORK is not duty-throttled');
 {
  const f=pipelineFixture();delete ctx.Game.creeps.builder;
  f.room.sites=[{id:'live-extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(16,33),progress:2665,progressTotal:3000}];
@@ -515,10 +512,10 @@ console.log('PASS: in-range fueled builders retain budget despite retired miner 
  work(builder);assert.equal(builder.memory.loaded,true);assert.equal(builder.memory.refuelTarget,undefined);
  assert.deepEqual(builder.actions[0],['build',site.id],'a supplied 90/100 builder must build instead of chasing its final ten energy');
  ctx.Game.time++;builder.memory.loaded=false;builder.store[C.RESOURCE_ENERGY]=89;builder.actions.length=0;
- assert.equal(buildAllowed(builder),false,'a builder below its completed-batch threshold is not counted as work-ready');
- work(builder);assert.equal(builder.actions[0][0],'withdraw','the threshold does not indiscriminately turn partial loads into ready builders');
+ assert.equal(buildAllowed(builder),true,'partial carried energy can fund construction immediately');
+ work(builder);assert.equal(builder.actions[0][0],'build','a builder does not chase its final11 energy before working');
 }
-console.log('PASS: fixed construction supply priority, controller emergency/spawn priorities, matching 90% construction readiness');
+console.log('PASS: fixed construction supply priority, controller emergency/spawn priorities, partial-fuel construction readiness');
 {
  const f=fixture(),c=f.creep('searcher','hauler',20,20),adjacent=f.structure(C.STRUCTURE_EXTENSION,'adjacent',21,21),blocked=f.structure(C.STRUCTURE_EXTENSION,'blocked',23,23),reachable=f.structure(C.STRUCTURE_EXTENSION,'reachable',27,27);
  let searches=0;c.pos.findClosestByPath=items=>{searches++;assert(items.includes(reachable));return reachable;};
@@ -588,7 +585,7 @@ console.log('PASS: CPU attribution starts before lazy Memory parsing, stage coun
  f.creep('haul-extra','hauler',21,28,0,600,[...Array(12).fill(C.CARRY),...Array(12).fill(C.MOVE)]);
  const control=updateEconomy(f.room);control.target=14;control.developmentBudget=14;
  assert.equal(upgradePolicy(f.room).mode,'growth');
- work(builder);assert.equal(builder.memory.role,'upgrader');assert.equal(builder.actions.length,0,'the conversion tick must not add an unbudgeted upgrade intent');
+ work(builder);assert.equal(builder.memory.role,'upgrader');assert.equal(builder.actions.filter(a=>a[0]==='upgrade').length,1,'finished builder can upgrade immediately on its conversion tick');
  const cohort=Object.values(ctx.Game.creeps).filter(c=>c.memory.role==='upgrader');
  assert.equal(cohort.reduce((n,c)=>n+c.getActiveBodyparts(C.WORK),0),18);
  let spent=0;
@@ -596,7 +593,7 @@ console.log('PASS: CPU attribution starts before lazy Memory parsing, stage coun
   ctx.Game.time=tick;
   for(const c of cohort){c.actions.length=0;work(c);if(c.actions.some(a=>a[0]==='upgrade'))spent+=c.getActiveBodyparts(C.WORK);}
  }
- assert(spent/36<=14&&spent/36>=14-6/36,'18 WORK must share 14 energy/tick, allowing at most one largest action of rounding remainder');
+ assert.equal(spent/36,18,'all18 fueled WORK execute even while the staffing budget remains14');
  spawnRoom(f.room);assert.equal(ctx.Memory.frontier.rooms[f.room.name].economy.upgradeWork,18,'spawn demand counts the converted body in the regular upgrade workforce');
  f.room.sites=[{id:'new-extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(22,28),progress:0,progressTotal:3000}];
  ctx.Game.time=1100;f.request=null;spawnRoom(f.room);
@@ -605,7 +602,7 @@ console.log('PASS: CPU attribution starts before lazy Memory parsing, stage coun
 {
  const f=pipelineFixture();f.room.sites=[];const builder=ctx.Game.creeps.builder;builder.memory.loaded=true;
  assert.equal(upgradePolicy(f.room).mode,'infrastructure');work(builder);
- assert.equal(builder.memory.role,'builder','a temporary gap in infrastructure construction must not convert its builder');
+ assert.equal(builder.memory.role,'upgrader','without construction or repair a builder joins upgrading even during infrastructure planning');
  assert(builder.actions.some(a=>a[0]==='upgrade'));
 }
 for(const scenario of ['rcl1','downgrade','bootstrap','pioneer']){
@@ -613,9 +610,9 @@ for(const scenario of ['rcl1','downgrade','bootstrap','pioneer']){
  if(scenario==='downgrade')f.room.controller.ticksToDowngrade=100;
  const role=['bootstrap','pioneer'].includes(scenario)?scenario:'builder';
  const c=f.creep('protected-'+scenario,role,16,23,50,50);c.memory.loaded=true;work(c);
- assert.equal(c.memory.role,role,scenario+' must preserve its existing role');assert(c.actions.some(a=>a[0]==='upgrade'),scenario+' retains its previous upgrade behavior');
+ assert.equal(c.memory.role,scenario==='downgrade'?'upgrader':role,scenario+' retains emergency upgrading; an idle builder may become an upgrader');assert(c.actions.some(a=>a[0]==='upgrade'),scenario+' retains its previous upgrade behavior');
 }
-console.log('PASS: retired growth builder joins shared upgrade budget without transition overspend, spawn accounting, later builder demand, infrastructure/RCL1/emergency and other-role protection');
+console.log('PASS: retired growth builder joins active upgrade workforce on next tick, spawn accounting, later builder demand, infrastructure/RCL1/emergency and other-role protection');
 // Replay the historical duplicate-delivery bug against the actual terrain and
 // unchanged execution plan. This is an offline fixture, not live throughput.
 function stationFixture(){
@@ -650,22 +647,22 @@ function stationFixture(){
  for(const c of f.ups)c.pos=f.pos(c.memory.upgradeSeat.x,c.memory.upgradeSeat.y);
  let upgrades=0,concurrent=0;
  for(let tick=0;tick<32;tick++){
-  ctx.Game.time=f.flow.tick+tick;f.box.store[C.RESOURCE_ENERGY]=2000;
+  ctx.Game.time=f.flow.tick+1+tick;f.box.store[C.RESOURCE_ENERGY]=2000;
   for(const c of f.ups){c.store[C.RESOURCE_ENERGY]=8;c.actions.length=0;work(c);
    assert(c.actions.some(a=>a[0]==='withdraw'),'prefuel begins while the worker still has initial energy');
    assert(!c.actions.some(a=>a[0]==='move'),'fixed workers neither chase fuel nor move on duty-off ticks');
    if(c.actions.some(a=>a[0]==='upgrade')){upgrades+=4;concurrent++;}
   }
  }
- assert.equal(upgrades/32,14,'fixed prefueling preserves the original fourteen-energy upgrade duty budget');assert(concurrent>0);
+ assert.equal(upgrades/32,16,'fixed prefueling keeps all16WORK active despite the14/t planning target');assert(concurrent>0);
  const c=f.ups[0];c.store[C.RESOURCE_ENERGY]=0;c.actions.length=0;work(c);
  assert(c.actions.some(a=>a[0]==='withdraw'));assert(!c.actions.some(a=>a[0]==='upgrade'),'newly withdrawn energy cannot fund an upgrade from zero initial energy');
  assert(JSON.stringify(ctx.Memory.frontier.rooms[f.room.name].upgradeStation).length<700,'runtime station state remains compact');
 }
 {
- const f=stationFixture();f.box.store[C.RESOURCE_ENERGY]=600;
+ const f=stationFixture();f.box.store[C.RESOURCE_ENERGY]=1800;
  for(const c of f.haulers){c.store[C.RESOURCE_ENERGY]=c.store[C.RESOURCE_ENERGY]+c.store.getFreeCapacity();c.memory.loaded=true;delete c.memory.haulDelivery;}
- const need=deliveryNeeds(f.room).find(n=>n.node.id===f.box.id),gap=need.high-600;
+ const need=deliveryNeeds(f.room).find(n=>n.node.id===f.box.id),gap=need.high-1800;
  for(const c of f.haulers)haulTarget(c);
  const promised=f.haulers.reduce((n,c)=>n+(c.memory.haulDelivery?.amount||0),0);
  assert(promised<=gap,'carriers subtract other live commitments before reserving the same deficit');
@@ -792,7 +789,7 @@ for(const planFile of ['fixtures/layout-plan-before.json','fixtures/layout-plan-
  f.box.store[C.RESOURCE_ENERGY]=10;const courier=f.haulers.find(c=>c.memory.loaded);assert.equal(haulTarget(courier),f.box,'low controller box becomes a fixed supply request under full '+planFile);
  assert(ctx.Memory.frontier.rooms[f.room.name].controllerSupply.active);assert(courier.memory.haulDelivery.amount>0);
 }
-console.log('PASS: strict and official RoomPosition overloads, local coordinate normalization, cross-room Infinity, full old/reviewed plans each produce four cached seats plus fixed low-water box demand');
+console.log('PASS: strict and official RoomPosition overloads, local coordinate normalization, cross-room Infinity, full old/reviewed plans each produce four cached seats plus physical container capacity demand');
 // Shared development budget: tests exercise actual role actions and both
 // caller orders, not only the eligibility predicates.
 function sharingFixture(upWork=[4,4,4,4],buildWork=[1,1,1]){
@@ -810,13 +807,13 @@ function sharingFixture(upWork=[4,4,4,4],buildWork=[1,1,1]){
    developmentPlan(f.room);for(const c of order)work(c);finishDevelopment(f.room);
    const d=ctx.Memory.frontier.rooms[f.room.name].development;
    totals.build+=d.buildIntentEnergy;totals.upgrade+=d.upgradeIntentEnergy;
-   assert(d.credit>=-1e-8,'shared pool cannot be double-spent');
+   assert.equal(ctx.Memory.frontier.rooms[f.room.name].developmentCredit,undefined,'execution no longer retains action-credit or upgrade debt');
   }
   return totals;
  };
  return f;
 }
-for(const unavailable of ['travel','empty','refueling','spawning','yielding']){
+for(const unavailable of ['travel','empty','spawning','yielding']){
  const f=sharingFixture();
  for(const c of f.builders){
   if(unavailable==='travel')c.pos=f.pos(35,35);
@@ -828,27 +825,28 @@ for(const unavailable of ['travel','empty','refueling','spawning','yielding']){
  // Match the production loop: spawning workers do not execute work().
  const actual=f.cycle(100,[...f.up,...f.builders.filter(c=>!c.spawning)]);
  assert.equal(actual.build,0,unavailable+' cannot reserve construction energy');
- assert(actual.upgrade>=1540&&actual.upgrade<=1550,unavailable+' lends the entire affordable pool to ready upgrades');
+ assert.equal(actual.upgrade,1600,unavailable+' cannot make ready upgraders skip actions');
 }
 {
  const f=sharingFixture();f.builders[0].pos=f.pos(35,35);
  const use=f.cycle(100);
  assert(use.build>=980&&use.build<=1020,'two ready builders retain their realizable priority');
  assert(use.upgrade>500,'unrealizable construction quota reaches upgrading');
- assert(use.build+use.upgrade<=1550&&use.build+use.upgrade>=1540,'combined work consumes the pool within action rounding');
+ assert.equal(use.upgrade,1600,'every ready upgrader executes alongside planned construction');
+ assert(use.build+use.upgrade>1550,'intent telemetry may exceed the planning budget and must report it honestly');
 }
 {
  const f=sharingFixture([4,4],[2,2]);Object.assign(f.control,{target:10,buildEnergyTarget:5.5});
  for(const c of f.up){c.pos=f.pos(35,35);c.upgradeController=()=>C.ERR_NOT_IN_RANGE;}
  const use=f.cycle(100,[...f.builders,...f.up]);
- assert.equal(use.upgrade,0);assert(use.build>=1530&&use.build<=1550,'construction borrows the unused upgrade share');
+ assert.equal(use.upgrade,0);assert.equal(use.build,2000,'ready construction runs its full20/t independently of absent upgraders');
  assert(f.up.every(c=>c.actions.some(a=>a[0]==='move')),'borrowing must not stop idle upgraders from reaching the controller');
 }
 {
  const f=sharingFixture([4,4,4,4],[3,3]);f.room.sites[0].progress=f.room.sites[0].progressTotal-1;
  const use=f.cycle();assert.equal(use.build,1,'all builders together can consume only the remaining site energy');
  assert(use.upgrade>=12,'the almost-complete site cannot hoard a full construction allowance');
- assert(use.build+use.upgrade<=15.5);
+ assert.equal(use.upgrade,16,'finishing construction does not suppress an independent upgrade intent');
 }
 {
  const f=sharingFixture([4,4,4,4],[3]);Object.assign(f.control,{target:2,buildEnergyTarget:14,developmentBudget:16});
@@ -861,7 +859,7 @@ for(const unavailable of ['travel','empty','refueling','spawning','yielding']){
 }
 {
  const f=sharingFixture([10,10],[]);f.room.controller.level=8;f.room.sites=[];Object.assign(f.control,{target:15,buildEnergyTarget:0,developmentBudget:20});
- const use=f.cycle(20);assert.equal(use.upgrade,300,'RCL8 sharing never exceeds the physical unboosted controller cap');
+ const use=f.cycle(20);assert.equal(use.upgrade,400,'RCL8 diagnostic reports submitted intent estimates; the engine enforces its actual15/t cap');
 }
 {
  const f=sharingFixture([4,4],[1]);f.room.sites=[];
@@ -876,7 +874,7 @@ for(const unavailable of ['travel','empty','refueling','spawning','yielding']){
  const need=deliveryNeeds(f.room).find(n=>n.node===box);
  assert(need&&need.high>=460,'controller replenishment covers 8 WORK borrowing, rather than the 2/t floor');
 }
-console.log('PASS: shared budget lends both ways across travel/refuel/empty/spawn/yield, conserves total energy, clips fuel and site completion, releases failed actions in the same tick, preserves travel/RCL8/reserves and supplies borrowed work');
+console.log('PASS: ready upgrades run each tick independently of planning; builders execute without action credit, with actual fuel/site clipping and no duplicate intents; submitted intents are distinct from engineRCL8 actual expenditure');
 
 {
  const f=sharingFixture();const pioneer=f.creep('independent-pioneer','pioneer',21,28,100,100,[C.WORK,C.CARRY,C.MOVE]);pioneer.memory.loaded=true;
@@ -929,7 +927,8 @@ function capacityFixture(work=[4,4,1,1,1]){
  c.pos=f.pos(17,24);c.store[C.RESOURCE_ENERGY]=10;work(c);
  assert(!c.memory.upgradeSeat);assert(c.memory.upgradeParking,'the real reviewed layout has a safe overflow parking cell');
  assert(c.actions.some(a=>a[0]==='move'),'live-shaped no-seat upgrader must leave delivery port immediately');
- assert(!c.actions.some(a=>a[0]==='upgrade'||a[0]==='withdraw'),'port clearing takes precedence over holding the tile for work/refill');
+ assert.equal(c.actions.filter(a=>a[0]==='upgrade').length,1,'port clearing can move and use held energy for upgrading in the same tick');
+ assert(!c.actions.some(a=>a[0]==='withdraw'),'port clearing does not chase a refill back into the blocked port');
  const parking={...c.memory.upgradeParking},plan=ctx.Memory.frontier.rooms[f.room.name].plan;
  assert(!plan.structures.some(s=>(s.type===C.STRUCTURE_ROAD||C.OBSTACLE_OBJECT_TYPES.includes(s.type))&&s.x===parking.x&&s.y===parking.y));
  assert(![[17,24],[16,24]].some(([x,y])=>parking.x===x&&parking.y===y));
@@ -1051,7 +1050,7 @@ for(const release of ['death','expiry','completion','other-room']){
 console.log('PASS: real-terrain alternate unloading, exact endpoint reachability, fixed seats/future obstacles, preferred-port fallback, unique room-scoped port leases, same-node stall recovery, successful transfer/exit, death/expiry/completion release and bounded unreachable/fatigue handling');
 
 function cargoLeaseFixture(){
- const f=unloadFixture();f.box.store[C.RESOURCE_ENERGY]=349;
+ const f=unloadFixture();f.box.store[C.RESOURCE_ENERGY]=1469;
  Object.assign(f.control,{target:14,developmentBudget:14,routes:[{roundTrip:40}]});
  f.truck=(name,x,y,held,capacity,amount,phase='deliver')=>{
   const c=f.creep(name,'hauler',x,y,held,capacity,[...Array(capacity/50).fill(C.CARRY),...Array(capacity/50).fill(C.MOVE)]);c.memory.loaded=phase==='deliver'&&held>0;
@@ -1064,7 +1063,7 @@ function cargoLeaseFixture(){
  f.emptyA=f.truck('empty-a',24,26,0,100,100,'pickup');f.emptyB=f.truck('empty-b',16,32,0,100,100,'pickup');
  f.near=f.truck('near',20,27,200,200,0);
  f.promised=()=>Object.values(ctx.Game.creeps).reduce((n,c)=>n+(c.memory.haulDelivery?.id===f.box.id?c.memory.haulDelivery.amount:0),0);
- const request=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(request.high,880);assert.equal(f.promised(),531);
+ const request=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(request.high,2000);assert.equal(f.promised(),531);
  return f;
 }
 for(const order of ['empty-first','loaded-first']){
@@ -1111,7 +1110,7 @@ for(const action of ['withdraw','pickup']){
  assert.equal(f.emptyA.memory.haulDelivery.phase,'deliver');
 }
 {
- const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=749;
+ const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=1869;
  delete f.large.memory.haulDelivery;delete f.far.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
  // Exactly31 unreserved +100 soft energy: the first loaded truck takes131.
  const second=f.truck('second-near',21,27,200,200,0);
@@ -1130,4 +1129,94 @@ for(const action of ['withdraw','pickup']){
  assert(deliverHaul(c,f2.box));ctx.Game.time+=8;assert.equal(deliverHaul(c,f2.box),false,'persistent contention has a finite wait');
  assert.equal(c.memory.haulDelivery,undefined);assert.equal(c.memory.haulBlocked[f2.box.id],ctx.Game.time+15);
 }
-console.log('PASS: live531-energy lease reproduction, loaded-first/empty-first conservation, partial cargo/new-task phase, accepted transfer/withdraw/pickup protection, two-loaded race, emergency priority, distant port hints and bounded near-port contention');
+console.log('PASS: physical531-energy gap lease conservation, loaded-first/empty-first conservation, partial cargo/new-task phase, accepted transfer/withdraw/pickup protection, two-loaded race, emergency priority, distant port hints and bounded near-port contention');
+
+{
+ const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'whole-batch-box',25,30,0,2000);
+ f.room.sites=[{id:'whole-batch-job',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(25,32),progress:0,progressTotal:3000}];
+ const worker=f.creep('whole-batch-worker','builder',25,31,0,100);worker.memory.workSupply={id:box.id,job:'whole-batch-job',room:f.room.name};
+ const first=f.creep('whole-batch-first','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]),second=f.creep('whole-batch-second','hauler',23,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
+ first.memory.loaded=second.memory.loaded=true;
+ first.memory.haulDelivery={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:3,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ let sent;first.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
+ assert(deliverHaul(first,box));assert.equal(sent,100,'100 cargo with75 scheduling lease unloads all100 into a2000-capacity container');
+ assert.equal(first.memory.haulDelivery.amount,100,'pending amount records the real100 transfer, not the old75 lease');
+ assert.equal(first.memory.haulDelivery.sent,ctx.Game.time);assert.equal(haulTarget(second),null,'same-tick real100 transfer reserves the entire worker buffer deficit');
+ ctx.Game.time++;first.store[C.RESOURCE_ENERGY]=0;box.store[C.RESOURCE_ENERGY]=100;
+ assert.equal(haulTarget(second),null,'next snapshot confirms the filled demand without fabricating another trip');
+}
+{
+ const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'almost-full-box',25,30,1960,2000),c=f.creep('physical-limit','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
+ c.memory.haulDelivery={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:4,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ let sent;c.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
+ assert(deliverHaul(c,box));assert.equal(sent,40,'only physical remaining container capacity may leave cargo aboard');assert.equal(c.memory.haulDelivery.amount,40);
+}
+{
+ const f=fixture(),spawn=f.structure(C.STRUCTURE_SPAWN,'lease-limited-spawn',25,30,0,300),c=f.creep('spawn-courier','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
+ c.memory.haulDelivery={id:spawn.id,room:f.room.name,amount:75,phase:'deliver',priority:0,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ let sent;c.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
+ assert(deliverHaul(c,spawn));assert.equal(sent,100,'spawn also unloads all cargo that physically fits');assert.equal(c.memory.haulDelivery.amount,100);
+}
+console.log('PASS: containers unload full cargo beyond scheduling lease, respect actual remaining capacity, preserve actual same-tick transfer reservations, and use the same physical rule for spawns');
+
+{
+ const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=349;
+ const need=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(need.high,2000,'controller container dispatches to actual capacity rather than historical880 watermark');
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,200);
+ assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyB.memory.haulDelivery.amount,100,'with real spare capacity, ready cargo needs no artificial reclaim');
+ assert.equal(f.promised(),731);assert(f.promised()<=2000-349);
+ const memory=ctx.Memory.frontier.rooms[f.room.name];memory.controllerSupply.active=false;
+ f.box.store[C.RESOURCE_ENERGY]=1900;
+ const almostFull=deliveryNeeds(f.room).find(n=>n.node===f.box);
+ assert(almostFull&&almostFull.high===2000,'even above the old low watermark, remaining physical capacity stays a delivery demand');
+ f.box.store[C.RESOURCE_ENERGY]=2000;assert(!deliveryNeeds(f.room).some(n=>n.node===f.box),'a physically full container stops demand');
+ f.box.store[C.RESOURCE_ENERGY]=0;assert.equal(deliveryNeeds(f.room).find(n=>n.node===f.box).priority,2,'container emergency priority remains');
+}
+{
+ const f=cargoLeaseFixture();f.room.objects=f.room.objects.filter(o=>o!==f.box);
+ const link=f.structure(C.STRUCTURE_LINK,'unchanged-controller-link',16,24,530,800);f.room.controller.level=5;
+ const memory=ctx.Memory.frontier.rooms[f.room.name];delete memory.controllerSupply;
+ assert(!deliveryNeeds(f.room).some(n=>n.node===link),'link above its low watermark does not open a new request');
+ link.store[C.RESOURCE_ENERGY]=500;
+ const need=deliveryNeeds(f.room).find(n=>n.node===link);assert(need);assert.equal(need.high,770,'link retains its old calculated high watermark below physical capacity');
+ link.store[C.RESOURCE_ENERGY]=780;assert(!deliveryNeeds(f.room).some(n=>n.node===link));
+ link.store[C.RESOURCE_ENERGY]=760;assert(!deliveryNeeds(f.room).some(n=>n.node===link),'link hysteresis remains closed until its low watermark');
+}
+console.log('PASS: controller containers request physical capacity regardless of stale active flag, real349-stock cargo demand, full/urgent handling, and unchanged controller-link hysteresis');
+
+{
+ const f=sharingFixture([6,6,6],[]);f.room.sites=[];Object.assign(f.control,{target:15,buildEnergyTarget:0,developmentBudget:15});
+ const use=f.cycle(20);assert.equal(use.upgrade,360,'18 ready WORK issue upgrades each tick under a15/t staffing plan');
+ const d=ctx.Memory.frontier.rooms[f.room.name].development,credit=ctx.Memory.frontier.rooms[f.room.name].developmentCredit;
+ assert.equal(d.budget,15);assert.equal(d.upgradeIntentEnergy,18);assert.equal(d.upgradeThrottled,false);
+ assert.equal(credit,undefined,'no execution credit or debt remains in Memory');
+ const before=f.up.map(c=>c.actions.filter(a=>a[0]==='upgrade').length);
+ for(const c of f.up)work(c);finishDevelopment(f.room);finishDevelopment(f.room);
+ assert.deepEqual(f.up.map(c=>c.actions.filter(a=>a[0]==='upgrade').length),before,'role calls and repeated finish passes cannot resubmit an upgrade intent');
+}
+{
+ const f=sharingFixture([4],[]);f.room.sites=[];const c=f.up[0];c.store[C.RESOURCE_ENERGY]=5;c.memory.loaded=false;
+ const use=f.cycle();assert.equal(use.upgrade,4,'partial cargo below the old readiness threshold still upgrades');
+ assert(!c.actions.some(a=>a[0]==='withdraw'),'mobile workers consume their current cargo before searching for more');
+ ctx.Game.time++;c.store[C.RESOURCE_ENERGY]=0;c.actions.length=0;work(c);finishDevelopment(f.room);
+ assert(!c.actions.some(a=>a[0]==='upgrade'),'zero initial energy cannot assume a pending withdrawal is already usable');
+ ctx.Game.time++;c.store[C.RESOURCE_ENERGY]=50;c.memory.loaded=true;c.pos=f.pos(35,35);c.actions.length=0;
+ c.upgradeController=()=>{c.actions.push(['upgrade-out-of-range']);return C.ERR_NOT_IN_RANGE;};work(c);finishDevelopment(f.room);
+ assert(c.actions.some(a=>a[0]==='move'),'out-of-range workers continue travelling');
+ assert.equal(ctx.Memory.frontier.rooms[f.room.name].development.upgradeIntentEnergy,0,'failed out-of-range request is never recorded as successful upgrading');
+}
+{
+ const f=fixture();f.room.controller.level=3;f.source('self-refuel-source',18,23);
+ const c=f.creep('concurrent-harvest','upgrader',17,23,5,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);c.memory.loaded=false;
+ work(c);assert(c.actions.some(a=>a[0]==='upgrade'));assert(!c.actions.some(a=>a[0]==='harvest'),'mobile upgrader uses current cargo instead of forcing a top-up before work');
+}
+for(const reason of ['sustainable-upgrade','sustained-source-backlog','measured-reserve-drawdown']){
+ const f=sharingFixture([4,4],[3,3]);Object.assign(f.control,{target:8,buildEnergyTarget:2,developmentBudget:10,reason});
+ for(const c of f.builders){c.store[C.RESOURCE_ENERGY]=3;c.memory.loaded=false;}
+ const use=f.cycle(10);assert.equal(use.build,60,reason+' cannot idle builders holding3 energy at a valid site');assert.equal(use.upgrade,80);
+ assert.equal(f.control.developmentBudget,10,'execution never alters the staffing planning budget');
+ assert.equal(ctx.Memory.frontier.rooms[f.room.name].development.buildThrottled,false);
+ ctx.Game.time++;f.room.sites=[];developmentPlan(f.room);finishDevelopment(f.room);
+ assert.equal(ctx.Memory.frontier.rooms[f.room.name].development.buildIntentEnergy,0,'no site means no invented building intent');
+}
+console.log('PASS: every-tick primary upgrades with partial fuel, concurrent refueling/movement, zero-energy and out-of-range guards, heap deduplication, separate intent accounting, every-tick partial-fuel builders under all planning modes and no-job safeguards');

@@ -6,6 +6,22 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.4.2 — 2026-09-25
+
+- Game build `2026-09-25.16` fills the controller container according to its
+  physical free capacity, removing the artificial low/high target watermark.
+- A courier at any delivery target unloads all carried energy that physically fits,
+  rather than clipping the transfer to its earlier task reservation. Preserve
+  emergency sink priority and account for actual same-tick transfer promises.
+- Remove action-budget duty cycling for upgrading and construction. Fueled
+  workers perform valid work each tick; economic rates plan staffing and supply.
+- Reuse completed builders for upgrading, including rooms with storage. Replace
+  arbitrary body/room carrying caps with energy, demand and physical body limits.
+- Remove minimum pickup/delivery batches and the fixed link-transfer threshold;
+  retain actual resource, capacity, cooldown and net-delivery constraints.
+- Add independent regressions for full unload, genuinely full-container partial
+  unload, same-tick capacity, and controller demand above the former watermark.
+
 ## 0.4.1 — 2026-09-25
 
 - Game build `2026-09-25.15` lets ready cargo reclaim only unfunded pickup
