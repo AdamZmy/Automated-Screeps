@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-25T19-15-53Z-run-c26e6b4fddca",
+  "kind": "scheduled",
+  "startedAt": "2026-09-25T19:15:53.214Z",
+  "updatedAt": "2026-09-25T19:15:53.214Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "周期巡检与协调者核验",
+  "summary": "",
+  "game": null,
+  "findings": [],
+  "tasks": [],
+  "actions": [],
+  "checks": [],
+  "next": [],
+  "references": []
+}

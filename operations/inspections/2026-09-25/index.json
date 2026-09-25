@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T19:15:53.214Z",
+  "updatedAt": "2026-09-25T21:22:31.599Z",
   "day": "2026-09-25",
   "runs": [
     {
@@ -19,11 +19,23 @@
       "id": "2026-09-25T18-43-09Z-rcl4-62f6f1170fce",
       "kind": "scheduled",
       "startedAt": "2026-09-25T18:43:09.934Z",
-      "updatedAt": "2026-09-25T18:43:09.934Z",
+      "updatedAt": "2026-09-25T21:22:31.599Z",
       "completedAt": null,
       "status": "running",
       "title": "RCL4能源及仓储巡检",
-      "summary": "",
+      "summary": "已确认前协调者idle/completed，当前协调者接管；修复遗留日志索引后开始API巡检。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T18:19:31.338Z",
+      "updatedAt": "2026-09-25T18:19:31.372Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检与日志一致性修复",
+      "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
       "tick": null,
       "issueNumbers": []
     },
@@ -184,11 +196,11 @@
       "id": "2026-09-25T12-39-00Z-run-111454a6f642",
       "kind": "scheduled",
       "startedAt": "2026-09-25T12:39:00.070Z",
-      "updatedAt": "2026-09-25T14:20:12.474Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-25T21:22:31.568Z",
+      "completedAt": "2026-09-25T15:40:01Z",
+      "status": "failed",
       "title": "周期巡检：现有协调者仍在运行",
-      "summary": "即时任务状态确认现有协调者 active、最新轮次 inProgress；本轮仅记录占用并发布日志，保留原文件归属。",
+      "summary": "原任务发生传输故障并停止；本轮核验其 failed 状态后补记终态，仅恢复日志，不补造游戏观测。",
       "tick": null,
       "issueNumbers": [
         1
