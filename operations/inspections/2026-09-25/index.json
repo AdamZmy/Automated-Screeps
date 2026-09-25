@@ -19,6 +19,21 @@
       ]
     },
     {
+      "id": "2026-09-25T17-33-21Z-run-3ee5c01c4a58",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T17:33:21.157Z",
+      "updatedAt": "2026-09-25T17:34:30.966Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：核验已有协调者",
+      "summary": "即时任务状态已确认既有协调者仍active；本轮保留文件归属，仅记录跳过原因并发布日志。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
+    {
       "id": "2026-09-25T17-33-15Z-run-6bc2e72bd5d9",
       "kind": "scheduled",
       "startedAt": "2026-09-25T17:33:15.418Z",
