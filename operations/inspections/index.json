@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T17:35:17.982Z",
+  "updatedAt": "2026-09-25T17:35:36.120Z",
   "days": [
     "2026-09-25"
   ],
@@ -9,11 +9,11 @@
       "id": "2026-09-25T17-33-58Z-run-4ae43624eede",
       "kind": "scheduled",
       "startedAt": "2026-09-25T17:33:58.877Z",
-      "updatedAt": "2026-09-25T17:34:55.483Z",
-      "completedAt": null,
-      "status": "running",
-      "title": "周期巡检：核验现有协调者",
-      "summary": "即时状态已确认现有协调者仍active；本轮仅登记跳过原因，保留其代码、API与部署归属。",
+      "updatedAt": "2026-09-25T17:35:36.120Z",
+      "completedAt": "2026-09-25T17:35:36.075Z",
+      "status": "skipped",
+      "title": "周期巡检跳过：现有协调者仍运行",
+      "summary": "本轮因已核验的active协调者跳过接管；起始日志已发布，无新游戏观测、代码改动或部署。结束日志待本次串行提交发布。",
       "tick": null,
       "issueNumbers": [
         1,
