@@ -1,8 +1,53 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T22:03:12.093Z",
+  "updatedAt": "2026-09-25T22:04:57.409Z",
   "day": "2026-09-25",
   "runs": [
+    {
+      "id": "2026-09-25T22-02-39Z-run-224be65131e4",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T22:02:39.509Z",
+      "updatedAt": "2026-09-25T22:04:57.409Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态核验",
+      "summary": "本轮已核验当前协调者仍运行；不接管API、游戏源码、共享日志档案或Git发布。",
+      "tick": null,
+      "issueNumbers": [
+        4,
+        12
+      ]
+    },
+    {
+      "id": "2026-09-25T21-46-29Z-run-6180719c795d",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T21:46:29.995Z",
+      "updatedAt": "2026-09-25T22:04:57.274Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者运行中，本轮跳过接管",
+      "summary": "本轮协调者01a0da71-f5a4-7021-8337-23b7d10addbf确认既有协调者仍active；仅记录跳过，不接管游戏、代码或共享Git。",
+      "tick": null,
+      "issueNumbers": [
+        4,
+        12
+      ]
+    },
+    {
+      "id": "2026-09-25T21-46-09Z-run-ca86d5a6e545",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T21:46:09.955Z",
+      "updatedAt": "2026-09-25T22:04:57.341Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "巡检跳过：上轮协调者仍运行",
+      "summary": "核验到上轮协调者仍active；本轮仅记录跳过原因，日志隔离保存，等待唯一协调者串行合并发布。",
+      "tick": null,
+      "issueNumbers": [
+        4,
+        12
+      ]
+    },
     {
       "id": "2026-09-25T20-31-26Z-run-17bff5933395",
       "kind": "scheduled",
