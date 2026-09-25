@@ -3,11 +3,11 @@
   "id": "2026-09-25T09-50-25Z-run-a015d2c17123",
   "kind": "scheduled",
   "startedAt": "2026-09-25T09:50:25.264Z",
-  "updatedAt": "2026-09-25T11:37:55.263Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "上轮协调者仍运行，本轮保留归属",
-  "summary": "即时任务快照已确认上轮协调者 active、当前 turn inProgress；本轮仅发布跳过日志，保留原文件/API/部署归属。",
+  "updatedAt": "2026-09-25T14:19:22.652Z",
+  "completedAt": "2026-09-25T14:19:22.620Z",
+  "status": "skipped",
+  "title": "原协调任务运行中，本轮已跳过",
+  "summary": "已确认原协调者 active / inProgress，保留 Issue #1/#4 和原审视者归属。本轮未取新游戏 tick、修改源码或部署；开始记录已推送，结束记录按同一批次发布。",
   "game": null,
   "findings": [
     {
@@ -57,8 +57,14 @@
     {
       "at": "2026-09-25T11:37:55.217Z",
       "description": "初始化本轮独立批次，准备发布开始状态。",
-      "status": "in-progress",
-      "result": "仅本轮 JSON/Markdown 与基于已提交记录生成的索引进入提交；源代码与原协调者文档保持原归属。"
+      "status": "done",
+      "result": "开始记录仅含本轮 JSON/Markdown 和一致索引；commit d2e0689d22b5073dacdc87f0fa9a454260055500 已推送 origin/main。其他工作者的修改与索引条目保持原状。"
+    },
+    {
+      "at": "2026-09-25T14:19:22.620Z",
+      "description": "按 active owner 规则结束本轮，保留所有权并更新同一批次的结束记录。",
+      "status": "done",
+      "result": "未调用游戏 API，未启动重复代理，未修改 Issue 检查点、CURRENT_STATE、游戏源码或网站；未恢复 heartbeat 或新增调度。最终发布随本记录的 Git 提交执行。"
     }
   ],
   "checks": [
@@ -74,8 +80,13 @@
     },
     {
       "name": "开始日志发布",
-      "result": "pending",
-      "detail": "等待显式 Git 提交和推送确认。"
+      "result": "passed",
+      "detail": "起始记录提交 d2e0689 已推送 origin/main；独立出版归档校验为 7 轮/1 天，未混入原协调者未提交日志。"
+    },
+    {
+      "name": "归档与发布边界",
+      "result": "passed",
+      "detail": "本地归档 write/validate 通过；Git 使用独立索引与原生 index.lock 串行提交，仅本轮两个文件和两级索引。其他工作者未发布的记录保持本地原状。"
     }
   ],
   "next": [
