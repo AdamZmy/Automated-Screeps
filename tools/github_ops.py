@@ -134,18 +134,34 @@ def listing():
 
 
 def checkpoint(args):
-    if args.key not in {item["key"] for item in plan()["issues"]}:
-        raise ValueError("Unknown stable key; add a scoped work item to roadmap.json first")
-    item = match(all_issues(), args.key)
-    if not item:
-        raise ValueError("Issue missing; sync first")
+    key, number = getattr(args, "key", None), getattr(args, "number", None)
+    if (key is None) == (number is None):
+        raise ValueError("Select exactly one Issue with --key or --number")
+    if key is not None:
+        if key not in {item["key"] for item in plan()["issues"]}:
+            raise ValueError("Unknown stable key; add a scoped work item to roadmap.json first")
+        item = match(all_issues(), key)
+        if not item:
+            raise ValueError("Issue missing; sync first")
+    else:
+        if type(number) is not int or number < 1:
+            raise ValueError("Issue number must be a positive integer")
+        item = api(BASE + "/issues/" + str(number))
+        # Issue endpoints can also return PRs or redirect transferred Issues.
+        # A direct number must still belong to this fixed repository.
+        expected_repository = "https://api.github.com/" + BASE
+        if (not isinstance(item, dict) or item.get("number") != number
+                or str(item.get("repository_url", "")).casefold() != expected_repository.casefold()):
+            raise ValueError("Issue number did not resolve in " + REPO)
+        if "pull_request" in item:
+            raise ValueError("Pull Requests cannot receive Issue checkpoints")
     if not args.next.strip() or not args.evidence.strip():
         raise ValueError("Next checkpoint and actual evidence are required")
     for name in args.files:
         path = Path(name)
         if path.is_absolute() or ".." in path.parts:
             raise ValueError("File ownership must use repository-relative paths")
-    value = {"key": args.key, "status": args.status, "ownerKind": args.owner_kind,
+    value = {"key": key, "status": args.status, "ownerKind": args.owner_kind,
              "owner": args.owner, "files": args.files, "next": args.next, "evidence": args.evidence}
     previous = latest_checkpoint(item["number"])
     previous_comparable = {k: v for k, v in (previous or {}).items() if k != "at"}
@@ -171,7 +187,9 @@ def main():
     sync_command.add_argument("--apply", action="store_true")
     commands.add_parser("list")
     write = commands.add_parser("checkpoint")
-    write.add_argument("--key", required=True)
+    target = write.add_mutually_exclusive_group(required=True)
+    target.add_argument("--key", help="Stable key from operations/roadmap.json")
+    target.add_argument("--number", type=int, help="Existing Issue number in " + REPO)
     write.add_argument("--status", choices=STATES, required=True)
     write.add_argument("--owner-kind", choices=("root", "agent", "thread"), required=True)
     write.add_argument("--owner", required=True)

@@ -22,7 +22,7 @@
 
 控制器 `(16,21)`，两个能源点 `(24,24)`、`(16,42)`。实时遥测显示两个源各只有一个地形采矿位，因此专职矿工的有效 WORK 与换体衔接尤为重要。两个自有源的理论持续产能合计 20 energy/tick；这不是当前实测产量。
 
-已有完整分级布局通过独立地形/API 模拟，含 60 extension、3 spawn、6 tower、10 lab、6 link 及其他终局建筑；模拟产出 339 项（含路和 rampart）。现场复用已有工地后的在线 v3 布局为 331 项，已确认 `complete=true`、`missing=null`；道路等数量会随既有布局变化。在线权威布局保存在 `Memory.frontier.rooms.W21N26.plan`。两份 `plan-W21N26*.json` 是早期离线快照，不能当作实时布局。
+当前主房使用已复核的离线规划 `2026-09-25-international-adapter-1`（执行schema仍为v3），已随游戏 `.9` 在tick73930296激活。复用 International 动态建筑布置/实验室/min-cut及 Overmind 道路算法，保留36个既有人工设施。终局205项：60 extension、3 spawn、6 tower、10 lab、3个正式link、71格road、41格rampart及其他设施。当前先补7格经济道路，后续按RCL和原有资源门槛分批施工。在线权威布局为 `Memory.frontier.rooms.W21N26.plan`；旧331项方案及早期 `plan-W21N26*.json` 仅作历史，不能继续当现行布局。
 
 开局先恢复采运和 RCL 2，然后建设 extension 扩大身体预算；RCL 3 加塔，RCL 4 建 storage，RCL 5 加 link。升级吞吐随储备和开拓活动调整。施工按当前等级和预算分批执行，并非开局同时建设全部计划。
 
@@ -96,7 +96,7 @@ Codex 本任务已设置每 20 分钟复查的 heartbeat，名称“Screeps Worl
 
 面板：https://screeps-energy-observatory.vercel.app ，源码 `/Users/zmy/screepsworld/dashboard`。页面可见时60秒检查、服务端缓存120秒。最新上线配置和实测状态以LIVE_STATUS.md为准。原20分钟巡检已加入持续低效诊断、自主局部修复和效果复核。
 
-分级建筑地图：https://screeps-energy-observatory.vercel.app/#layout 。提供真实主房地形、331项规划的RCL1–8累计/新增视图、坐标定位和施工门槛。建造状态为有时间戳的API快照，当前RCL随遥测更新；更新导出步骤在dashboard/README.md。地图在网页绘制，未增加游戏运行逻辑或常驻Memory。
+分级建筑地图：https://screeps-energy-observatory.vercel.app/#layout 。提供真实主房地形、205项复核规划的RCL1–8累计/新增视图、坐标定位、Link角色与可选预留条件。建造状态为有时间戳的API快照，当前RCL随遥测更新；更新导出步骤在dashboard/README.md。地图在网页绘制，未增加游戏运行逻辑或常驻Memory。
 
 2026-09-25T03:54Z：Vercel CLI登录、敏感生产环境变量配置和重新发布均已完成，公开API已经返回真实游戏账本。此前“未配置凭据”阻碍已解决，不应再要求用户重新登录。
 
@@ -127,3 +127,25 @@ python3 screeps_api.py deploy --apply
 `.7` 修复成长阶段施工完成后的预算缺口：没有工地、维修或储存工作的builder转为upgrader，转换当tick不追加升级，之后加入同一升级配额和补员统计。基础建设短空档、RCL1、紧急防降级、bootstrap与pioneer维持原行为。不要把转岗前未计入预算的额外升级当作可持续收益。
 
 `.8` 修复侦察出口撞墙：出口候选先排除不可通行实体和占位单位；连续真实受阻后清除旧路径，失败出口暂避50tick（最多8格），全部受阻则10tick后重试。平时仍复用路线/出口缓存，疲劳与旧停滞记录不触发重选。不能用moveTo返回OK或“能到出口旁一格”代替真实跨房成功。
+
+
+## .9 复核布局的生成与执行
+
+来源、许可及适配边界见 [生成器说明](research/layout-implementation/README.md)，独立几何基线为 `fixtures/layout-world-before.json`（tick73930064）。`fixtures/layout-design-reviewed.json` 保留完整本地设计；`fixtures/layout-plan-reviewed.json` 为约21.6KB的执行数据，较旧布局34.1KB减小。游戏只保留3条经济路线；逐建筑用途、92条服务路线、研究出处及可选预留不放入每tick解析的Memory。网站以API回读的几何为权威，严格匹配设计版本/位置/等级后合入这些说明。
+
+- 仓库至Extension服务距离：平均6.517→4.317格，p95/最长23/24→7/7；Spawn起点最长8格。
+- 6个必须出防区补能的核心目标→0；所有核心共用受保护交通区，固定hub工位不会堵断它。无遮顶核心距外部可达位置超过3格；这不是战斗胜率保证。
+- RCL5远矿Link `(16,40)` + hub `(25,28)`；RCL6控制器Link `(17,23)`。近矿 `(25,26)` 与西/南入口只是可选候选，不进入自动施工或正式配额，启用需实测净收益及完整跨房路线。
+- `planner.js` 用真实controller ID和不可变archive ID绑定一次迁移；先检查当下所有建筑/工地都被新规划保留，冲突或档案缺失时暂停施工并退避。不会拆建筑，也不会因新布局在游戏中执行搜索。`plans.js`保留全部旧档案。
+
+从仓库根目录运行：
+
+```sh
+node new-colony/research/layout-implementation/verify.cjs
+node new-colony/tools/verify-layout-audit.cjs
+node new-colony/verify-reviewed-plan.cjs
+node new-colony/verify-layout-execution.cjs
+node new-colony/tools/verify-layout-build.cjs
+```
+
+上述检查覆盖源码/许可校验、可复现生成、真实地形正反例、原位迁移、所有RCL施工及语义精简一致性。未来修订应先生成、独立审计，再编译并归档，更新 `REVIEWED_PLANS` 中的准确ID；发布后逐字段回读核对，并按dashboard README导出匹配的网页数据。不能只替换网页或手工改几个坐标绕过执行验收。

@@ -1,4 +1,29 @@
-# 当前状态更新：公开布局研究与入口 Link 方案（游戏仍为2026-09-25.8）
+# 当前状态：2026-09-25.10、复核布局上线、GitHub管理待授权
+
+- 父目录 `/Users/zmy/screepsworld` 已复用现有公开仓库 AdamZmy/Automated-Screeps 的原始历史；旧根代码保留为历史，活动入口仍是new-colony六模块。已保存本地基线commit `64c95f2`/tag `v0.1.0`、物流与工单commit `f607a2b`、布局commit `271cc45`、坐标热修commit `126189a`。当前项目版本0.2.0。**截至本次记录尚未推送到GitHub**：插件创建Issue返回403，CLI待用户设备授权；不可称工单或新版本已在远端。
+- GitHub工作流见父目录OPERATIONS.md：4个RCL里程碑、10个初始工单定义、六种状态与结构化checkpoint、真实owner核验和恢复、手工Issue编号支持。同步脚本只访问固定仓库，重复运行保留现有Issue和状态。原20分钟heartbeat已更新并回读确认ACTIVE；不新增调度。待补录记录在state/github-work-checkpoints.json，恢复授权后先核验任务状态再同步。凭据/状态快照/备份均不入Git。
+- 离线CI已经可移植：锁定官方引擎/常量包，五套原游戏回归、五项新增布局入口、23项API检查、19项工单管理检查；dashboard 8项API、能源DOM、布局DOM和7项导出检查均通过。CI只读且不持有游戏凭据，GitHub Actions实际运行仍待推送。布局源码/vendor许可和精简fixture纳入版本管理，不依赖Steam或本地state。
+
+## 固定交接与上线发现
+
+- `.9`于07:10Z联合发布main/planner/plans，备份`backups/api-deploy-20260925T071003.499542Z/remote-code.json`，六模块GET回读一致。原追creep配送改为固定建筑节点与数量预约，upgrader绑定席位提前取能，builder绑定批量补给；原孵化和经济预算函数保留。Link由明确tag识别source/controller/hub，普通hauler不向hub回灌；当前RCL3，只做了Link离线验证。
+- 真实tick73930304发现station/seat未生成，未按离线测试宣布完成。tick73930328 API探针确认原生getRangeTo({x,y})为NaN（JSON null），数字重载/RoomPosition结果均2；旧VM模拟过宽隐藏该问题。`.10`归一化双端坐标并保留异房Infinity；严格模拟、官方参数实现和完整旧/新计划四席测试通过。
+- `.10`于07:14:29Z发布，备份`backups/api-deploy-20260925T071429.581287Z/remote-code.json`，回读一致。tick73930387四upgrader已在(16,23)/(15,23)/(15,22)/(16,22)，均有能且stuck0，交货口(17,24)空闲；无hauler以creep为目标。tick73930406保持四席，控制器箱773，hauler在交货口提交112能量预约交付，保留到下一tick防重派。
+- tick73930400线上版本`.10`、bucket10000；升级最近20tick14.6/t。新经济决策为升级13/t、施工2能量/t、运输19CARRY目标，属于原预算算法重新计算；不能称全程保持旧14/t数值。新经济道路有3工地，计划21格已建14格（旧已建道路保留，新路线有所调整）。
+- 纯新20tick CPU窗口73930381–400：均值7.2857/峰值10.1223，Memory176094；moveCalls3.1/t、targetSearches0.15/t、未报告受阻重算，6hauler长期停滞0。旧基线均值5.5453，但旧为5hauler/1scout，新为6hauler/2scout且布局/施工变化；仍须同负载继续比较，不能宣称CPU改善或已消除回退。初始化峰值25.35另列，不当稳态。
+
+## 布局与网站
+
+- 主房迁移 `2026-09-25-international-adapter-1` 于tick73930296 applied，archive ID `e34ce4906df4948c5e55da106059783b1a66f576404649bc211e1f0e529c9bda`。API live plan与已提交execution fixture逐字段一致。205项/71道路/41rampart/3正式Link；全部36既有人工设施保留，所有旧11份档案也保留。未来extension补给max/p95由24/23格降至7/7格是离线几何结果，非已建终局实测。
+- 语义74KB设计保存在本地/网页，约21.6KB执行计划一次激活进Memory；不把成熟规划器塞进每tick。RCL5远源+hub、RCL6 controller，近源和入口3项可选只展示不自动建。
+- 网站生产`dpl_2QHBtL9eZefWFx8L9oyVX1y4ytet` READY，稳定https://screeps-energy-observatory.vercel.app/#layout。地图snapshot73930304：36built/3site/166planned，HTTP五文件字节比对及生产DOM验证通过。公开遥测已自然刷新到tick73930409、`.10`、stale=false，未重复部署。地图施工状态仍是快照。
+- 本轮只替换W21N26，其他冷房仍旧v3；W22N26旧布局失败不能等同不适宜开发。下一个ready工单要求通用化成熟规划器、重新评估西邻双矿及W21N25外矿/跨房运输；入口预留还不是已证实的跨房最优站。没有开分矿或修改expansion策略。
+
+下轮：先恢复GitHub授权后的推送/Issue同步与Actions验证；固定物流保持verifying，检查实际完整补货、换体、施工取能与同负载CPU。继续1500tick可持续总用能率≥90%的验收：发布前tick73930200为89.36%且unexplained-balance，不能判定达标；新旧混合窗口也不能当改版成绩。依据Issue检查点续做现有工作，不重复启动已完成的布局任务。
+
+---
+
+# 之前状态：公开布局研究与入口 Link 方案（游戏仍为2026-09-25.8）
 
 - 用户明确要求先研究 GitHub、玩家论坛的成熟规划器再改布局；该原则已写入 AGENTS.md。本轮由布局审计、公开算法研究、外矿/Link 战略三个子代理完成独立研究，root 汇总为 `research/ROOM_LAYOUT_RESEARCH.md`；详细出处、固定提交、许可及适用边界见 `research/planner-research.md` 和 `research/remote-link-strategy.md`。
 - API 地形/建筑基线 tick73929558。旧布局北山后5个Extension的补能单程23–24格，几何距离仅5–6格；这些建筑与1个Link虽各自受防线保护，补给却必须经过防区外。34/168格道路仅服务尚未绑定外矿需求的出口分支。证据 `state/layout-audit-before.json`；审计脚本 `tools/audit-layout.cjs` 自检通过。两个额外Link有通用运输行为，但缺少明确用途及净收益论证。

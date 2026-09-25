@@ -75,6 +75,7 @@
             <label class="layout-type-control" for="layout-type">类型<select id="layout-type"><option value="all">全部建筑</option></select></label>
             <label class="layout-check"><input id="layout-roads" type="checkbox" checked>道路</label>
             <label class="layout-check"><input id="layout-protection" type="checkbox" checked>防护</label>
+            <label class="layout-check"><input id="layout-logistics-toggle" type="checkbox" checked>运输用途</label>
           </div>
           <div id="layout-summary" class="layout-summary" aria-live="polite"></div>
           <div class="layout-workbench">
@@ -90,6 +91,16 @@
               <div class="layout-snapshot"><h3>建造状态快照</h3><p id="layout-snapshot-time"></p><p id="layout-telemetry-time"></p><p>已建 / 工地 / 未建均对应上述快照；遥测刷新只更新当前 RCL 与最近 tick。</p></div>
             </aside>
           </div>
+          <section id="layout-logistics" class="layout-logistics" aria-labelledby="layout-logistics-title">
+            <div class="layout-list-heading"><div><h3 id="layout-logistics-title">能量运输与 Link 分工</h3><p>箭头表示规划用途；不代表实时流量。可选入口预留不计入正式建筑数量。</p></div></div>
+            <div id="layout-link-roles" class="layout-link-roles"></div>
+            <div id="layout-optional-links" class="layout-optional-links"></div>
+          </section>
+          <section id="layout-regional" class="layout-regional" aria-labelledby="layout-regional-title" hidden>
+            <div class="layout-list-heading"><div><h3 id="layout-regional-title">周边房间的候选用途</h3><p id="layout-regional-source"></p></div><span class="small-badge">规划建议</span></div>
+            <div id="layout-regional-rooms" class="layout-regional-rooms"></div>
+            <p id="layout-regional-note" class="layout-regional-note"></p>
+          </section>
           <div class="layout-list-heading"><div><h3>建筑清单</h3><p id="layout-list-caption">点击坐标，在地图中定位。</p></div><span id="layout-list-count" class="mono"></span></div>
           <div id="layout-building-list" class="layout-building-list"></div>
           <div class="layout-planning-note"><span class="info-dot">i</span><div><p><strong>RCL 是最早计划等级。</strong>升到该等级不代表立即施工；建造仍受储备、优先级和工地额度约束。清单统计按建筑计数，同一地块的道路与防护分别计入。</p><ul id="layout-plan-notes"></ul></div></div>

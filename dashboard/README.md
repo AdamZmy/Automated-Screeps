@@ -2,7 +2,7 @@
 
 Production: https://screeps-energy-observatory.vercel.app
 
-Latest production: `dpl_7VB8CtJh17t8tHciwtpZx9MmXGoY`, 2026-09-25 06:28 UTC. [Room layout atlas](https://screeps-energy-observatory.vercel.app/#layout) verified with all 331 API-sourced placements and live telemetry tick73929674 (RCL3, stale=false); static structure snapshot tick73929558. Production assets match local files and integrated DOM interaction checks passed. Atlas implementation is isolated in `public/layout.js` and `public/layout.css`.
+Latest production: `dpl_2QHBtL9eZefWFx8L9oyVX1y4ytet`, 2026-09-25. [Room layout atlas](https://screeps-energy-observatory.vercel.app/#layout) now publishes reviewed revision `2026-09-25-international-adapter-1`: 205 formal placements, 3 formal Links and 3 explicitly optional reservations. Geometry exactly matches the live API plan; observed construction snapshot tick73930304 has 36 built / 3 sites / 166 planned. Link directions, use conditions and advisory neighboring-room roles are included without extra game Memory or polling. Production API additionally verified at tick73930409, game build `2026-09-25.10`, `stale=false`; downloaded production assets match local bytes and combined energy/layout DOM checks pass.
 
 Live production data verified 2026-09-25 at 03:54 UTC and again at 03:56 UTC with advancing game ticks. Vercel CLI login and sensitive production credential configuration are complete. Deployment: dpl_4AxSEJv7tEvHECspazQSf6ei7bz1. The previous NOT_CONFIGURED blocker is resolved.
 
@@ -25,7 +25,7 @@ Metric specification and maintenance procedure: `/Users/zmy/screepsworld/new-col
 
 ## Room layout atlas
 
-The `#layout` section reads `/data/room-layouts.json`, an offline export of the actual `Memory.frontier.rooms.W21N26.plan` and an API room snapshot. Terrain, all 331 planned placements, RCLs, construction conditions and observed structure states are preserved. The snapshot date/tick belongs to built/site status; the existing telemetry request updates the current RCL separately through `screeps:telemetry`. The atlas does not add polling, persistent game Memory, pathfinding, or new game code. Static plans and observed construction are not silently presented as live state.
+The `#layout` section reads `/data/room-layouts.json`, an offline export of the actual `Memory.frontier.rooms.W21N26.plan` and an API room snapshot. Terrain, planned placements, RCLs, construction conditions and observed structure states are preserved. The snapshot date/tick belongs to built/site status; the existing telemetry request updates the current RCL separately through `screeps:telemetry`. The atlas does not add polling, persistent game Memory, pathfinding, or new game code. Static plans and observed construction are not silently presented as live state.
 
 Root refreshes the snapshot after a layout revision or RCL milestone. Run from the game project, wait for a new game tick before reading `layoutProbe`, and verify the tick before export:
 
@@ -33,11 +33,23 @@ Root refreshes the snapshot after a layout revision or RCL milestone. Run from t
 python3 screeps_api.py console --file tools/inspect-layout.js
 python3 screeps_api.py memory --path frontier.layoutProbe > state/layout-world-W21N26.json
 python3 screeps_api.py memory --path frontier.rooms.W21N26.plan > state/layout-plan-W21N26.json
-python3 /Users/zmy/screepsworld/dashboard/tools/build-room-layouts.py --plan state/layout-plan-W21N26.json --snapshot state/layout-world-W21N26.json
+python3 /Users/zmy/screepsworld/dashboard/tools/build-room-layouts.py --plan state/layout-plan-W21N26.json --snapshot state/layout-world-W21N26.json --design fixtures/layout-design-reviewed.json --intel state/expansion-research-input.json
 python3 screeps_api.py console --file tools/clear-diagnostics.js
 ```
 
-The exporter reads local artifacts only, publishes whitelisted fields and rejects malformed/incomplete data. From the dashboard directory run `node verify-layout-ui.cjs`, existing `npm test` and `node verify-ui.cjs`, then deploy the existing Vercel project. No token is copied into the atlas. Room coordinates are the original game's x/y, not Arena mirror coordinates.
+The exporter reads local artifacts only, publishes whitelisted fields and rejects malformed/incomplete data. From the dashboard directory run `python3 verify-layout-export.py`, `node verify-layout-ui.cjs`, existing `npm test` and `node verify-ui.cjs`, then root deploys the existing Vercel project. No token is copied into the atlas. Room coordinates are the original game's x/y, not Arena mirror coordinates.
+
+### Link semantics and regional planning
+
+Schema v2 accepts explicit `linkRole`, `label`, `purpose`, `targetTag`, `fallbackTargetTag`, `flow`, `serviceArea` and `serviceSpot`. Use `--design` for the local reviewed design: the exporter requires an identical nonempty `layoutRevision` and an exact ordered match of every `(type,x,y,rcl,tag)` against the final API execution plan. A mismatch is an error. Only display semantics, optional reservations and whitelisted provenance are read from the design; coordinates, RCL, build state and observation time remain authoritative from the API plan/snapshot. The lean execution plan does not need long descriptions or optional strategies in game Memory.
+
+H/C/S map labels and dashed arrows show planned transport responsibilities, not measured energy flow or road paths. Arrows appear only when both formal endpoints are visible at the selected RCL/type filter; when the preferred controller Link is not yet in the selected stage, the documented hub fallback is used. The linked role cards locate the building and explain its service area. Existing dated construction states remain unchanged by telemetry.
+
+`plan.optionalReservations` is separate from `structures`: these positions are candidate reservations, always disabled in this export, omitted from formal structure/RCL counts and rendered with a dashed `?` only at their stated earliest RCL. They list their active-remote, saved-CARRY and narrative prerequisites; reaching a level does not activate construction. Enabled entries must migrate into a formal plan rather than be silently exported as disabled candidates. The exporter rejects malformed coordinates, terrain walls and enabled reservations. Missing planning semantics are shown as unavailable instead of inferred as completed work.
+
+The optional `--intel` input joins root-provided, dated `intel.exits/sources/seen` to local recommendations for W22N26, W21N25, W23N26 and W21N24. Paths follow observed exits. The resulting regional cards explicitly describe candidate uses, retain each room's separate observation tick and never claim mining or colonization is enabled. This planning context is static and refreshes only when root exports a new verified payload. It does not change the game policy or add another HTTP request. Research basis: `/Users/zmy/screepsworld/new-colony/research/remote-link-strategy.md`.
+
+The new display/export logic was verified locally with DOM and exporter checks. A new public payload must come from root's final API readback; local plan-generation output alone does not prove the plan is active in game. Deployment remains root's responsibility. For an unpublished candidate preview, add `--preview --output test-output/room-layouts-candidate.json` and run `node verify-layout-ui.cjs test-output/room-layouts-candidate.json test-output/layout-candidate.svg`; this labels it as an unverified local candidate and refuses output under `public/`. Omit `--preview` only after root has verified the final API readback. SVG rendering can be performed locally with a file renderer and needs no browser automation.
 
 ## 2026-09-25：90%总用能目标
 

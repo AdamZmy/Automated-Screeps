@@ -43,6 +43,8 @@
 
 ## 规划与执行边界（用户2026-09-25明确偏好）
 
+- 主房现行复核布局为 `2026-09-25-international-adapter-1`，205项，源于本地 International/Overmind 算法适配；不是旧331项v3几何。`fixtures/layout-design-reviewed.json`保留语义，`fixtures/layout-plan-reviewed.json`为轻量执行，`planner.js`的REVIEWED_PLANS绑定controller ID和archive ID一次激活。修改先走生成/独立审计/编译/迁移验证，再同时更新执行与网页；不要把复杂设计直接放回Memory。完整流程见README及research/layout-implementation/README.md。
+
 - 复杂战略、语义说明、完整候选布局和研究记录留在本地项目，由Codex持久维护。游戏Memory只留活跃房间执行数据、候选摘要和有界监控，不将所有未来房间详单留作每tick解析。
 - `plans.js`是静态执行归档模块，冷房激活时一次加载建筑坐标。仅精确匹配已归档版本的冷房可从Memory精简；未归档或已修改的计划必须先归档，不能直接删除。生成命令和恢复机制见README。
 - `Memory.frontier.performance`每20tick发布CPU阶段、角色开销、Memory体积及移动计数，历史最多60条。先看实测归因，再优化；疲劳和合法驻守不算堵塞，目标正常完成后的切换不算震荡。

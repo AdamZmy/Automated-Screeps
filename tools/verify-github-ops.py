@@ -2,8 +2,10 @@
 """Offline Issue workflow regressions. No gh process, network, or credentials."""
 
 import argparse
+import contextlib
 import copy
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -42,6 +44,7 @@ class FakeGitHub:
             "state": state,
             "state_reason": "completed" if state == "closed" else None,
             "html_url": "https://example.invalid/issues/" + str(number),
+            "repository_url": "https://api.github.com/" + ops.BASE,
             "updated_at": "2026-01-01T00:00:00Z",
             "milestone": {"number": 99, "title": "Maintainer milestone"},
         }
@@ -61,6 +64,14 @@ class FakeGitHub:
             elif endpoint.endswith("/comments?per_page=100"):
                 number = int(endpoint.split("/")[-2])
                 value = self.comments[number]
+            elif endpoint.startswith(ops.BASE + "/issues/"):
+                if pages:
+                    raise AssertionError("Single Issue reads must not paginate")
+                number = int(endpoint.split("/")[-1])
+                value = next((item for item in self.issues if item["number"] == number), None)
+                if value is None:
+                    raise RuntimeError("Synthetic GitHub 404: Issue does not exist")
+                return copy.deepcopy(value)
             else:
                 raise AssertionError("Unexpected read: " + endpoint)
             if not pages:
@@ -126,7 +137,7 @@ class GitHubOpsTests(unittest.TestCase):
 
     def args(self, **overrides):
         values = {
-            "key": "alpha", "status": "in-progress", "owner_kind": "agent", "owner": "offline-worker",
+            "key": "alpha", "number": None, "status": "in-progress", "owner_kind": "agent", "owner": "offline-worker",
             "files": ["tools/github_ops.py"], "next": "Run the regression suite",
             "evidence": "Synthetic test fixture; no live result claimed",
         }
@@ -185,6 +196,13 @@ class GitHubOpsTests(unittest.TestCase):
         self.roadmap["issues"].append(copy.deepcopy(self.roadmap["issues"][0]))
         self.save_roadmap()
         with self.assertRaisesRegex(ValueError, "Duplicate roadmap key"):
+            ops.sync(apply=True)
+        self.assertEqual(self.github.calls, [])
+
+    def test_done_roadmap_seed_is_rejected_before_api_reads(self):
+        self.roadmap["issues"][0]["status"] = "done"
+        self.save_roadmap()
+        with self.assertRaisesRegex(ValueError, "Roadmap seeds must be open work"):
             ops.sync(apply=True)
         self.assertEqual(self.github.calls, [])
 
@@ -269,6 +287,82 @@ class GitHubOpsTests(unittest.TestCase):
             with self.subTest(overrides=overrides), self.assertRaises(ValueError):
                 ops.checkpoint(self.args(**overrides))
             self.assertEqual(self.github.writes, [])
+
+    def test_unseeded_issue_number_updates_without_roadmap_or_duplicate_issue(self):
+        item = self.github.issue(body="A manually reported incident without a seed marker",
+                                 labels=["incident", "area:operations", "status:ready"])
+        original_body = item["body"]
+        args = self.args(key=None, number=item["number"], status="blocked")
+        with mock.patch.object(ops, "plan", side_effect=AssertionError("Manual Issues do not require roadmap seeds")):
+            result = ops.checkpoint(args)
+            self.assertEqual(result["number"], item["number"])
+            self.assertEqual(ops.latest_checkpoint(item["number"])["key"], None)
+            self.assertEqual([label["name"] for label in item["labels"]],
+                             ["incident", "area:operations", "status:blocked"])
+            self.github.calls.clear()
+            ops.checkpoint(args)
+            self.assertEqual(self.github.writes, [])
+        self.assertEqual(len(self.github.issues), 1)
+        self.assertEqual(item["body"], original_body)
+        self.assertEqual(len(self.github.comments[item["number"]]), 1)
+
+    def test_issue_number_retry_after_patch_failure_does_not_duplicate_comment(self):
+        item = self.github.issue(body="Manual incident")
+        args = self.args(key=None, number=item["number"], status="done")
+        self.github.fail_next_patch = True
+        with self.assertRaisesRegex(RuntimeError, "Synthetic PATCH failure"):
+            ops.checkpoint(args)
+        self.github.calls.clear()
+        ops.checkpoint(args)
+        self.assertEqual(item["state"], "closed")
+        self.assertEqual(len(self.github.comments[item["number"]]), 1)
+        self.assertEqual([call[1] for call in self.github.writes], ["PATCH"])
+        ops.checkpoint(self.args(key=None, number=item["number"], status="ready"))
+        self.assertEqual(item["state"], "open")
+
+    def test_missing_issue_number_and_pull_requests_are_rejected_before_writes(self):
+        with self.assertRaisesRegex(RuntimeError, "404"):
+            ops.checkpoint(self.args(key=None, number=123))
+        self.assertEqual(self.github.writes, [])
+        pull = self.github.issue()
+        pull["pull_request"] = {"url": "https://example.invalid/pulls/1"}
+        with self.assertRaisesRegex(ValueError, "Pull Requests"):
+            ops.checkpoint(self.args(key=None, number=pull["number"]))
+        self.assertEqual(self.github.writes, [])
+        self.assertTrue(all(call[0].startswith(ops.BASE + "/issues/") for call in self.github.calls))
+
+    def test_number_must_resolve_to_same_issue_in_fixed_repository(self):
+        for response in (None, {}, {"number": 42, "repository_url": "https://api.github.com/" + ops.BASE},
+                         {"number": 1, "repository_url": "https://api.github.com/repos/another/project"}):
+            with self.subTest(response=response), mock.patch.object(ops, "api", return_value=response) as api:
+                with self.assertRaisesRegex(ValueError, "did not resolve"):
+                    ops.checkpoint(self.args(key=None, number=1))
+                api.assert_called_once_with(ops.BASE + "/issues/1")
+
+    def test_number_requires_positive_integer_and_exclusive_target_before_api(self):
+        for overrides in ({"key": None, "number": 0}, {"key": None, "number": -1},
+                          {"key": None, "number": "1"}, {"key": None, "number": True},
+                          {"key": None, "number": None}, {"key": "alpha", "number": 1}):
+            with self.subTest(overrides=overrides), self.assertRaises(ValueError):
+                ops.checkpoint(self.args(**overrides))
+            self.assertEqual(self.github.calls, [])
+
+    def test_checkpoint_cli_supports_number_and_requires_exactly_one_target(self):
+        item = self.github.issue(body="Manual incident")
+        common = ["github_ops.py", "checkpoint", "--status", "verifying", "--owner-kind", "root",
+                  "--owner", "offline-root", "--next", "Inspect evidence", "--evidence", "Offline sample"]
+        for target in ([], ["--key", "alpha", "--number", "1"]):
+            with self.subTest(target=target), mock.patch.object(ops.sys, "argv", common + target):
+                with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as stopped:
+                    ops.main()
+                self.assertEqual(stopped.exception.code, 2)
+                self.assertEqual(self.github.calls, [])
+        output = io.StringIO()
+        with mock.patch.object(ops.sys, "argv", common + ["--number", str(item["number"])]):
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(ops.main(), 0)
+        self.assertEqual(json.loads(output.getvalue())["status"], "verifying")
+        self.assertEqual([label["name"] for label in item["labels"]], ["area:operations", "status:verifying"])
 
 
 if __name__ == "__main__":

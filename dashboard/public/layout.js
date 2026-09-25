@@ -11,6 +11,7 @@
     constructedWall: ['人造墙', '#8c9aab']
   };
   const STATUS = { built: '已建', site: '工地', planned: '未建', unknown: '状态未知' };
+  const LINK_ROLES = { hub: ['核心中转', 'H'], controller: ['控制器供能', 'C'], source: ['矿源输入', 'S'], 'remote-entry': ['外矿入口', 'E'] };
   const array = value => Array.isArray(value) ? value : [];
   const object = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const finite = value => typeof value === 'number' && Number.isFinite(value);
@@ -24,6 +25,13 @@
   const integer = value => finite(value) ? value.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
   const validTime = value => Number.isFinite(typeof value === 'number' ? value : Date.parse(value));
   const readableTime = value => validTime(value) ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '时间未报告';
+  const textValue = value => typeof value === 'string' ? value.slice(0, 500) : '';
+  const linkDescription = item => ({
+    linkRole: Object.hasOwn(LINK_ROLES, item.linkRole) ? item.linkRole : '',
+    purpose: textValue(item.purpose), targetTag: textValue(item.targetTag), fallbackTargetTag: textValue(item.fallbackTargetTag),
+    flow: textValue(item.flow), serviceArea: textValue(item.serviceArea),
+    serviceSpot: position(item.serviceSpot) ? { x: item.serviceSpot.x, y: item.serviceSpot.y } : null
+  });
 
   function normalizeLayouts(payload) {
     const raw = object(payload);
@@ -42,13 +50,25 @@
         tag: typeof item.tag === 'string' ? item.tag : '',
         label: typeof item.label === 'string' ? item.label : '',
         roadClass: typeof item.roadClass === 'string' ? item.roadClass : '',
+        ...linkDescription(item),
         status: dated && Object.hasOwn(STATUS, item.status) ? item.status : 'unknown',
         conditions: array(item.conditions).filter(item => typeof item === 'string')
       }));
       const rawObjects = object(room.objects);
       rooms[name] = {
         name, terrain, currentRcl: level(room.currentRcl), snapshot,
-        plan: { version: String(plan.version ?? '—'), updatedAt: plan.updatedAt, notes: array(plan.notes).filter(item => typeof item === 'string'), buildings },
+        plan: {
+          version: String(plan.version ?? '—'), layoutRevision: textValue(plan.layoutRevision), updatedAt: plan.updatedAt, notes: array(plan.notes).filter(item => typeof item === 'string'), buildings,
+          optionalReservations: array(plan.optionalReservations).filter(item => position(item) && item.type === 'link').map(item => ({
+            ...linkDescription(item), type: 'link', x: item.x, y: item.y, rcl: level(item.rcl),
+            tag: textValue(item.tag), label: textValue(item.label), optional: true, enabled: false,
+            activation: { requiresActiveRemote: item.activation?.requiresActiveRemote === true,
+              requiresMeasuredBenefit: item.activation?.requiresMeasuredBenefit === true,
+              minExpectedEnergyPerTick: finite(item.activation?.minExpectedEnergyPerTick) && item.activation.minExpectedEnergyPerTick >= 0 ? item.activation.minExpectedEnergyPerTick : null,
+              minSavedCarry: finite(item.activation?.minSavedCarry) && item.activation.minSavedCarry >= 0 ? item.activation.minSavedCarry : null,
+              notes: array(item.activation?.notes).filter(note => typeof note === 'string') }
+          }))
+        },
         objects: {
           sources: array(rawObjects.sources).filter(position),
           controller: position(rawObjects.controller) ? rawObjects.controller : null,
@@ -57,7 +77,17 @@
         }
       };
     }
-    return { rooms, shard: typeof raw.shard === 'string' ? raw.shard : 'WORLD', primaryRoom: rooms[raw.primaryRoom] ? raw.primaryRoom : Object.keys(rooms)[0], generatedAt: raw.generatedAt };
+    const strategy = object(raw.regionalStrategy);
+    const regionalStrategy = {
+      observedAt: strategy.observedAt, source: textValue(strategy.source), note: textValue(strategy.note),
+      rooms: array(strategy.rooms).filter(item => /^[WE]\d+[NS]\d+$/.test(item.name)).map(item => ({
+        name: item.name, role: textValue(item.role), note: textValue(item.note),
+        route: array(item.route).filter(name => typeof name === 'string' && /^[WE]\d+[NS]\d+$/.test(name)),
+        sources: Number.isInteger(item.sources) && item.sources >= 0 ? item.sources : null,
+        seenTick: finite(item.seenTick) ? item.seenTick : null
+      }))
+    };
+    return { rooms, regionalStrategy, preview: raw.publicationState === 'candidate-preview', shard: typeof raw.shard === 'string' ? raw.shard : 'WORLD', primaryRoom: rooms[raw.primaryRoom] ? raw.primaryRoom : Object.keys(rooms)[0], generatedAt: raw.generatedAt };
   }
   function visibleBuildings(room, state) {
     return room.plan.buildings.filter(item => (state.mode === 'new' ? item.rcl === state.rcl : item.rcl <= state.rcl)
@@ -82,14 +112,14 @@
     if (text !== '') element.textContent = text;
     return element;
   };
-  const state = { data: null, room: '', rcl: 8, mode: 'cumulative', type: 'all', roads: true, protection: true, selected: null, zoom: 1, telemetry: null };
+  const state = { data: null, room: '', rcl: 8, mode: 'cumulative', type: 'all', roads: true, protection: true, logistics: true, selected: null, zoom: 1, telemetry: null };
   const currentRoom = () => state.data?.rooms[state.room];
   const selectedCurrentRcl = room => level(state.telemetry?.rooms?.[room.name]?.rcl) || room.currentRcl;
 
   function renderHeader(room) {
     const rcl = selectedCurrentRcl(room);
     $('layout-current-rcl').textContent = `当前 RCL ${rcl ?? '—'}`;
-    $('layout-plan-version').textContent = `规划 ${room.plan.version}`;
+    $('layout-plan-version').textContent = `规划 ${room.plan.version}${room.plan.layoutRevision ? ` · ${room.plan.layoutRevision}` : ''}`;
     $('layout-snapshot-time').textContent = `TICK ${integer(room.snapshot.tick)} · ${readableTime(room.snapshot.capturedAt)}${room.snapshot.status === 'stale' ? ' · 来源标记为过时' : ''}`;
     const telemetryRoom = state.telemetry?.rooms?.[room.name];
     const tick = telemetryRoom?.tick ?? state.telemetry?.tick;
@@ -161,6 +191,30 @@
     group.append(svgNode('title', {}, `${type === 'source' ? '能量源' : type === 'controller' ? '控制器' : '矿物'} (${item.x}, ${item.y})`));
     return group;
   }
+  function visibleReservations(room) {
+    if (!state.logistics || !['all', 'link'].includes(state.type)) return [];
+    return room.plan.optionalReservations.filter(item => item.rcl && (state.mode === 'new' ? item.rcl === state.rcl : item.rcl <= state.rcl));
+  }
+  function logisticsOverlay(room, items) {
+    const group = svgNode('g', { class: 'layout-logistics-overlay', 'pointer-events': 'none' });
+    if (!state.logistics) return group;
+    for (const item of items.filter(item => item.type === 'link' && item.targetTag)) {
+      const target = items.find(target => target.tag === item.targetTag) || items.find(target => target.tag === item.fallbackTargetTag);
+      if (!target || target.id === item.id) continue;
+      const line = svgNode('line', { x1: item.x + .5, y1: item.y + .5, x2: target.x + .5, y2: target.y + .5,
+        class: 'layout-flow-line', 'marker-end': 'url(#layout-flow-arrow)', 'data-flow-from': item.tag, 'data-flow-to': target.tag });
+      line.append(svgNode('title', {}, `${item.label || LINK_ROLES[item.linkRole]?.[0] || 'Link'} → ${target.label || typeName(target.type)} · 规划用途，非实时流量`));
+      group.append(line);
+    }
+    for (const item of visibleReservations(room)) {
+      const candidate = svgNode('g', { class: 'layout-optional-reservation', transform: `translate(${item.x} ${item.y})`, 'data-reservation-tag': item.tag });
+      candidate.append(svgNode('rect', { x: -.13, y: -.13, width: 1.26, height: 1.26, rx: .2 }),
+        svgNode('text', { x: .5, y: .73, 'text-anchor': 'middle' }, '?'),
+        svgNode('title', {}, `${item.label || '外矿入口 Link'} · 候选预留，未启用 · 条件满足后才考虑施工`));
+      group.append(candidate);
+    }
+    return group;
+  }
   function renderMap(room, items) {
     const root = $('layout-map'); root.replaceChildren();
     const map = svgNode('svg', { viewBox: '-2 -2 54 54', role: 'img', tabindex: '0', 'aria-labelledby': 'layout-svg-title layout-svg-desc', class: 'layout-map-svg' });
@@ -169,7 +223,9 @@
     const defs = svgNode('defs');
     const pattern = svgNode('pattern', { id: 'layout-grid', width: 1, height: 1, patternUnits: 'userSpaceOnUse' });
     pattern.append(svgNode('path', { d: 'M1 0H0V1', fill: 'none', stroke: '#d9e4ed', 'stroke-opacity': '.065', 'stroke-width': '.04' }));
-    defs.append(pattern); map.append(defs);
+    const arrow = svgNode('marker', { id: 'layout-flow-arrow', viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 3, markerHeight: 3, orient: 'auto-start-reverse' });
+    arrow.append(svgNode('path', { d: 'M1 1L7 4L1 7', fill: 'none', stroke: '#7cd6dd', 'stroke-width': 1.5 }));
+    defs.append(pattern, arrow); map.append(defs);
     map.append(svgNode('rect', { width: 50, height: 50, fill: '#18252b' }));
     const paths = { wall: '', swamp: '' };
     for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
@@ -179,6 +235,7 @@
     }
     map.append(svgNode('path', { d: paths.swamp, fill: '#344739', class: 'layout-terrain-swamp' }), svgNode('path', { d: paths.wall, fill: '#080f17', class: 'layout-terrain-wall' }));
     map.append(svgNode('rect', { width: 50, height: 50, fill: 'url(#layout-grid)', class: 'layout-grid-overlay' }));
+    map.append(logisticsOverlay(room, items));
     for (const value of [0, 10, 20, 30, 40, 49]) {
       map.append(svgNode('text', { x: value + .5, y: -.6, class: 'layout-axis', 'text-anchor': 'middle' }, String(value)));
       map.append(svgNode('text', { x: -.55, y: value + .68, class: 'layout-axis', 'text-anchor': 'end' }, String(value)));
@@ -195,7 +252,8 @@
         group.append(svgNode('text', { x: .98, y: .26, class: 'layout-rcl-label', 'text-anchor': 'end' }, String(item.rcl)));
         group.append(svgNode('circle', { cx: .89, cy: .87, r: .085, class: 'layout-status-mark' }));
       }
-      group.append(svgNode('title', {}, `${typeName(item.type)} · RCL ${item.rcl} · ${STATUS[item.status]} · (${item.x}, ${item.y})`));
+      if (state.logistics && item.type === 'link' && item.linkRole) group.append(svgNode('text', { x: -.1, y: .08, class: 'layout-link-role-label', 'data-link-role': item.linkRole }, LINK_ROLES[item.linkRole][1]));
+      group.append(svgNode('title', {}, `${item.label || typeName(item.type)}${item.linkRole ? ` · ${LINK_ROLES[item.linkRole][0]}` : ''} · RCL ${item.rcl} · ${STATUS[item.status]} · (${item.x}, ${item.y})`));
       map.append(group);
     }
     for (const item of room.objects.structures) {
@@ -227,6 +285,7 @@
     for (const status of ['built', 'site', 'planned', 'unknown']) { const item = node('span'); item.append(node('i', `layout-status-dot ${status}`), document.createTextNode(STATUS[status])); statuses.append(item); }
     statuses.append(node('span', 'layout-legend-note', `主建筑角标 = 最早 RCL · 道路 / 防护等级点击查看${room.objects.structures.length ? ' · 灰色建筑为规划外快照对象' : ''}`));
     root.append(statuses);
+    if (state.logistics) root.append(node('p', 'layout-legend-note', 'H 核心中转 · C 控制器 · S 矿源 · 虚线箭头 = 规划传能用途（非道路） · ? = 可选预留，未启用'));
   }
   function updateSelection() {
     const room = currentRoom(); if (!room || !state.selected) return;
@@ -247,6 +306,18 @@
       header.append(node('h4', '', typeName(item.type)), badge); card.append(header);
       card.append(node('p', 'layout-cell-rcl', `最早 RCL ${item.rcl}${item.priority !== null ? ` · 优先级 ${item.priority}` : ''}${visible.has(item.id) ? '' : ' · 当前筛选外'}`));
       if (item.label || item.tag) card.append(node('p', 'layout-cell-tag', item.label || item.tag));
+      if (item.linkRole) card.append(node('p', 'layout-cell-role', `Link 分工：${LINK_ROLES[item.linkRole][0]}`));
+      if (item.purpose) card.append(node('p', 'layout-cell-purpose', item.purpose));
+      if (item.serviceArea) card.append(node('p', 'layout-cell-tag', `服务范围：${item.serviceArea}`));
+      if (item.serviceSpot) card.append(node('p', 'layout-cell-tag', `装卸服务格：(${item.serviceSpot.x}, ${item.serviceSpot.y})`));
+      if (item.targetTag) {
+        const target = room.plan.buildings.find(target => target.tag === item.targetTag);
+        card.append(node('p', 'layout-cell-tag', `规划去向：${target ? `${target.label || typeName(target.type)} (${target.x}, ${target.y})` : item.targetTag}`));
+      }
+      if (item.fallbackTargetTag) {
+        const target = room.plan.buildings.find(target => target.tag === item.fallbackTargetTag);
+        card.append(node('p', 'layout-cell-tag', `备用去向：${target ? `${target.label || typeName(target.type)} (${target.x}, ${target.y})` : item.fallbackTargetTag}`));
+      }
       if (item.roadClass) card.append(node('p', 'layout-cell-tag', `道路分类：${item.roadClass}`));
       const conditions = node('ul', 'layout-conditions');
       for (const condition of item.conditions.length ? item.conditions : ['达到计划 RCL 后，还需满足当前建造调度与储备条件。']) conditions.append(node('li', '', condition));
@@ -254,7 +325,13 @@
     }
     const unplanned = room.objects.structures.filter(item => item.x === x && item.y === y && !buildings.some(planned => planned.type === item.type));
     for (const item of unplanned) root.append(node('p', 'layout-unplanned-detail', `规划外 ${typeName(item.type)} · ${STATUS[item.status]}`));
-    if (!buildings.length && !unplanned.length) root.append(node('p', 'layout-cell-empty', '此格没有规划建筑。'));
+    const reservations = room.plan.optionalReservations.filter(item => item.x === x && item.y === y);
+    for (const item of reservations) {
+      const card = node('article', 'layout-reservation-detail');
+      card.append(node('h4', '', item.label || '外矿入口 Link'), node('p', 'layout-candidate-label', '候选预留 · 未启用 · 不计入正式建筑'), node('p', '', item.purpose));
+      card.append(activationList(item)); root.append(card);
+    }
+    if (!buildings.length && !unplanned.length && !reservations.length) root.append(node('p', 'layout-cell-empty', '此格没有规划建筑。'));
     if (buildings.length) root.append(node('p', 'layout-cell-footnote', `本地块共 ${buildings.length} 项规划；包含当前筛选未显示的叠层。`));
     document.querySelectorAll('[data-layout-locate]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.x) === x && Number(button.dataset.y) === y)));
   }
@@ -281,10 +358,77 @@
       details.append(entries); root.append(details);
     }
   }
+  function activationList(item) {
+    const list = node('ul', 'layout-conditions');
+    const notes = [];
+    if (item.rcl) notes.push(`最早考虑 RCL ${item.rcl}，仍需可用 Link 配额。`);
+    if (item.activation.requiresActiveRemote) notes.push('对应外矿已启用并有稳定输入。');
+    if (item.activation.requiresMeasuredBenefit) notes.push('实测证明运输或拥堵改善后才启用。');
+    if (item.activation.minExpectedEnergyPerTick !== null) notes.push(`预计持续输入至少 ${item.activation.minExpectedEnergyPerTick} energy/tick。`);
+    if (item.activation.minSavedCarry !== null) notes.push(`估算至少节省 ${item.activation.minSavedCarry} 个 CARRY，并核对损耗与接收搬运成本。`);
+    notes.push(...item.activation.notes);
+    if (!notes.length) notes.push('完整路线、稳定流量、配额与净收益验证后，才考虑启用。');
+    notes.forEach(note => list.append(node('li', '', note)));
+    return list;
+  }
+  function logisticsButton(item) {
+    const button = node('button', 'layout-logistics-locate', `(${item.x}, ${item.y}) ↗`);
+    button.type = 'button'; button.dataset.logisticsX = item.x; button.dataset.logisticsY = item.y;
+    button.setAttribute('aria-label', `在地图定位${item.label || 'Link'} (${item.x}, ${item.y})`);
+    return button;
+  }
+  function renderLogistics(room, items) {
+    const root = $('layout-link-roles'); root.replaceChildren();
+    const links = items.filter(item => item.type === 'link');
+    if (!links.length) root.append(node('p', 'layout-logistics-empty', `当前筛选无 Link。RCL 5 起可建设；可切换至更高规划等级查看分工。`));
+    for (const item of links) {
+      const card = node('article', 'layout-link-card');
+      const head = node('div', 'layout-link-card-heading');
+      head.append(node('h4', '', item.label || LINK_ROLES[item.linkRole]?.[0] || 'Link'), logisticsButton(item));
+      card.append(head, node('p', 'layout-cell-rcl', `最早 RCL ${item.rcl} · 快照${STATUS[item.status]}`));
+      card.append(node('p', '', item.purpose || '此版本尚未提供明确运输用途。'));
+      if (item.serviceArea) card.append(node('p', 'layout-cell-tag', `服务：${item.serviceArea}`));
+      if (item.targetTag) {
+        const target = room.plan.buildings.find(target => target.tag === item.targetTag);
+        card.append(node('p', 'layout-link-destination', `→ ${target?.label || (target ? typeName(target.type) : item.targetTag)}`));
+      }
+      if (item.fallbackTargetTag) {
+        const target = room.plan.buildings.find(target => target.tag === item.fallbackTargetTag);
+        card.append(node('p', 'layout-cell-tag', `备用 → ${target?.label || (target ? typeName(target.type) : item.fallbackTargetTag)}`));
+      }
+      root.append(card);
+    }
+    const optional = $('layout-optional-links'); optional.replaceChildren();
+    if (room.plan.optionalReservations.length) {
+      optional.append(node('h4', '', '可选 Link 预留'), node('p', 'layout-regional-note', '预留仅保留位置与条件，未启用；不随达到等级自动施工。地图只在对应等级和 Link 图层中显示。'));
+      const cards = node('div', 'layout-optional-grid');
+      for (const item of room.plan.optionalReservations) {
+        const card = node('article', 'layout-reservation-card');
+        const head = node('div', 'layout-link-card-heading'); head.append(node('h4', '', item.label || '外矿入口'), logisticsButton(item));
+        card.append(head, node('p', 'layout-candidate-label', '候选预留 · 未启用'), node('p', '', item.purpose), activationList(item)); cards.append(card);
+      }
+      optional.append(cards);
+    }
+  }
+  function renderRegional() {
+    const strategy = state.data.regionalStrategy;
+    $('layout-regional').hidden = !strategy.rooms.length;
+    $('layout-regional-source').textContent = `${strategy.source} · 情报采集 ${readableTime(strategy.observedAt)}`;
+    $('layout-regional-note').textContent = strategy.note;
+    const root = $('layout-regional-rooms'); root.replaceChildren();
+    for (const item of strategy.rooms) {
+      const card = node('article', 'layout-regional-card');
+      card.append(node('h4', 'mono', item.name), node('p', 'layout-regional-role', item.role),
+        node('p', 'layout-candidate-label', '候选用途 · 未确认启用'), node('p', '', item.note),
+        node('p', 'layout-region-route', item.route.join(' → ')),
+        node('small', '', `${item.sources ?? '—'} 个源 · ${Math.max(0, item.route.length - 1)} 次跨房 · seen ${integer(item.seenTick)}`));
+      root.append(card);
+    }
+  }
   function render() {
     const room = currentRoom(); if (!room) return;
     const items = visibleBuildings(room, state);
-    renderHeader(room); renderSummary(room, items); renderMap(room, items); renderLegend(room); renderList(room, items); updateSelection();
+    renderHeader(room); renderSummary(room, items); renderMap(room, items); renderLegend(room); renderList(room, items); renderLogistics(room, items); renderRegional(); updateSelection();
     document.querySelectorAll('[data-layout-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.layoutMode === state.mode)));
     const notes = $('layout-plan-notes'); notes.replaceChildren(); room.plan.notes.forEach(note => notes.append(node('li', '', note)));
   }
@@ -325,6 +469,13 @@
   $('layout-type').addEventListener('change', event => { state.type = event.target.value; render(); });
   $('layout-roads').addEventListener('change', event => { state.roads = event.target.checked; render(); });
   $('layout-protection').addEventListener('change', event => { state.protection = event.target.checked; render(); });
+  $('layout-logistics-toggle').addEventListener('change', event => { state.logistics = event.target.checked; render(); });
+  $('layout-logistics').addEventListener('click', event => {
+    const button = event.target.closest('[data-logistics-x]'); if (!button) return;
+    state.selected = { x: Number(button.dataset.logisticsX), y: Number(button.dataset.logisticsY) };
+    updateSelection(); centerSelection();
+    $('layout-map').querySelector('svg')?.focus({ preventScroll: true });
+  });
   $('layout-map').addEventListener('click', event => { const target = event.target.closest('[data-cell]'); if (!target) return; state.selected = { x: Number(target.dataset.x), y: Number(target.dataset.y) }; updateSelection(); });
   $('layout-map').addEventListener('keydown', event => {
     const movements = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
@@ -359,7 +510,7 @@
       for (const name of Object.keys(data.rooms).sort((a, b) => a === data.primaryRoom ? -1 : b === data.primaryRoom ? 1 : a.localeCompare(b))) { const option = node('option', '', `${name}${name === data.primaryRoom ? ' · 主房' : ''}`); option.value = name; select.append(option); }
       select.value = data.primaryRoom;
       $('layout-content').hidden = false;
-      $('layout-notice').textContent = '公开规划快照 · 地形与坐标来自房间数据 · 建造状态不是实时画面';
+      $('layout-notice').textContent = data.preview ? '本地候选预览 · 尚未确认成为游戏执行规划 · 建造状态取自标注的历史快照' : '公开规划快照 · 几何来自 API 执行规划，用途来自匹配设计 · 建造状态不是实时画面';
       $('layout-notice').classList.add('is-ready');
       chooseRoom(data.primaryRoom);
     } catch {

@@ -39,6 +39,7 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 
 不应为了保持工作者忙碌而制造任务。RCL/储备不够时保留 planned；其他任务改动同一文件时等待交接。
 GitHub不可用时，保存带时间戳的本地检查点并继续已授权且安全的游戏工作；恢复后补录。
+待补录记录统一放 `new-colony/state/github-work-checkpoints.json`，先核验实时任务状态再上传，不能原样重放过时的owner。
 不得把“已准备待上传”写成“GitHub 已更新”。401/403不重复重试同一凭据。
 
 ## 工具
@@ -57,6 +58,8 @@ python3 tools/github_ops.py checkpoint --key fixed-logistics \
   --evidence '填写真实提交、测试和快照 tick'
 ```
 
+手工创建的新问题可用 `checkpoint --number N ...`，无需将其重复创建为路线图工单。
+`--number` 与 `--key` 二选一；编号仅指当前固定仓库的真实 Issue，不接受 PR 或其他仓库。
 完成用 `checkpoint --status done ... --evidence '验收证据'`，会关闭对应 Issue；
 复发用其他状态会重开。状态更新只替换 `status:` 标签，保留 area/priority 等其他标签。
 禁止用用户内容拼接 shell；描述通过 JSON stdin 提交。脚本在失败写入后不自行重试；先 `list` 回读。

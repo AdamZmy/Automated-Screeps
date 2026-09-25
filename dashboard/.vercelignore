@@ -4,6 +4,7 @@ test-output/
 dev.mjs
 verify-ui.cjs
 verify-layout-ui.cjs
+verify-layout-export.py
 tools/
 README.md
 node_modules/
