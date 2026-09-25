@@ -19,6 +19,21 @@
       ]
     },
     {
+      "id": "2026-09-25T12-21-45Z-run-180b053940d3",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T12:21:45.432Z",
+      "updatedAt": "2026-09-25T13:39:29.551Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "巡检跳过：已有协调者运行",
+      "summary": "本轮协调者 01a0d83d-7ed6-7bf2-a8d1-a6eee1b731eb 已核验既有协调者仍active/inProgress；保留既有文件归属，本轮仅发布跳过日志。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
+    {
       "id": "2026-09-25T12-21-07Z-run-93ce7e995d21",
       "kind": "scheduled",
       "startedAt": "2026-09-25T12:21:07.050Z",
