@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T08:23:06.757Z",
+  "updatedAt": "2026-09-25T08:32:21.277Z",
   "days": [
     "2026-09-25"
   ],
@@ -9,11 +9,11 @@
       "id": "2026-09-25T08-18-14Z-run-358131860170",
       "kind": "scheduled",
       "startedAt": "2026-09-25T08:18:14.542Z",
-      "updatedAt": "2026-09-25T08:23:06.757Z",
+      "updatedAt": "2026-09-25T08:32:21.277Z",
       "completedAt": null,
       "status": "running",
       "title": "主房能效与矿区积压巡检",
-      "summary": "确认消费WORK不足与无座位升级工占用控制器卸货入口；P0 #4和固定物流 #1正在联合修复。",
+      "summary": ".12已部署并回读一致；初步新tick显示占港工人让开，Hauler对控制器容器发生100能量真实转入；仍在验证工位和持续吞吐。",
       "tick": 73931320,
       "issueNumbers": [
         1,
