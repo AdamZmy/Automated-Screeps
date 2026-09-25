@@ -6,6 +6,14 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## Unreleased
+
+- Move the 20-minute inspection to independent scheduled conversations (#11), restoring
+  work from a bounded CURRENT_STATE handoff, Issue checkpoints and fresh API data.
+- Load historical logs and research only when needed; check previous coordinator
+  and worker ownership before a fresh run takes over files or deployment.
+- Game build and dashboard deployment are unchanged by this operations update.
+
 ## 0.2.0 — 2026-09-25
 
 - Replace moving-worker delivery targets with fixed structure endpoints, reserved

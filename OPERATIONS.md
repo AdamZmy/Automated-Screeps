@@ -22,7 +22,18 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 
 ## 每 20 分钟的协调流程
 
-沿用唯一 `screeps-world` heartbeat。先读本文件、World AGENTS、LIVE_STATUS 和 skill，再取新 API tick。
+唯一调度为 `screeps-world` 独立定时任务：每 20 分钟启动一个新对话，从保存的提示词恢复，不续接或复制原长对话。
+源码始终在 `/Users/zmy/screepsworld`；调度的 Project Rules 工作区只是上下文目录，其 Arena 默认入口不适用于本任务。
+每轮先读 World skill、`new-colony/AGENTS.md`、本文件和 `CURRENT_STATE.md`，再读活动 Issue 最新检查点并取新 API tick。
+`CURRENT_STATE.md` 只保留最近核验版本/tick、当前风险、下一检查点和本轮负责者，保持在 80 行以内，更新替换旧状态。
+`LIVE_STATUS.md`、README、ROADMAP、完整聊天与研究不再是每轮必读；仅在相关问题需要时检索对应段落。
+能效判断读取 ENERGY_METRICS 的相关定义，修改代码前读取相应模块与 ARCHITECTURE；不要为恢复任务而回放全部历史。
+
+跨轮交接时，先核验 `CURRENT_STATE.md` 记录的上轮协调者任务是否仍运行；活动 Issue 中的 owner 也必须核验。
+新对话的 `collaboration.list_agents` 仅覆盖自己的协调树，列表为空不能证明旧对话的子代理已退出。
+旧子代理必须同时记录其父任务 ID；用 Codex `wait_threads` 的即时快照核验父任务，必要时只读取该任务最近一轮。
+上轮仍运行则不并行修改或部署；状态无法核验时保留文件归属、记录待核验并结束本轮，不能按时间戳抢占。
+确认旧协调者和相关工作者均停止后，本轮才接管文件并记录当前任务 ID。每轮结束前收齐有限子任务，或明确记录可查询的接班任务。
 
 1. `python3 tools/github_ops.py list` 读取 GitHub 状态和活动 Issue 的最新 checkpoint。
 2. 对每个 in-progress：通过 `collaboration.list_agents` 或 Codex `wait_threads` 核验 owner。
@@ -34,8 +45,9 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 4. 按实际 RCL、岗位覆盖、储备和依赖，解锁 planned；为 unattended ready 工作分派有限子任务。
    root 也可直接完成短小任务；独立工作才并行。每个文件只能有一个写入者。
 5. 新问题先搜索所有开放及已关闭 Issue。相同未解决问题更新原 Issue；复发问题重开并补新证据。
-6. root 统一 API、整合、Git 提交和串行部署。写入结果不明先回读；不盲重试。
-   完成后记录版本/提交/部署/实际 tick。只在所有验收条件满足时关闭 Issue。
+6. 本轮 root 统一 API、整合、Git 提交和串行部署。写入结果不明先回读；不盲重试。
+   完成后更新 CURRENT_STATE，并在 Issue 检查点记录版本/提交/部署/实际 tick；有实际变更或关键证据才追加 LIVE_STATUS。
+   普通无变化巡检不重复追加历史；只在所有验收条件满足时关闭 Issue。用户授权的子代理工作不继承完整聊天，只传该 Issue 所需文件与脱敏证据。
 
 不应为了保持工作者忙碌而制造任务。RCL/储备不够时保留 planned；其他任务改动同一文件时等待交接。
 GitHub不可用时，保存带时间戳的本地检查点并继续已授权且安全的游戏工作；恢复后补录。

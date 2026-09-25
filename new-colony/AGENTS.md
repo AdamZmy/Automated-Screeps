@@ -6,7 +6,7 @@
 - Link可作为主房入口的外矿接收中继：运输者跨房后卸载，再传给房内仓库端；按实际外矿路线、吞吐、损耗及RCL配额评估并预留，不为填满上限任意摆放。新基地、外矿、交通走廊要统一规划。
 - 唯一游戏源码目录 `/Users/zmy/screepsworld/new-colony`，六模块为main.js、planner.js、expansion.js、monitor.js、ledger.js、plans.js。Screeps Arena、其地图编辑器及旧结构图均不属于此项目。
 - **用户明确要求全部游戏数据读取与操作仅通过HTTP API，禁止computer use、截图、原生UI或浏览器自动化；不以界面为失败回退。** 此偏好持续适用于后续巡检及子代理。
-- 读取可复用操作skill：[screeps-world-api](/Users/zmy/.codex/skills/screeps-world-api/SKILL.md)。每次先读本文件、README.md及LIVE_STATUS.md，修改游戏代码前读相关模块和ARCHITECTURE.md。历史研究建议不等于已实现功能。
+- 读取可复用操作skill：[screeps-world-api](/Users/zmy/.codex/skills/screeps-world-api/SKILL.md)。每轮巡检先读本文件、父目录OPERATIONS.md和CURRENT_STATE.md；README/LIVE_STATUS/ROADMAP只按相关问题检索。修改游戏代码前读相关模块和ARCHITECTURE.md。历史研究建议不等于已实现功能。
 
 ## API 入口与凭据
 
@@ -30,8 +30,8 @@
 
 - root是唯一凭据持有、API采样、Console提交、整合和部署者。子代理默认只读root提供的脱敏state工件，注明fetchedAt和tick；不重复调用API或自行部署。
 - 能源代理负责main.js及经济测试；布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
-- 每次启动有限、独立的小任务，约定文件归属，交付发现/测试/待验证点并释放。不要把子代理当永久运行进程；游戏代码逐tick工作，heartbeat定期复查。
-- 长期状态写LIVE_STATUS.md与有限游戏Memory，不依赖代理永久保留context。只在重要进展、故障、干预结果或需用户处理时通知。
+- 每次启动有限、独立的小任务，约定文件归属，交付发现/测试/待验证点并释放。不要把子代理当永久运行进程；游戏代码逐tick工作，独立定时任务每20分钟新开对话复查。不给子代理复制整段历史，仅传对应Issue及必要证据。
+- 跨轮当前状态写父目录CURRENT_STATE.md，工作检查点写GitHub Issue，重要历史才追加LIVE_STATUS.md，不依赖代理永久保留context。先核验上轮父任务及文件负责者，避免并行重复修改或部署；新协调树没有旧代理不等于它已退出。只在重要进展、故障、干预结果或需用户处理时通知。
 
 ## 能源指标与网页
 

@@ -1,4 +1,16 @@
-# 当前状态：GitHub已接通，游戏2026-09-25.10持续验证
+# 当前状态：独立巡检已启用（2026-09-25，Issue #11）
+
+- 用户明确要求每轮新开对话。通过automation_update原地迁移唯一`screeps-world`，已回读kind=cron、ACTIVE、每20分钟、local执行，无旧target_thread_id；所有本机活动自动化中仅此一项Screeps巡检。
+- 任务使用已有Project Rules上下文目录，提示词明确真正源码为`/Users/zmy/screepsworld`，Arena不属于范围。保留本机默认gpt-6-astra/xhigh及既有游戏/GitHub/部署授权。
+- 新增父目录CURRENT_STATE.md短交接，OPERATIONS/AGENTS和本机API skill改为读取短状态、活动Issue检查点及新API数据；历史聊天不回放，README/LIVE_STATUS/ROADMAP按需检索。
+- 跨轮先核验旧协调者和Issue负责者；新协调树没有旧子代理不代表它已退出。若仍运行或无法核验，不竞争修改/部署。子代理只接收对应Issue和必要工件。
+- skill quick_validate和git diff --check通过。此轮未读新游戏tick、未改执行代码/面板，因此下面的游戏观测均为先前证据；#1/#4继续验证。首轮实际定时执行尚未发生，不把配置成功称为已经运行。
+
+以下为按需查阅的历史；最新交接以父目录CURRENT_STATE.md和GitHub Issue为准。
+
+---
+
+# 之前状态：GitHub已接通，游戏2026-09-25.10持续验证
 
 - 用户已在Chrome完成GitHub CLI授权，确认账号AdamZmy、目标仓库ADMIN。原插件403/CLI未登录阻碍已经解除，后续使用已认证gh，**不要再次要求用户登录或使用旧设备码**。
 - main与v0.1.0/v0.2.0已推送至 https://github.com/AdamZmy/Automated-Screeps ，两份正式Release已发布。GitHub已创建4个里程碑、10个Issue；固定交接#1和持续90%能效#4为verifying，布局#3已凭游戏/网页验收关闭，后续阶段受实际门槛约束。GitHub管理#2完成同步及CI核验后关闭。
