@@ -26,8 +26,9 @@ individually reviewable; tested releases receive immutable version tags.
   at tick73930387 and stable operation at73930400. Dashboard production
   `dpl_2QHBtL9eZefWFx8L9oyVX1y4ytet` returns build `.10` at tick73930409.
 - Long-window sustainable 90% utilization and comparable CPU/travel-cost checks
-  remain open verification work. GitHub publication requires the user's CLI login;
-  local history is preserved independently of remote synchronization.
+  remain open verification work (#4 and #1). GitHub authentication and publication
+  were completed on 2026-09-25: both release tags, ten Issues and four milestones
+  are available remotely, and the initial offline CI passed both jobs.
 
 ## 0.1.0 — 2026-09-25
 

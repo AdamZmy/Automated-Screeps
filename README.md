@@ -3,6 +3,8 @@
 AdamZmy 的 Screeps World 殖民地与能源监控网站。
 当前游戏：官方 shard1 / frontier24，初始主房 W21N26。
 
+[工单](https://github.com/AdamZmy/Automated-Screeps/issues) · [RCL里程碑](https://github.com/AdamZmy/Automated-Screeps/milestones) · [发布版本](https://github.com/AdamZmy/Automated-Screeps/releases) · [CI](https://github.com/AdamZmy/Automated-Screeps/actions)
+
 - [`new-colony/`](new-colony/README.md)：唯一活动源码、六个游戏模块、HTTP API 客户端及行为回归。
 - [`dashboard/`](dashboard/README.md)：[实时能源面板](https://screeps-energy-observatory.vercel.app)与[RCL建筑地图](https://screeps-energy-observatory.vercel.app/#layout)。
 - [`OPERATIONS.md`](OPERATIONS.md)：Issue 生命周期、巡检分工、检查点和发布流程。

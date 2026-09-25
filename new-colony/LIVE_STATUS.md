@@ -1,4 +1,15 @@
-# 当前状态：2026-09-25.10、复核布局上线、GitHub管理待授权
+# 当前状态：GitHub已接通，游戏2026-09-25.10持续验证
+
+- 用户已在Chrome完成GitHub CLI授权，确认账号AdamZmy、目标仓库ADMIN。原插件403/CLI未登录阻碍已经解除，后续使用已认证gh，**不要再次要求用户登录或使用旧设备码**。
+- main与v0.1.0/v0.2.0已推送至 https://github.com/AdamZmy/Automated-Screeps ，两份正式Release已发布。GitHub已创建4个里程碑、10个Issue；固定交接#1和持续90%能效#4为verifying，布局#3已凭游戏/网页验收关闭，后续阶段受实际门槛约束。GitHub管理#2完成同步及CI核验后关闭。
+- 真实GitHub Actions run36107745828（e4ef2fa）两项job成功：Colony/API与Dashboard。检查运行在干净Ubuntu、Node22/Python3.11，无游戏Token。旧设备授权码已经无用，不存入项目。
+- 原20分钟heartbeat及OPERATIONS工作流程保持生效：读取远端Issue/checkpoint、核验实际owner、避免重复派工，分清验证等待和无人处理。首次纯`.10`1500tick窗口不早于73931864；这只是可比窗口门槛，不代表届时必然达标。继续诊断明确故障、检查完整配送周期和同负载CPU。
+
+以下为上线时的原始证据；其中“GitHub待授权”是已解决的历史状态。
+
+---
+
+# 之前状态：2026-09-25.10、复核布局上线、GitHub管理待授权
 
 - 父目录 `/Users/zmy/screepsworld` 已复用现有公开仓库 AdamZmy/Automated-Screeps 的原始历史；旧根代码保留为历史，活动入口仍是new-colony六模块。已保存本地基线commit `64c95f2`/tag `v0.1.0`、物流与工单commit `f607a2b`、布局commit `271cc45`、坐标热修commit `126189a`。当前项目版本0.2.0。**截至本次记录尚未推送到GitHub**：插件创建Issue返回403，CLI待用户设备授权；不可称工单或新版本已在远端。
 - GitHub工作流见父目录OPERATIONS.md：4个RCL里程碑、10个初始工单定义、六种状态与结构化checkpoint、真实owner核验和恢复、手工Issue编号支持。同步脚本只访问固定仓库，重复运行保留现有Issue和状态。原20分钟heartbeat已更新并回读确认ACTIVE；不新增调度。待补录记录在state/github-work-checkpoints.json，恢复授权后先核验任务状态再同步。凭据/状态快照/备份均不入Git。
