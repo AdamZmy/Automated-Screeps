@@ -1,8 +1,24 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T09:20:15.981Z",
+  "updatedAt": "2026-09-25T11:37:55.263Z",
   "day": "2026-09-25",
   "runs": [
+    {
+      "id": "2026-09-25T09-50-25Z-run-a015d2c17123",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T09:50:25.264Z",
+      "updatedAt": "2026-09-25T11:37:55.263Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者仍运行，本轮保留归属",
+      "summary": "即时任务快照已确认上轮协调者 active、当前 turn inProgress；本轮仅发布跳过日志，保留原文件/API/部署归属。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5
+      ]
+    },
     {
       "id": "2026-09-25T09-18-14Z-run-780fc8daf622",
       "kind": "scheduled",
