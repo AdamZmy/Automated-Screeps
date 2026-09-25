@@ -3,11 +3,11 @@
   "id": "2026-09-25T08-11-09Z-run-1bff16856d14",
   "kind": "setup",
   "startedAt": "2026-09-25T08:11:09.044Z",
-  "updatedAt": "2026-09-25T08:11:49.173Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-25T08:15:10.658Z",
+  "completedAt": "2026-09-25T08:15:10.619Z",
+  "status": "completed",
   "title": "巡检日志归档与独立日志页面上线",
-  "summary": "本次记录巡检日志系统的建设进度。日志写入、只读API和独立页面已实现，正在验证GitHub发布与生产网页；未进行新的游戏采样。",
+  "summary": "巡检日志系统已上线。每轮保存独立JSON与Markdown，网站可按日期和状态查看发现、待办、进度、动作与证据。已验证GitHub到生产页面的完整链路；本次没有新游戏采样，能源修复另有明确历史补录。",
   "game": null,
   "findings": [
     {
@@ -24,15 +24,15 @@
     {
       "issue": 12,
       "title": "巡检日志归档与网站页面",
-      "status": "in-progress",
-      "progress": "已实现日志工具、API、页面并完成主要离线验证。",
-      "next": "推送真实记录、部署现有Vercel站点并核验公开链路。",
+      "status": "done",
+      "progress": "日志工具、GitHub归档、只读API、独立页面及后续巡检规范已完成并验证。",
+      "next": "从下一次独立巡检开始持续记录每轮实际发现和进度。",
       "owner": "日志功能协调者"
     },
     {
       "issue": 4,
       "title": "消除矿区溢出与施工闲置预算",
-      "status": "in-progress",
+      "status": "ready",
       "progress": "独立能源任务已提交预算双向借用修复2c1c04a，并报告游戏版本2026-09-25.11已上传。此处引用该任务进度，不是本批次新游戏采样。",
       "next": "由能源任务验证实际产出、工人体型及完整长期能效窗口。",
       "owner": "能源修复任务"
@@ -50,13 +50,19 @@
       "description": "记录离线验证结果",
       "status": "done",
       "result": "页面深链、筛选、失败保留、缺测和XSS检查通过；API与Python写入器行为回归通过。"
+    },
+    {
+      "at": "2026-09-25T08:15:10.619Z",
+      "description": "发布并验证Vercel日志页面",
+      "status": "done",
+      "result": "生产dpl_BResWyWLagg3GKWRPZ7UPXTZuP2X READY。公开页面/深链/资源、root/day/detail API和真实数据DOM通过；部署后新增补录已自动显示，无需再次部署。"
     }
   ],
   "checks": [
     {
       "name": "本地日志写入器",
       "result": "passed",
-      "detail": "18项行为检查通过，含同轮身份、历史保留、并发和失败回滚。"
+      "detail": "20项行为检查通过，含同轮身份、历史保留、并发和失败回滚。"
     },
     {
       "name": "日志页面与原面板",
@@ -65,13 +71,13 @@
     },
     {
       "name": "GitHub到Vercel生产链路",
-      "result": "pending",
-      "detail": "等待推送、部署及公开API验证。"
+      "result": "passed",
+      "detail": "公开API均200、stale=false，显示2条真实记录；HTML/JS/CSS逐字节匹配，GitHub Actions36111695495/36111695345通过。"
     }
   ],
   "next": [
-    "完成生产部署及真实日志端到端验证。",
-    "后续每轮创建一条日志，无变化、跳过和受阻也记录。"
+    "从下一次独立巡检开始持续记录每轮实际发现和进度。",
+    "由能源任务验证实际产出、工人体型及完整长期能效窗口。"
   ],
   "references": [
     {
@@ -85,6 +91,10 @@
     {
       "label": "预算共享修复提交",
       "url": "https://github.com/AdamZmy/Automated-Screeps/commit/2c1c04a"
+    },
+    {
+      "label": "/logs",
+      "url": "https://screeps-energy-observatory.vercel.app/logs"
     }
   ]
 }
