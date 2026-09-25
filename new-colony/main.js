@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.10';
+const VERSION = '2026-09-25.11';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
 // Plans and station seats are plain local coordinates, which the engine's
@@ -39,7 +39,7 @@ function go(c,t,r=1) {
 }
 function take(c,t) { const r=t.resourceType?c.pickup(t):c.withdraw(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
 function give(c,t) { const r=c.transfer(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
-function upgrade(c) { const t=c.room.controller; if(t&&t.my&&c.upgradeController(t)===ERR_NOT_IN_RANGE)go(c,t,3); }
+function upgrade(c) { const t=c.room.controller; if(t&&t.my){const result=c.upgradeController(t);recordDevelopment(c,'upgrade',result);if(result===ERR_NOT_IN_RANGE)go(c,t,3);} }
 function alive(c) {return c.spawning || (c.ticksToLive||0)>c.body.length*3+35;}
 function sources(room) { return room.find(FIND_SOURCES); }
 function stores(room) { return room.find(FIND_STRUCTURES,{filter:s=>s.store}); }
@@ -157,7 +157,7 @@ function updateEconomy(room) {
     const builderWork=building?Math.max(1,Math.ceil(buildRate/BUILD_POWER)):0;
     const reason=sustainedBacklog?'sustained-source-backlog':feedbackReason|| (infrastructure&&building?'capacity-and-mining-infrastructure':building?'planned-construction-first':reserveRate?'reserve-and-renewal':'sustainable-upgrade');
     return m.economyControl={at:Game.time,baseMode:base.mode,mode:base.mode,reason,target,carry,rawCarry,lowerSince:lowerSince===undefined?null:lowerSince,
-        builderWork,feedbackTicks:feedback?feedback.observedTicks:0,incomeBasis:feedback?'measured-harvest':'active-work-potential',harvestPotential:harvest,plannedHarvest,upkeep:+upkeep.toFixed(2),reserveRate,usefulTarget:+useful.toFixed(2),buildEnergyTarget:+buildRate.toFixed(2),routes};
+        developmentBudget:+(feedbackReason==='measured-reserve-drawdown'?target+buildRate:Math.max(useful,target+buildRate)).toFixed(2),builderWork,feedbackTicks:feedback?feedback.observedTicks:0,incomeBasis:feedback?'measured-harvest':'active-work-potential',harvestPotential:harvest,plannedHarvest,upkeep:+upkeep.toFixed(2),reserveRate,usefulTarget:+useful.toFixed(2),buildEnergyTarget:+buildRate.toFixed(2),routes};
 }
 function upgradePolicy(room) {
     const base=baseUpgradePolicy(room),m=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[room.name],control=m&&m.economyControl;
@@ -172,6 +172,14 @@ function upgraderAssignment(room) {
     return {policy,primary,support};
 }
 function upgradeAllowed(c,assignment=upgraderAssignment(c.room)) {
+    const plan=developmentPlan(c.room);
+    if(plan){
+        // Travel must continue even when there is no executable upgrade yet.
+        if(range(c,c.room.controller)>3)return true;
+        const request=plan.requests.find(r=>r.creep===c&&r.kind==='upgrade');
+        if(request)request.asked=true;
+        return !!(request&&request.grant&&!request.done&&!request.failed);
+    }
     const peers=assignment.primary;
     const total=peers.reduce((n,o)=>n+o.getActiveBodyparts(WORK),0),target=assignment.policy.target;
     if(total<=target)return true;
@@ -282,30 +290,96 @@ function workReady(c) {
     if(c.memory.role==='builder')return held>=Math.ceil(capacity*.9);
     return c.memory.role==='upgrader'&&held>=Math.min(capacity,Math.max(Math.ceil(capacity/2),c.getActiveBodyparts(WORK)*10));
 }
+// The slow policy reserves priorities, not exclusive spending rights. Only
+// fueled, in-range work competes for a shared, bounded development allowance.
+// Heap plans last one tick; Memory retains just credits for indivisible intents.
+let developmentTick=-1,developmentPlans={};
+function developmentPlan(room) {
+    const m=economyMemory(room),control=m.economyControl;
+    if(!control||Game.time-control.at>=200||!Number.isFinite(control.target)||!Number.isFinite(control.buildEnergyTarget)||
+        !room.controller||room.controller.level===1||room.controller.ticksToDowngrade<4000)return null;
+    if(developmentTick!==Game.time){developmentTick=Game.time;developmentPlans={};}
+    const cached=developmentPlans[room.name];if(cached&&cached.room===room&&cached.memory===m)return cached;
+    const assignment=upgraderAssignment(room),job=constructionJobs(room)[0],supportJob=assignment.support.length?constructionJobs(room,true)[0]:null;
+    const station=controllerStation(room),requests=[];
+    for(const c of vals(Game.creeps)){
+        if(c.spawning||c.room.name!==room.name||!energy(c))continue;
+        const work=c.getActiveBodyparts(WORK);if(!work)continue;
+        const yielding=c.memory.yieldSource&&Game.getObjectById(c.memory.yieldSource);
+        if(yielding&&range(c,yielding)<=1)continue;
+        let kind,target,cost;
+        if(assignment.primary.includes(c)){
+            const seated=station&&c.memory.upgradeSeat&&c.memory.upgradeSeat.id===station.node.id;
+            if(room.controller.upgradeBlocked||range(c,room.controller)>3||!seated&&!workReady(c))continue;
+            kind='upgrade';target=room.controller;cost=Math.min(work,energy(c));
+        }else if(['builder','bootstrap'].includes(c.memory.role)||assignment.support.includes(c)){
+            target=assignment.support.includes(c)?supportJob:job;
+            if(!target||range(c,target)>3||!workReady(c)||c.memory.role==='bootstrap'&&room.energyAvailable<room.energyCapacityAvailable)continue;
+            kind='build';cost=Math.min(work*BUILD_POWER,energy(c),Number.isFinite(target.progressTotal)?Math.max(0,target.progressTotal-target.progress):Infinity);
+        }
+        if(cost>0)requests.push({creep:c,kind,target,cost});
+    }
+    const demand=kind=>requests.filter(r=>r.kind===kind).reduce((n,r)=>n+r.cost,0);
+    const buildDemand=demand('build'),upgradeDemand=Math.min(room.controller.level===8?15:Infinity,demand('upgrade'));
+    const total=Math.max(0,Number.isFinite(control.developmentBudget)?control.developmentBudget:control.target+control.buildEnergyTarget);
+    let buildShare=Math.min(control.buildEnergyTarget,buildDemand),upgradeShare=Math.min(control.target,upgradeDemand);
+    let spare=Math.max(0,total-buildShare-upgradeShare);
+    const buildLoan=Math.min(spare,buildDemand-buildShare);buildShare+=buildLoan;spare-=buildLoan;
+    upgradeShare+=Math.min(spare,upgradeDemand-upgradeShare);
+    const maxCost=Math.max(1,...requests.map(r=>r.cost)),prior=m.developmentCredit;
+    const credit=prior&&prior.tick===Game.time-1?prior:{credit:0,build:0,upgrade:0};
+    // Carry at most one action's rounding remainder. Idle periods cannot bank a
+    // large future burst or debt that deprives newly ready priority work.
+    const state=m.developmentCredit={tick:Game.time,credit:Math.min(total+maxCost,Math.max(0,credit.credit)+total),
+        build:buildDemand?Math.max(-maxCost,Math.min(maxCost,credit.build))+buildShare:0,
+        upgrade:upgradeDemand?Math.max(-maxCost,Math.min(maxCost,credit.upgrade))+upgradeShare:0};
+    const plan={room,memory:m,state,requests,total,buildDemand,upgradeDemand,spent:{build:0,upgrade:0},siteSpent:{}};
+    developmentPlans[room.name]=plan;
+    // Rotate equal-cost workers, while role balances preserve the original
+    // priority shares when both roles can use them. Either role may borrow.
+    requests.sort((a,b)=>a.creep.name.localeCompare(b.creep.name));
+    const shift=requests.length?Game.time%requests.length:0;requests.push(...requests.splice(0,shift));
+    let available=state.credit;const balance={build:state.build,upgrade:state.upgrade},sites={};let upgrades=0;
+    const remaining=requests.slice();
+    while(remaining.length){
+        const choices=remaining.map(r=>({r,cost:Math.min(r.cost,r.kind==='build'&&Number.isFinite(r.target.progressTotal)?Math.max(0,r.target.progressTotal-r.target.progress-(sites[r.target.id]||0)):r.kind==='upgrade'?Math.max(0,upgradeDemand-upgrades):Infinity)}))
+            .filter(q=>q.cost>0&&q.cost<=available).sort((a,b)=>balance[b.r.kind]/b.cost-balance[a.r.kind]/a.cost);
+        if(!choices.length)break;
+        const {r,cost}=choices[0];r.grant=cost;available-=cost;balance[r.kind]-=cost;
+        if(r.kind==='build')sites[r.target.id]=(sites[r.target.id]||0)+cost;else upgrades+=cost;
+        remaining.splice(remaining.indexOf(r),1);
+    }
+    return plan;
+}
+function recordDevelopment(c,kind,result) {
+    const plan=developmentPlans[c.room.name];if(developmentTick!==Game.time||!plan||plan.room!==c.room)return;
+    const request=plan.requests.find(r=>r.creep===c&&r.kind===kind);if(!request||request.done||request.failed)return;
+    if(result!==OK){request.failed=true;return;}
+    const cost=Math.min(request.cost,kind==='build'&&Number.isFinite(request.target.progressTotal)?Math.max(0,request.target.progressTotal-request.target.progress-(plan.siteSpent[request.target.id]||0)):kind==='upgrade'&&c.room.controller.level===8?Math.max(0,15-plan.spent.upgrade):Infinity);
+    request.done=true;plan.state.credit-=cost;plan.state[kind]-=cost;plan.spent[kind]+=cost;
+    if(kind==='build')plan.siteSpent[request.target.id]=(plan.siteSpent[request.target.id]||0)+cost;
+}
+function finishDevelopment(room) {
+    const plan=developmentPlan(room);if(!plan)return;
+    // Failed or superseded intents do not spend energy. Give their headroom to
+    // ready workers that were denied earlier, regardless of creep loop order.
+    const remaining=plan.requests.filter(r=>r.asked&&!r.done&&!r.failed).sort((a,b)=>plan.state[b.kind]/b.cost-plan.state[a.kind]/a.cost);
+    for(const r of remaining){
+        const cost=Math.min(r.cost,r.kind==='build'&&Number.isFinite(r.target.progressTotal)?Math.max(0,r.target.progressTotal-r.target.progress-(plan.siteSpent[r.target.id]||0)):Infinity);
+        if(!cost||cost>plan.state.credit||r.kind==='upgrade'&&room.controller.level===8&&plan.spent.upgrade+cost>15)continue;
+        const result=r.kind==='build'?r.creep.build(r.target):r.creep.upgradeController(r.target);recordDevelopment(r.creep,r.kind,result);
+    }
+    // Intent costs are diagnostic predictions; the event ledger remains the
+    // authority for actual energy use. This is one bounded current-tick record.
+    plan.memory.development={tick:Game.time,budget:plan.total,buildReady:plan.buildDemand,upgradeReady:plan.upgradeDemand,
+        buildIntentEnergy:plan.spent.build,upgradeIntentEnergy:plan.spent.upgrade,credit:Math.max(0,plan.state.credit)};
+}
 function buildAllowed(c) {
-    const m=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[c.room.name],control=m&&m.economyControl;
-    if(!control||Game.time-control.at>=200||!['builder','bootstrap','upgrader'].includes(c.memory.role))return true;
-    const support=upgraderAssignment(c.room).support;
-    const job=constructionJobs(c.room)[0],supportJob=support.length?constructionJobs(c.room,true)[0]:null;
-    const peers=vals(Game.creeps).filter(o=>{
-        if(o.spawning||o.room.name!==c.room.name||!['builder','bootstrap'].includes(o.memory.role)&&!support.includes(o)||!energy(o))return false;
-        const site=support.includes(o)?supportJob:job;
-        if(!site||range(o,site)>3)return false;
-        if(!workReady(o))return false;
-        const yielding=o.memory.yieldSource&&Game.getObjectById(o.memory.yieldSource);
-        if(yielding&&range(o,yielding)<=1)return false;
-        return o.memory.role!=='bootstrap'||c.room.energyAvailable>=c.room.energyCapacityAvailable;
-    }).sort((a,b)=>a.name.localeCompare(b.name));
-    if(!peers.includes(c))return false;
-    // Only bodies able to issue a build intent now share the spending allowance.
-    // Traveling, refueling and retiring miners must not reserve idle WORK quota.
-    const total=peers.reduce((n,o)=>n+o.getActiveBodyparts(WORK)*BUILD_POWER,0);
-    if(total<=control.buildEnergyTarget)return true;
-    const offset=peers.slice(0,peers.indexOf(c)).reduce((n,o)=>n+o.getActiveBodyparts(WORK)*BUILD_POWER,0);
-    // Phase a 100-tick duty cycle across existing cohorts. The target is energy,
-    // not WORK: construction spends BUILD_POWER energy for each active WORK.
-    const allowedTicks=Math.floor(100*control.buildEnergyTarget/Math.max(1,total));
-    return (Game.time*37+offset)%100<allowedTicks;
+    if(!['builder','bootstrap','upgrader'].includes(c.memory.role))return true;
+    const plan=developmentPlan(c.room);if(!plan)return true;
+    const request=plan.requests.find(r=>r.creep===c&&r.kind==='build');
+    if(request)request.asked=true;
+    return !!(request&&request.grant&&!request.done&&!request.failed);
 }
 function refuel(c,harvest=true) {
     const station=controllerStation(c.room),dedicated=station&&!(c.memory.role==='upgrader'&&upgraderAssignment(c.room).primary.includes(c));
@@ -407,7 +481,7 @@ function work(c) {
         const t=sites[0];
         // Travel consumes no construction energy and must not be duty-throttled.
         if(range(c,t)>3){go(c,t,3);return;}
-        if(buildAllowed(c)&&c.build(t)===ERR_NOT_IN_RANGE)go(c,t,3);
+        if(buildAllowed(c)){const result=c.build(t);recordDevelopment(c,'build',result);if(result===ERR_NOT_IN_RANGE)go(c,t,3);}
         return;
     }
     const broken=c.room.find(FIND_STRUCTURES,{filter:s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55});
@@ -470,7 +544,10 @@ function deliveryNeeds(room,includeStorage=true) {
     const threatened=room.find(FIND_HOSTILE_CREEPS).length>0;
     for(const s of stock)if(s.my&&s.structureType===STRUCTURE_TOWER)add(s,threatened?900:400,1);
     const station=controllerStation(room),assignment=upgraderAssignment(room),m=economyMemory(room);
-    const rate=Math.min(assignment.policy.target,assignment.primary.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0));
+    // A borrower must also receive fuel: size the controller buffer for the
+    // maximum useful share its existing WORK can consume, not just its floor.
+    const control=m.economyControl,ceiling=control&&Game.time-control.at<200?(control.developmentBudget??(control.target+(control.buildEnergyTarget||0))):assignment.policy.target;
+    const rate=Math.min(ceiling,room.controller.level===8?15:Infinity,assignment.primary.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0));
     const carriers=vals(Game.creeps).filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='hauler');
     const batch=Math.max(100,...carriers.map(c=>energy(c)+c.store.getFreeCapacity(E)));
     // Existing round trips include empty return, pickup, delivery and terrain.
@@ -791,12 +868,14 @@ module.exports.loop=function(){
     if(moduleStart!==null)cpuAdd('stages','modules',cpuNow()-moduleStart);
     const owned=vals(Game.rooms).filter(r=>r.controller&&r.controller.my);
     for(const room of owned)for(const [name,run] of [['defense',defend],['links',links],['spawn',spawnRoom],['planner',planner&&planner.run]])if(run){try{measured('stages',name,()=>run(room));}catch(e){console.log('[Frontier '+name+' '+room.name+'] '+e.stack);}}
+    for(const room of owned)try{measured('stages','development',()=>developmentPlan(room));}catch(e){console.log('[Frontier development '+room.name+'] '+e.stack);}
     for(const c of vals(Game.creeps)){if(c.spawning)continue;try{
         measured('roles',c.memory.role||'unknown',()=>{
             if(c.memory.role==='miner')mine(c);else if(c.memory.role==='hauler')haul(c);
             else if(['scout','claimer','pioneer'].includes(c.memory.role)&&expansion)expansion.run(c,{go,work,refuel,upgrade});else work(c);
         });
     }catch(e){console.log('[Frontier creep '+c.name+'] '+e.stack);}}
+    for(const room of owned)try{measured('stages','development',()=>finishDevelopment(room));}catch(e){console.log('[Frontier development '+room.name+'] '+e.stack);}
     if(expansion)try{measured('stages','strategy',()=>expansion.tick(owned));}catch(e){console.log('[Frontier expansion] '+e.stack);}
     if(monitor)try{measured('stages','monitor',()=>monitor.tick(owned));}catch(e){console.log('[Frontier monitor] '+e.stack);}
     if(Game.time%20===0){const last=Memory.frontier.status;Memory.frontier.status={tick:Game.time,version:VERSION,gcl:Game.gcl,cpu:Game.cpu.getUsed(),bucket:Game.cpu.bucket,rooms:owned.map(r=>{const p=last&&last.rooms.find(p=>p.name===r.name);return{name:r.name,rcl:r.controller.level,progress:r.controller.progress,total:r.controller.progressTotal,upgradePerTick:p&&p.rcl===r.controller.level?(r.controller.progress-p.progress)/(Game.time-last.tick):0,energy:r.energyAvailable,capacity:r.energyCapacityAvailable,creeps:vals(Game.creeps).filter(c=>c.memory.home===r.name).length,storage:r.storage?energy(r.storage):0};})};}

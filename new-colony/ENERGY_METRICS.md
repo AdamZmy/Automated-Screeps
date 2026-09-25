@@ -43,6 +43,14 @@ The `.5` ledger also recognizes tombstones/ruins as withdrawal event actors. Pre
 
 Release `.7` includes finished growth-stage builders in the shared upgrade workforce. After construction, repair and storage fallbacks are exhausted, such a builder changes to upgrader and starts budgeted work next tick. Previously a 2-WORK builder added about2/t beyond the14/t upgrade plan while regular upgraders alone shared that plan. The conversion prevents this hidden budget bypass and includes its body in replacement demand. Bootstrap, pioneer, infrastructure gaps and downgrade emergencies retain their prior behavior. This corrects spending attribution/control; it does not itself prove higher sustainable utilization.
 
+## Shared development spending (`2026-09-25.11`)
+
+Upgrade and construction allocations are priority shares of one development pool, not exclusive caps. Each tick, only fueled workers already in action range may claim energy. Construction claims are limited by remaining site work and carried energy; multiple builders cannot reserve the same finishing progress. Traveling, refueling, spawning and source-yielding workers leave their share available to the other role immediately. Both directions are supported.
+
+The room pool retains the existing deductions for recurring replacement, maintenance and reserves. A trusted drawdown reduction remains binding. Slow staffing changes do not reduce the pool merely because the preferred upgrade headcount is still catching up. Costs of indivisible creep actions use bounded carry-over (at most the rate plus one largest ready action), with separate bounded priority balances; empty periods cannot accumulate an unlimited burst. Only accepted work intents debit the pool. Failed intents release their grant and a second pass lets earlier-denied ready workers use the remainder in the same tick. The controller refill buffer covers the maximum share its existing WORK can borrow.
+
+`Memory.frontier.rooms[room].developmentCredit` is a constant-size balance, and `development` is one current-tick diagnostic record. Its `*IntentEnergy` fields are expected energy costs, **not actual ledger measurements**: the event ledger and fresh online progress remain the accounting authority. RCL1/downgrade emergencies and independent pioneer behavior retain their previous recovery policy. This change does not resize existing bodies or complete the P0's body/logistics/long-window acceptance.
+
 ## Dashboard and persistent review
 
 - Project: `/Users/zmy/screepsworld/dashboard`.
