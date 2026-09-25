@@ -25,7 +25,7 @@ function engineProcessor(relative){
 }
 const transfer=engineProcessor('creeps/transfer'),pickup=engineProcessor('creeps/pickup'),decay=engineProcessor('energy/tick');
 const context={...C,module:{exports:{}},console,RoomPosition:Position,Game:{},Memory:{},global:{}};
-vm.createContext(context);vm.runInContext(readSource('main.js')+'\nmodule.exports.review={VERSION,range,walkable,controllerStation,deliverHaul,haulTarget,collectHaul,body,workforceDemand};',context);
+vm.createContext(context);vm.runInContext(readSource('main.js')+'\nmodule.exports.review={VERSION,range,walkable,controllerStation,deliverHaul,haulTarget,collectHaul,body,workforceDemand,deliveryNeeds};',context);
 const policy=context.module.exports.review;
 const reviewed=JSON.parse(readSource('fixtures/layout-plan-reviewed.json'));
 const world=JSON.parse(readSource('fixtures/layout-world-before.json'));
@@ -82,7 +82,29 @@ function fixture(){
  function delivery(c,amount=c.store.energy){c.memory.haulDelivery={id:box.id,room:room.name,amount,priority:2,expires:context.Game.time+200,position:key(c.pos),progress:context.Game.time};}
  return {room,pos,store,creep,box,path,occupied,delivery};
 }
+// Minimal public reconstruction of API tick73931921, not a private snapshot read.
+function loadedReservationFixture(){
+ const f=fixture();context.Game.time=73931921;f.box.store.energy=349;
+ const m=context.Memory.frontier.rooms[f.room.name];m.economyControl={at:context.Game.time,baseMode:'growth',mode:'growth',target:14,
+  developmentBudget:14,usefulTarget:14,routes:[{roundTrip:22},{roundTrip:40}]};
+ const station=policy.controllerStation(f.room);
+ for(const [i,n] of [4,4,1,4].entries()){const p=station.seats[i];f.creep('worker'+i,'upgrader',p.x,p.y,40,100,[...Array(n).fill(C.WORK),C.CARRY,C.CARRY,C.MOVE]);}
+ f.creep('overflow','upgrader',16,39,0,50,[C.WORK,C.CARRY,C.MOVE]);
+ for(const source of f.room.objects.filter(o=>o.source)){const p=reviewed.sourcePlans.find(p=>p.id===source.id),c=f.creep('miner'+source.id,'miner',p.x,p.y,10,50,[...Array(5).fill(C.WORK),C.CARRY,C.MOVE]);c.memory.source=source.id;}
+ const incumbent=f.creep('incumbent','hauler',23,27,250,250),far=f.creep('far-loaded','hauler',16,40,100,100);
+ const emptyA=f.creep('empty-a','hauler',24,26,0,100),emptyB=f.creep('empty-b','hauler',16,32,0,100);
+ const near=f.creep('near-loaded','hauler',20,27,200,200),blocked=f.creep('blocked-loaded','hauler',17,40,100,100);
+ for(const [c,amount,phase,port] of [[incumbent,231,'deliver',{x:17,y:24}],[far,100,'deliver',{x:16,y:24}],[emptyA,100,'pickup'],[emptyB,100,'pickup']]){
+  f.delivery(c,amount);Object.assign(c.memory.haulDelivery,{phase,priority:4});if(port)c.memory.haulDelivery.port=port;
+ }
+ blocked.memory.haulBlocked={[f.box.id]:context.Game.time+6};
+ const need=policy.deliveryNeeds(f.room).find(n=>n.node.id===f.box.id);assert.equal(need.high,880);
+ return {...f,incumbent,far,emptyA,emptyB,near,blocked,high:need.high};
+}
 const report={version:policy.VERSION,checks:[],limitations:[],planning:[]},regressions=[];
+const promisedEnergy=f=>Object.values(context.Game.creeps).reduce((sum,c)=>{
+ const t=c.memory.haulDelivery;return sum+(t&&t.id===f.box.id&&t.expires>context.Game.time&&t.amount>0?t.amount:0);
+},0);
 {
  const f=fixture(),p=f.pos(16,21);
  assert(Number.isNaN(p.getRangeTo({x:16,y:23})));assert.equal(p.getRangeTo(16,23),2);
@@ -200,6 +222,111 @@ report.checks.push('Dead, expired, destroyed-target and already-sent spatial cla
  report.checks.push('Official drop decay: piles 3031 and 972 lose 4+1 energy/tick in isolation.');
  report.limitations.push({case:'unexplained-residual',observedResidual:5,isolatedDecay:losses.reduce((a,b)=>a+b,0),
   interpretation:'Compatible with observed one-tick loss, not a full-window attribution without consecutive pre/post inventories.'});
+}
+{
+ const f=loadedReservationFixture(),target=policy.haulTarget(f.near),initialTarget=target?.id||null;
+ const initialAmount=f.near.memory.haulDelivery?.amount||0;
+ // Counterfactual changes only the two empty carriers' future delivery promises.
+ delete f.emptyA.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
+ const withoutEmpty=policy.haulTarget(f.near),counterfactualAmount=f.near.memory.haulDelivery?.amount||0;
+ assert.equal(withoutEmpty?.id,f.box.id,'the same stocked consumer and near cargo can match when empty promises are removed');
+ report.limitations.push({case:'future-quantity-promises-preempt-ready-cargo',evidenceTick:73931921,boxEnergy:349,high:f.high,
+  priorPromises:{loaded:331,empty:200},nearCargo:200,initialTarget,initialAmount,withoutEmptyTarget:withoutEmpty?.id||null,counterfactualAmount});
+ if(initialTarget!==f.box.id||initialAmount<200)regressions.push('L003: near loaded cargo must displace future empty pickup promises without exceeding the consumer high watermark.');
+}
+{
+ const f=loadedReservationFixture();delete f.emptyA.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
+ assert.equal(policy.haulTarget(f.near)?.id,f.box.id);
+ const beforeTask=f.near.memory.haulDelivery,initialAccepted=policy.deliverHaul(f.near,f.box),initialMoves=f.near.actions.filter(a=>a[0]==='move');
+ const cooldown=f.near.memory.haulBlocked?.[f.box.id]-context.Game.time||0;
+ // Second counterfactual retains cargo, quantity promises and all positions;
+ // remove only the far carriers' endpoint claims, then restore this task.
+ delete f.incumbent.memory.haulDelivery.port;delete f.far.memory.haulDelivery.port;
+ f.near.memory.haulDelivery=beforeTask;delete f.near.memory.haulBlocked;f.near.actions=[];
+ const withoutRemotePorts=policy.deliverHaul(f.near,f.box),counterfactualMoves=f.near.actions.filter(a=>a[0]==='move');
+ assert(withoutRemotePorts&&counterfactualMoves.length,'available exact endpoint paths exist when distant promises are removed');
+ report.limitations.push({case:'distant-endpoint-promises-preempt-near-cargo',evidenceTick:73931921,initialAccepted,
+  initialMove:initialMoves.at(-1)||null,cooldown,withoutRemotePorts,counterfactualMove:counterfactualMoves.at(-1)||null});
+ if(!initialAccepted||!initialMoves.length||cooldown)regressions.push('L004: distant endpoint promises must not blacklist a reachable consumer for a nearer ready carrier.');
+}
+{
+ const f=loadedReservationFixture();f.emptyA.store.energy=40;
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,160,'only 60+100 uncollected energy can be reclaimed');
+ assert.equal(f.emptyA.memory.haulDelivery?.amount,40,'partial existing cargo keeps its exact funded amount');
+ assert.equal(promisedEnergy(f),f.high-f.box.store.energy);
+ report.checks.push('Reclaim protects partial physical cargo and keeps all outstanding quantity promises within the same high watermark.');
+}
+for(const action of ['withdraw','pickup']){
+ const f=loadedReservationFixture(),source=f.room.objects.find(o=>o.id==='6ab589f9bb1b523b9796e6d4');
+ if(action==='pickup')f.room.objects.push({id:'pending-drop',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)});
+ const id=action==='pickup'?'pending-drop':source.id;
+ f.emptyA.memory.haulPickup={id,room:f.room.name,position:key(f.emptyA.pos),progress:context.Game.time};
+ assert(policy.collectHaul(f.emptyA));assert.equal(f.emptyA.actions[0][0],action);assert.equal(f.emptyA.store.energy,0,'Store has not resolved the accepted intent');
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,100,'ready courier may reclaim only the other empty promise');
+ assert.equal(f.emptyA.memory.haulDelivery?.amount,100,'same-tick accepted collection remains funded');
+ assert(promisedEnergy(f)<=f.high-f.box.store.energy);
+ // Next tick, accepted energy is visible in Store; the intent annotation must
+ // not be needed to preserve cargo, or be counted for a second collection.
+ context.Game.time++;f.emptyA.store.energy=100;policy.haulTarget(f.emptyA);
+ assert.equal(f.emptyA.memory.haulDelivery?.amount,100);assert(promisedEnergy(f)<=f.high-f.box.store.energy);
+}
+report.checks.push('Accepted withdraw and pickup are protected before Store resolves, then transition to physical cargo without double reservation.');
+{
+ const f=loadedReservationFixture();f.emptyA.memory.haulDelivery.phase='deliver';f.emptyA.memory.haulDelivery.sent=context.Game.time;
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,100);
+ assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyA.memory.haulDelivery.sent,context.Game.time);
+ assert(promisedEnergy(f)<=f.high-f.box.store.energy);
+ report.checks.push('Same-tick sent transfers remain firm and cannot be reclaimed as empty cargo.');
+}
+for(const order of [['near','emptyA','emptyB','incumbent','far'],['emptyB','emptyA','far','incumbent','near']]){
+ const f=loadedReservationFixture();
+ for(const name of order){policy.haulTarget(f[name]);assert(promisedEnergy(f)<=f.high-f.box.store.energy,'role order cannot overbook quantity');}
+ assert.equal(f.near.memory.haulDelivery?.amount,200,'merely running empty planners first must not defeat ready cargo');
+}
+for(const order of [['near','second'],['second','near']]){
+ const f=loadedReservationFixture();f.second=f.creep('second-ready','hauler',19,27,100,100);
+ for(const name of order){policy.haulTarget(f[name]);assert(promisedEnergy(f)<=f.high-f.box.store.energy,'multiple ready claimants reclaim atomically');}
+ assert.equal((f.near.memory.haulDelivery?.amount||0)+(f.second.memory.haulDelivery?.amount||0),200);
+ assert.equal(f.incumbent.memory.haulDelivery.amount,231);assert.equal(f.far.memory.haulDelivery.amount,100);
+}
+report.checks.push('Both planner orders and both ready-courier orders preserve funded deliveries and never multiply the 200 reclaimable energy.');
+{
+ const f=loadedReservationFixture();f.near.store.energy=0;f.near.memory.loaded=false;
+ assert.equal(policy.haulTarget(f.near),null);assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyB.memory.haulDelivery.amount,100);
+ report.checks.push('An empty planner cannot steal another future pickup promise.');
+}
+{
+ const f=fixture(),c=f.creep('waiting-near','hauler',20,27);f.delivery(c);
+ f.creep('occupant-a','hauler',17,24);f.creep('occupant-b','hauler',16,24);
+ assert(policy.deliverHaul(c,f.box),'temporarily occupied endpoints wait before classifying the node as failed');
+ assert(c.memory.haulDelivery);assert(!c.memory.haulBlocked?.[f.box.id]);
+ delete context.Game.creeps['occupant-a'];context.Game.time++;c.actions=[];
+ assert(policy.deliverHaul(c,f.box));assert(c.actions.some(a=>a[0]==='move'&&a[1]===17&&a[2]===24));
+ report.checks.push('Temporary endpoint contention retains the amount task and resumes when a tile clears.');
+}
+{
+ const f=loadedReservationFixture(),m=context.Memory.frontier.rooms[f.room.name];m.economyControl.developmentBudget=13.67;
+ const high=policy.deliveryNeeds(f.room).find(n=>n.node.id===f.box.id).high,gap=Math.floor(high-f.box.store.energy);
+ assert(!Number.isInteger(high),'fixture deliberately exercises a fractional consumption-derived high watermark');
+ policy.haulTarget(f.near);
+ const amounts=Object.values(context.Game.creeps).map(c=>c.memory.haulDelivery).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
+ report.limitations.push({case:'fractional-high-watermark',high,integerGap:gap,amounts,total:promisedEnergy(f)});
+ if(!amounts.every(n=>Number.isInteger(n)&&n>=1)||promisedEnergy(f)>gap)
+  regressions.push('L003 integer boundary: fractional high watermarks must leave only positive integer tasks within floor(high-stock).');
+ // Repeated callers must preserve this invariant; no residual fraction may be
+ // recreated when soft promises shrink, disappear, or are requested again.
+ for(const c of [f.emptyA,f.emptyB,f.far,f.incumbent,f.near])policy.haulTarget(c);
+ const after=Object.values(context.Game.creeps).map(c=>c.memory.haulDelivery).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
+ if(!after.every(n=>Number.isInteger(n)&&n>=1)||promisedEnergy(f)>gap)
+  regressions.push('L003 integer boundary: repeated role planning must preserve integer quantities and the floored high watermark.');
+}
+for(const previousAmount of [0.14999999999997726,60.14999999999998]){
+ const f=loadedReservationFixture();f.emptyA.memory.haulDelivery.amount=previousAmount;
+ const legacy=f.emptyA.memory.haulDelivery;policy.haulTarget(f.emptyA);
+ const current=f.emptyA.memory.haulDelivery;
+ if(current===legacy||current&&(!Number.isInteger(current.amount)||current.amount<1))
+  regressions.push('L003 integer boundary: a legacy fractional delivery task must be discarded or replaced by a valid integer task.');
+ report.limitations.push({case:'legacy-fractional-task',before:previousAmount,after:current?.amount??null,replaced:current!==legacy});
 }
 console.log(JSON.stringify(report,null,2));
 assert.deepEqual(regressions,[],'Required behavior regressions: '+regressions.join(' '));
