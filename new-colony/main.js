@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.14';
+const VERSION = '2026-09-25.15';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
 // Plans and station seats are plain local coordinates, which the engine's
@@ -618,7 +618,7 @@ function deliveryNeeds(room,includeStorage=true) {
 }
 function validDelivery(c,task) {
     const target=task&&Game.getObjectById(task.id);
-    return task&&task.room===c.room.name&&task.expires>Game.time&&task.amount>0&&
+    return task&&task.room===c.room.name&&task.expires>Game.time&&Number.isInteger(task.amount)&&task.amount>0&&
         (task.sent===undefined||task.sent===Game.time)&&target&&target.structureType&&target.store&&target.store.getFreeCapacity(E)>0;
 }
 // Pickup plans reserve future capacity, but loaded cargo and accepted intents
@@ -643,7 +643,7 @@ function haulTarget(c,includeStorage=true) {
     const commitments=id=>vals(Game.creeps).filter(peer=>peer.name!==c.name&&peer.memory.haulDelivery&&peer.memory.haulDelivery.id===id&&validDelivery(peer,peer.memory.haulDelivery));
     const reserved=id=>commitments(id).reduce((n,peer)=>n+(ready?fundedDelivery(peer,peer.memory.haulDelivery):peer.memory.haulDelivery.amount),0);
     const needs=deliveryNeeds(room,includeStorage).filter(n=>!blocked[n.node.id]&&n.node.id!==c.memory.withdrawnFrom)
-        .map(n=>({...n,gap:Math.max(0,n.high-energy(n.node)),amount:Math.max(0,n.high-energy(n.node)-reserved(n.node.id))})).filter(n=>n.amount>0);
+        .map(n=>({...n,gap:Math.max(0,Math.floor(n.high-energy(n.node))),amount:Math.max(0,Math.floor(n.high-energy(n.node)-reserved(n.node.id)))})).filter(n=>n.amount>0);
     // Finish a batch inside its priority class; small normal gaps wait for the
     // next batch, while spawn/defense/controller emergency gaps remain urgent.
     needs.sort((a,b)=>a.priority-b.priority||Number(b.node.id===task?.id)-Number(a.node.id===task?.id)||range(c,a.node)-range(c,b.node));
