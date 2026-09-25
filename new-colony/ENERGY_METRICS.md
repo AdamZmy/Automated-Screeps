@@ -51,6 +51,21 @@ The room pool retains the existing deductions for recurring replacement, mainten
 
 `Memory.frontier.rooms[room].developmentCredit` is a constant-size balance, and `development` is one current-tick diagnostic record. Its `*IntentEnergy` fields are expected energy costs, **not actual ledger measurements**: the event ledger and fresh online progress remain the accounting authority. RCL1/downgrade emergencies and independent pioneer behavior retain their previous recovery policy. This change does not resize existing bodies or complete the P0's body/logistics/long-window acceptance.
 
+## Worker capacity and fixed-node access (`2026-09-25.12`)
+
+Staffing capacity is estimated separately from the shared spending pool. Fixed
+controller workers are compared using the useful WORK that fits the actual seats;
+mobile workers include a conservative refill/travel duty estimate. These estimates
+are planning inputs, not measured energy output. Prospective body upkeep is
+reserved before a capacity increase, and existing workers are not killed or
+recycled to force a body migration.
+
+A stronger stationary worker can replace a weak seat occupant only when its
+bounded useful gain covers its spawn cost; pending births suppress duplicates.
+Overflow workers use safe parking away from the delivery port and planned roads,
+and refuel without draining the protected controller node. The actual event
+ledger, fresh transfer events, source stock and CPU remain the acceptance evidence.
+
 ## Dashboard and persistent review
 
 - Project: `/Users/zmy/screepsworld/dashboard`.

@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment}=ctx.module.exports.test;
+vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty};',ctx);
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty}=ctx.module.exports.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -866,3 +866,89 @@ console.log('PASS: shared budget lends both ways across travel/refuel/empty/spaw
  const f=sharingFixture();const pioneer=f.creep('independent-pioneer','pioneer',21,28,100,100,[C.WORK,C.CARRY,C.MOVE]);pioneer.memory.loaded=true;
  assert.equal(buildAllowed(pioneer),true,'independent pioneer construction must retain its recovery policy in an owned room');
 }
+
+// Body/staffing regressions use the full reviewed plan and real local terrain.
+const countPart=(b,p)=>b.filter(q=>(q.type||q)===p).length;
+const bodyCost=b=>b.reduce((n,p)=>n+C.BODYPART_COST[p.type||p],0);
+{
+ const fixed=body('upgrader',800,{stationary:true}),mobile=body('upgrader',800),builder=body('builder',800);
+ assert.deepEqual([countPart(fixed,C.WORK),countPart(fixed,C.CARRY),countPart(fixed,C.MOVE),bodyCost(fixed)],[6,2,2,800]);
+ assert.deepEqual([countPart(mobile,C.WORK),countPart(mobile,C.CARRY),countPart(mobile,C.MOVE)],[5,2,4]);
+ assert.deepEqual([countPart(builder,C.WORK),countPart(builder,C.CARRY),countPart(builder,C.MOVE),bodyCost(builder)],[3,4,4,700]);
+ const f=fixture();f.structure(C.STRUCTURE_SPAWN,'spawn',21,28,300,300);
+ assert(workerDuty(f.room,fixed,f.room.controller,true)>.98,'short one-time slower transit still leaves over 98% useful life');
+ assert(workerDuty(f.room,fixed,f.room.controller,true)*6>workerDuty(f.room,mobile,f.room.controller,true)*5,'extra stationary WORK repays its slower one-time journey');
+}
+function capacityFixture(work=[4,4,1,1,1]){
+ const f=stationFixture(),plan=JSON.parse(readSource('fixtures/layout-plan-reviewed.json')),world=JSON.parse(readSource('fixtures/layout-world-before.json'));
+ ctx.global.frontierExpansion=null;
+ for(const s of world.structures)if(!f.room.objects.some(o=>o.id===s.id))f.structure(s.type,s.id,s.x,s.y,1000,1000);
+ ctx.Memory.frontier.rooms[f.room.name].plan=plan;
+ for(const c of f.ups)delete ctx.Game.creeps[c.name];
+ const station=controllerStation(f.room);
+ f.ups=work.map((n,i)=>{const p=station.seats[i]||station.port,c=f.creep('capacity-'+i,'upgrader',p.x,p.y,50,100,[...Array(n).fill(C.WORK),C.CARRY,C.CARRY,C.MOVE,C.MOVE]);c.memory.loaded=true;return c;});
+ const sp=f.room.find(C.FIND_MY_SPAWNS)[0];sp.spawnCreep=(body,name,options)=>{f.request={body,name,memory:options.memory};return C.OK;};
+ delete ctx.Memory.frontier.rooms[f.room.name].economyControl;
+ const control=updateEconomy(f.room);Object.assign(control,{target:8,buildEnergyTarget:0,usefulTarget:15.6,developmentBudget:15.6,carry:f.haulers.reduce((n,c)=>n+c.getActiveBodyparts(C.CARRY),0)});
+ return Object.assign(f,{control,station});
+}
+{
+ const f=capacityFixture(),roster=()=>Object.values(ctx.Game.creeps),demand=workforceDemand(f.room,f.control,roster());
+ assert(demand.upgradeWork>=16,'slow 8/t priority share cannot strand a sustainable 15.6/t no-site pool');
+ assert(demand.effectiveUp<10,'five bodies nominally11WORK provide only the top four seats, discounted for initial travel');
+ assert(demand.upgrade,'a profitable 6WORK body may replace a small seat occupant without recycling it');
+ spawnRoom(f.room);assert.equal(f.request.memory.role,'upgrader');assert.equal(countPart(f.request.body,C.WORK),6);
+ assert.equal(f.control.target,8);assert.equal(f.control.developmentBudget,15.6,'staffing never enlarges the shared expenditure pool');
+ const next=f.creep('capacity-new','upgrader',21,28,0,100,f.request.body);next.spawning=true;
+ f.request=null;spawnRoom(f.room);assert.equal(f.request,null,'a pending larger occupant prevents repeated capacity births');
+ assert(f.ups.every(c=>ctx.Game.creeps[c.name]===c),'capacity improvement never kills or recycles incumbents');
+ next.spawning=false;next.pos=f.pos(16,24);for(const c of f.ups)work(c);work(next);
+ assert(next.memory.upgradeSeat,'stronger arrived body displaces a small incumbent');
+ const seated=roster().filter(c=>c.memory.upgradeSeat);
+ assert.equal(seated.length,4);assert.equal(seated.reduce((n,c)=>n+c.getActiveBodyparts(C.WORK),0),15);
+ assert.equal(new Set(seated.map(c=>c.memory.upgradeSeat.x+','+c.memory.upgradeSeat.y)).size,4);
+}
+{
+ const f=capacityFixture(),c=f.ups[4];
+ c.pos=f.pos(17,24);c.store[C.RESOURCE_ENERGY]=10;work(c);
+ assert(!c.memory.upgradeSeat);assert(c.memory.upgradeParking,'the real reviewed layout has a safe overflow parking cell');
+ assert(c.actions.some(a=>a[0]==='move'),'live-shaped no-seat upgrader must leave delivery port immediately');
+ assert(!c.actions.some(a=>a[0]==='upgrade'||a[0]==='withdraw'),'port clearing takes precedence over holding the tile for work/refill');
+ const parking={...c.memory.upgradeParking},plan=ctx.Memory.frontier.rooms[f.room.name].plan;
+ assert(!plan.structures.some(s=>(s.type===C.STRUCTURE_ROAD||C.OBSTACLE_OBJECT_TYPES.includes(s.type))&&s.x===parking.x&&s.y===parking.y));
+ assert(![[17,24],[16,24]].some(([x,y])=>parking.x===x&&parking.y===y));
+ c.pos=f.pos(parking.x,parking.y);ctx.Game.time++;c.actions.length=0;work(c);
+ assert(c.actions.some(a=>a[0]==='upgrade'));assert(!c.actions.some(a=>a[0]==='move'),'fueled overflow stays at its safe range-three parking cell');
+ c.store[C.RESOURCE_ENERGY]=0;c.memory.refuelTarget={id:f.box.id,room:f.room.name,kind:'take',progress:ctx.Game.time};c.actions.length=0;ctx.Game.time++;work(c);
+ assert(c.actions.some(a=>a[0]==='withdraw'&&a[1]!==f.box.id),'empty overflow uses source/core stock instead of returning to the fixed port');
+ assert.notEqual(c.memory.refuelTarget?.id,f.box.id,'migration invalidates an old controller-box refuel target');
+ const carrier=f.haulers.find(o=>o.store[C.RESOURCE_ENERGY]>0);carrier.pos=f.pos(17,24);carrier.transfer=()=>C.OK;carrier.memory.loaded=true;
+ f.box.store[C.RESOURCE_ENERGY]=0;carrier.actions.length=0;haul(carrier);
+ assert(carrier.actions.some(a=>a[0]==='move'),'courier can transfer then leave the unblocked port');
+}
+{
+ const f=capacityFixture([6,6,4,4]);assert.equal(workforceDemand(f.room,f.control,Object.values(ctx.Game.creeps)).upgrade,false,'sufficient seat capacity does not buy redundant WORK');
+ const dying=capacityFixture();for(const c of dying.ups)if(c.getActiveBodyparts(C.WORK)===1)c.ticksToLive=100;
+ assert.equal(workforceDemand(dying.room,dying.control,Object.values(ctx.Game.creeps)).upgrade,false,'small remaining gain before normal replacement cannot repay an early body');
+ const poor=capacityFixture();Object.assign(poor.control,{target:2,usefulTarget:3,developmentBudget:3});
+ const demand=workforceDemand(poor.room,poor.control,Object.values(ctx.Game.creeps));
+ assert(!demand.upgrade);assert(countPart(demand.upgradeBody,C.WORK)<=3,'low income cannot demand an800-energy discretionary upgrader');
+ assert.equal(poor.control.developmentBudget,3,'trusted small/drawdown pool remains binding');
+ const f2=capacityFixture();ctx.Game.creeps[Object.keys(ctx.Game.creeps).find(n=>ctx.Game.creeps[n].memory.role==='miner')].ticksToLive=80;
+ spawnRoom(f2.room);assert.equal(f2.request.memory.role,'miner','critical miner renewal still outranks profitable seat improvement');
+}
+{
+ const f=pipelineFixture();f.room.energyAvailable=f.room.energyCapacityAvailable=800;f.room.sites[0].pos=f.pos(22,32);
+ const control=updateEconomy(f.room);Object.assign(control,{buildEnergyTarget:13,developmentBudget:15,usefulTarget:15});
+ const roster=()=>Object.values(ctx.Game.creeps),demand=workforceDemand(f.room,control,roster());
+ assert(demand.builderWork>Math.ceil(control.buildEnergyTarget/C.BUILD_POWER),'mobile construction demand includes refill/travel duty');
+ assert(demand.effectiveBuild<15,'three nominal building WORK cannot be treated as continuous15/t with refills');
+ assert(demand.build);assert(countPart(demand.builderBody,C.WORK)>=2,'a real sustained construction deficit gets a useful batched worker');
+ f.room.sites[0].progress=f.room.sites[0].progressTotal-100;
+ const finishing=workforceDemand(f.room,control,roster());assert(!finishing.build,'existing builders finish a tiny site before another birth could contribute');
+ delete ctx.Game.creeps.builder;
+ const tiny=workforceDemand(f.room,control,roster());assert(bodyCost(tiny.builderBody)<=300,'an unstaffed small road cannot create an unnecessary700-energy body');
+ f.room.sites[0].progress=0;Object.assign(control,{buildEnergyTarget:2,developmentBudget:4,usefulTarget:4});
+ const poor=workforceDemand(f.room,control,roster());assert(countPart(poor.builderBody,C.WORK)<=2,'low construction income sizes down future bodies');
+}
+console.log('PASS:800-energy stationary/mobile/builder bodies; lifespan and refill duty; seat-capacity demand, profitable replacement, pending suppression, real-plan port/approach clearing, retained incumbents, critical renewal, low-income and finishing-site protections');

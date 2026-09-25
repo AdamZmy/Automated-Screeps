@@ -6,6 +6,18 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.3.2 — 2026-09-25
+
+- Keep overflow controller workers off delivery ports and planned approach roads,
+  and reserve fixed seats for viable workers with useful WORK capacity (#1, #4).
+- Separate sustainable development spending from worker capacity estimates;
+  account for initial travel, mobile refill duty and prospective replacement cost.
+- Use station-aware upgrader and fuel-aware builder bodies. Admit a stronger
+  fixed-seat worker only for an uncovered, worthwhile capacity gain; preserve
+  incumbent lives, emergency spawning and the shared spending limit.
+- Game build `2026-09-25.12`; live acceptance evidence is recorded separately in
+  the inspection journal and Issues. Sustainable 90% utilization remains open.
+
 ## 0.3.1 — 2026-09-25
 
 - Align journal-writer validation with the deployed reader for malformed URL
