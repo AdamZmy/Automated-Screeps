@@ -2,6 +2,12 @@
 
 Production: https://screeps-energy-observatory.vercel.app
 
+Inspection journal: https://screeps-energy-observatory.vercel.app/logs . This independent page reads public per-run logs from the existing GitHub repository through `/api/inspections`; it does not read Screeps credentials or call game APIs. Records include findings, linked Issue progress, actions, verification and next steps. Dates are archived in UTC; displayed times use the viewer's local timezone. Each run has a shareable `/logs?id=<run-id>` URL and a GitHub Markdown record with revision history.
+
+The index shows the latest 50 runs; choosing a date loads that day's full index. Initial `running` records and later progress/final updates share one run ID. Kind `setup` is system work and `backfill` is explicitly historical; neither is silently treated as a fresh game observation. Empty, unavailable and stale states are distinct. The page polls while visible every60s; the read API uses short bounded caching, a fixed GitHub source, no secrets and no write methods. Pushing journal files updates the page without a Vercel redeployment. Format and publication procedure live in `operations/inspection-format.md` and `operations/inspection-logging.md` at repository root.
+
+Journal checks: `npm test` includes the API suite; `node verify-logs-ui.cjs` exercises deep links, filtering, progress/evidence, error retention and text safety. Log-only commits run the small Python archive validator in GitHub Actions instead of all game regressions.
+
 Latest production: `dpl_2QHBtL9eZefWFx8L9oyVX1y4ytet`, 2026-09-25. [Room layout atlas](https://screeps-energy-observatory.vercel.app/#layout) now publishes reviewed revision `2026-09-25-international-adapter-1`: 205 formal placements, 3 formal Links and 3 explicitly optional reservations. Geometry exactly matches the live API plan; observed construction snapshot tick73930304 has 36 built / 3 sites / 166 planned. Link directions, use conditions and advisory neighboring-room roles are included without extra game Memory or polling. Production API additionally verified at tick73930409, game build `2026-09-25.10`, `stale=false`; downloaded production assets match local bytes and combined energy/layout DOM checks pass.
 
 Live production data verified 2026-09-25 at 03:54 UTC and again at 03:56 UTC with advancing game ticks. Vercel CLI login and sensitive production credential configuration are complete. Deployment: dpl_4AxSEJv7tEvHECspazQSf6ei7bz1. The previous NOT_CONFIGURED blocker is resolved.

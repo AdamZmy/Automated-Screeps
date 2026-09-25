@@ -6,13 +6,27 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
-## Unreleased
+## 0.3.0 — 2026-09-25
+
+- Add one GitHub-backed journal per inspection, including unchanged, blocked,
+  skipped and failed runs. Preserve same-run progress as Git revisions and keep
+  bounded latest-run summaries alongside complete date archives (#12).
+- Add the `/logs` page with date/status selection, shareable run details, linked
+  Issues, findings, progress, actions, checks and next steps. The read-only API
+  fetches public GitHub data without game credentials; new logs need no redeploy.
+- Verify strict log schemas, safe text/link rendering, concurrency and stale/error
+  behavior. Log-only pushes use a small archive check instead of game regression CI.
+- Separately, game build `2026-09-25.11` shares unused construction and upgrading
+  budgets while preserving the combined development pool (#4, commit `2c1c04a`).
+  Five game regression suites passed; long-term energy and logistics acceptance
+  remains open and must be judged from fresh game windows.
 
 - Move the 20-minute inspection to independent scheduled conversations (#11), restoring
   work from a bounded CURRENT_STATE handoff, Issue checkpoints and fresh API data.
 - Load historical logs and research only when needed; check previous coordinator
   and worker ownership before a fresh run takes over files or deployment.
-- Game build and dashboard deployment are unchanged by this operations update.
+- The conversation migration itself changes no game behavior; the `.11` budget
+  fix and journal website are tracked independently in this release.
 
 ## 0.2.0 — 2026-09-25
 

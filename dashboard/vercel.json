@@ -3,7 +3,8 @@
   "framework": null,
   "outputDirectory": "public",
   "regions": ["iad1"],
-  "functions": {"api/telemetry.js": {"maxDuration": 20}},
+  "functions": {"api/telemetry.js": {"maxDuration": 20}, "api/inspections.js": {"maxDuration": 20}},
+  "rewrites": [{"source": "/logs", "destination": "/logs.html"}],
   "headers": [{"source": "/(.*)", "headers": [
     {"key": "X-Content-Type-Options", "value": "nosniff"},
     {"key": "Referrer-Policy", "value": "no-referrer"},

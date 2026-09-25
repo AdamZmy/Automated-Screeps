@@ -47,7 +47,23 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 5. 新问题先搜索所有开放及已关闭 Issue。相同未解决问题更新原 Issue；复发问题重开并补新证据。
 6. 本轮 root 统一 API、整合、Git 提交和串行部署。写入结果不明先回读；不盲重试。
    完成后更新 CURRENT_STATE，并在 Issue 检查点记录版本/提交/部署/实际 tick；有实际变更或关键证据才追加 LIVE_STATUS。
-   普通无变化巡检不重复追加历史；只在所有验收条件满足时关闭 Issue。用户授权的子代理工作不继承完整聊天，只传该 Issue 所需文件与脱敏证据。
+   普通无变化巡检不重复追加LIVE_STATUS，但仍必须保存下面规定的独立批次日志；只在所有验收条件满足时关闭 Issue。用户授权的子代理工作不继承完整聊天，只传该 Issue 所需文件与脱敏证据。
+
+## 每轮巡检日志
+
+每轮（包括无变化、受阻、跳过或失败）在 `operations/inspections/` 保存一份独立批次JSON及Markdown。
+操作步骤见 `operations/inspection-logging.md`，数据约定见 `operations/inspection-format.md`。
+开始时用 `python3 tools/inspection_log.py init --kind scheduled --title '本轮巡检'` 创建running记录，返回的ID贯穿本轮。
+重要阶段与结束时编辑该记录，经 `python3 tools/inspection_log.py write --file <JSON路径>` 校验并重新生成可读Markdown和索引。
+写清：发现的问题与真实tick/证据、对应Issue和严重程度；待办的当前进度/负责人/下一步；实际动作；验证通过/失败/待验证；下一轮检查点。
+本轮状态completed只表示本轮结束，不代表所有问题解决。缺少新观测要写null，使用旧证据明确说明；只可按真实证据backfill，不能伪造过去每轮记录。
+开始、重要进展和结束时，把本轮JSON/Markdown及受影响的两个索引显式Git提交并推送；不混入他人未完成代码。
+每轮至少发布起始和结束状态；若GitHub不可用，本地记录保留待同步，不能声称已发布，下一轮先恢复未推送日志。
+若发现同ID仍running但其负责任务已结束，核对真实结果后补最终状态；无法核验就保留未完成，不能按经过时间自动标成功。
+游戏代码/部署的文件所有权仍按上节核验；记录本轮skipped日志不等于有权接管别人的文件。Git写入也需串行，避免与其他协调者同时commit/push。
+公开日志只放精选证据，禁止凭据、完整Memory、私人绝对路径或整段聊天。Issues管理问题生命周期，日志保留每轮当时的检查过程；不要每轮重复新建相同问题Issue。
+页面 https://screeps-energy-observatory.vercel.app/logs 动态读取GitHub已发布记录，新日志无需重新部署网页。
+默认最近50轮，可按UTC日期查看完整归档；时间按浏览者本机时区显示。通知仍仅在有意义变化时发送，记录日志不等于每轮打扰用户。
 
 不应为了保持工作者忙碌而制造任务。RCL/储备不够时保留 planned；其他任务改动同一文件时等待交接。
 GitHub不可用时，保存带时间戳的本地检查点并继续已授权且安全的游戏工作；恢复后补录。

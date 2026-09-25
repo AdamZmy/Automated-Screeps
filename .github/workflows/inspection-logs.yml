@@ -1,0 +1,31 @@
+name: Inspection journal validation
+
+on:
+  push:
+    paths:
+      - 'operations/inspections/**'
+      - 'tools/inspection_log.py'
+      - '.github/workflows/inspection-logs.yml'
+  pull_request:
+    paths:
+      - 'operations/inspections/**'
+      - 'tools/inspection_log.py'
+      - '.github/workflows/inspection-logs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate journal schema and archive indices
+        run: python3 tools/inspection_log.py validate

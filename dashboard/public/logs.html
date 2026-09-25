@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a111b"><meta name="color-scheme" content="dark">
+  <meta name="description" content="逐次查看 Screeps 基地巡检发现、处理进度和验证证据。">
+  <title>巡检日志 · Screeps Observatory</title>
+  <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/logs.css">
+  <script src="/logs.js" defer></script>
+</head>
+<body class="logs-page">
+  <a class="skip-link" href="#run-detail">跳到本次巡检</a>
+  <aside class="rail" aria-label="面板导航">
+    <a class="brand-mark" href="/" aria-label="Screeps 能量账本">S<span>›</span></a>
+    <a class="rail-link" href="/" aria-label="能量总览"><span class="nav-symbol" aria-hidden="true">▦</span><span>总览</span></a>
+    <a class="rail-link" href="/#layout" aria-label="房间布局"><span class="nav-symbol" aria-hidden="true">⌘</span><span>布局</span></a>
+    <a class="rail-link active" href="/logs" aria-current="page"><span class="nav-symbol" aria-hidden="true">≡</span><span>巡检</span></a>
+    <div class="rail-end"><span class="rail-dot"></span><span>INSPECTION JOURNAL</span></div>
+  </aside>
+  <div class="workspace">
+    <header class="masthead"><div class="wordmark">SCREEPS <span>/</span> <span>OPERATIONS JOURNAL</span></div><a class="source-link" href="https://github.com/AdamZmy/Automated-Screeps/tree/main/operations/inspections" target="_blank" rel="noopener noreferrer">GitHub 归档 ↗</a></header>
+    <main>
+      <div class="page-heading"><div><div class="eyebrow">EVERY INSPECTION, ON RECORD</div><h1>巡检日志<span class="title-dot">.</span></h1><p class="subtitle">发现了什么，采取了什么行动，还有什么需要跟进。</p></div><button class="icon-button" id="logs-refresh" type="button">↻ 刷新日志</button></div>
+      <div class="journal-intro"><p>每轮一个批次，进度持续补充，GitHub 保留修订。</p><span id="sync-label" role="status">正在读取日志…</span></div>
+      <div id="logs-notice" class="notice" role="status" hidden></div>
+      <section class="toolbar logs-toolbar" aria-label="日志筛选">
+        <div class="log-filters"><label for="log-day">归档日期 <span>UTC</span></label><select id="log-day"><option value="">最近 50 次</option></select><label for="log-status">批次状态</label><select id="log-status"><option value="">全部状态</option><option value="running">进行中</option><option value="completed">本轮完成</option><option value="blocked">受阻</option><option value="skipped">跳过</option><option value="failed">失败</option></select></div><span class="list-count mono" id="log-count">— 个批次</span>
+      </section>
+      <div class="journal-grid">
+        <section class="run-browser" aria-labelledby="runs-heading"><div class="list-heading"><h2 id="runs-heading">巡检批次</h2><span>最新优先</span></div><div id="run-list" aria-live="polite"><div class="list-empty">正在读取 GitHub 记录…</div></div></section>
+        <article id="run-detail" class="panel run-detail" aria-label="本次巡检详情" aria-live="polite" tabindex="-1"><div class="detail-empty"><span class="empty-glyph" aria-hidden="true">≡</span><h2>每一次检查都有迹可循</h2><p>选择左侧批次，查看问题、进度和验证证据。</p></div></article>
+      </div>
+      <footer><span>批次状态描述本轮执行情况，不代表殖民地所有问题已经解决。</span><span>日期按 UTC 归档 · 时间按本机时区显示 · 每 60 秒检查更新</span></footer>
+    </main>
+  </div>
+</body>
+</html>

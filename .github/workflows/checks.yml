@@ -2,7 +2,11 @@ name: Offline checks
 
 on:
   push:
+    paths-ignore:
+      - 'operations/inspections/**'
   pull_request:
+    paths-ignore:
+      - 'operations/inspections/**'
   workflow_dispatch:
 
 permissions:
@@ -57,5 +61,7 @@ jobs:
         run: node verify-ui.cjs
       - name: Verify layout dashboard DOM
         run: node verify-layout-ui.cjs
+      - name: Verify inspection journal DOM
+        run: node verify-logs-ui.cjs
       - name: Verify layout snapshot exporter
         run: python3 verify-layout-export.py
