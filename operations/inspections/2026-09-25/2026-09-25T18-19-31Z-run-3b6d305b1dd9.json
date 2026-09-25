@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
+  "kind": "scheduled",
+  "startedAt": "2026-09-25T18:19:31.338Z",
+  "updatedAt": "2026-09-25T18:19:31.372Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "周期巡检与日志一致性修复",
+  "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
+  "game": null,
+  "findings": [],
+  "tasks": [],
+  "actions": [
+    {
+      "at": "2026-09-25T18:19:31.338Z",
+      "description": "核验上轮协调者和活动Issue owner",
+      "status": "done",
+      "result": "本轮01a0d9b7-4b5d-7160-ba1b-f2ed83639448；旧root01a0d7a3-fbe2-72e3-9871-1b834e8eb22d为idle/completed，所有活动checkpoint owner均为该root。"
+    }
+  ],
+  "checks": [],
+  "next": [],
+  "references": []
+}
