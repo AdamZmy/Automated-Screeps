@@ -3,11 +3,11 @@
   "id": "2026-09-25T13-29-21Z-run-0e00ac246a7c",
   "kind": "scheduled",
   "startedAt": "2026-09-25T13:29:21.826Z",
-  "updatedAt": "2026-09-25T14:19:26.995Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "周期巡检：核验工作归属",
-  "summary": "已读取活动Issue；原协调者及子代理即时状态无法核验，保留文件归属，准备结束为skipped。",
+  "updatedAt": "2026-09-25T14:20:51.815Z",
+  "completedAt": "2026-09-25T14:20:51.783Z",
+  "status": "skipped",
+  "title": "巡检跳过：原任务状态无法核验",
+  "summary": "本轮已结束。活动Issue #1/#4的原协调者及其子代理父任务状态unknown，依交接规则不接管。未调用游戏API，无新tick；仅保存本轮日志，保留原文件和Issue归属。",
   "game": null,
   "findings": [
     {
@@ -56,8 +56,14 @@
     {
       "at": "2026-09-25T14:19:26.894Z",
       "description": "发布本轮起始日志",
-      "status": "in-progress",
-      "result": "仅提交本轮JSON/Markdown及由已提交历史生成的一致索引；保留其他修改。"
+      "status": "done",
+      "result": "起始记录提交e21321a9234da6aa3832d1b0a0a127da50fcc664已推送；远端main回读一致。只含本轮JSON/Markdown和一致索引，未混入他人代码或旧批次未提交修改。"
+    },
+    {
+      "at": "2026-09-25T14:20:51.783Z",
+      "description": "结束本轮并生成skipped记录",
+      "status": "done",
+      "result": "不修改CURRENT_STATE、LIVE_STATUS或活动Issue；不认领代码、不派重复审视者、不部署游戏或网站。终态日志按显式路径单独提交。"
     }
   ],
   "checks": [
@@ -75,6 +81,11 @@
       "name": "游戏现场与能源窗口",
       "result": "pending",
       "detail": "本轮未调用游戏API；无新tick、版本、CPU、能效或运输结论，game=null。"
+    },
+    {
+      "name": "起始日志发布及档案一致性",
+      "result": "passed",
+      "detail": "本地16轮/1日校验通过；起始发布档案11轮/1日校验通过；起始commit及远端main均为e21321a。其他批次仍保留各自待确认状态。"
     }
   ],
   "next": [
