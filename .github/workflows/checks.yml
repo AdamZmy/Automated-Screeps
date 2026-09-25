@@ -48,9 +48,14 @@ jobs:
           cache-dependency-path: dashboard/package-lock.json
       - name: Install dashboard test dependencies without lifecycle scripts
         run: npm ci --ignore-scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Verify dashboard HTTP behavior
         run: npm test
       - name: Verify energy dashboard DOM
         run: node verify-ui.cjs
       - name: Verify layout dashboard DOM
         run: node verify-layout-ui.cjs
+      - name: Verify layout snapshot exporter
+        run: python3 verify-layout-export.py

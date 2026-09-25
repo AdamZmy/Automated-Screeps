@@ -1,0 +1,332 @@
+{
+  "input": {
+    "worldPath": "layout-world-implementation-before.json",
+    "priorPath": "layout-plan-implementation-before.json",
+    "tick": 73930064
+  },
+  "selected": {
+    "score": 94.05499999999999,
+    "radius": 10,
+    "phase": 0
+  },
+  "candidates": [
+    {
+      "score": 94.05499999999999,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.317,
+        "p95": 7,
+        "max": 7
+      },
+      "counts": {
+        "container": 4,
+        "road": 71,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 41
+      },
+      "adapter": {
+        "radius": 10,
+        "phase": 0,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 94.05499999999999,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.317,
+        "p95": 7,
+        "max": 7
+      },
+      "counts": {
+        "container": 4,
+        "road": 71,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 41
+      },
+      "adapter": {
+        "radius": 11,
+        "phase": 0,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 94.05499999999999,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.317,
+        "p95": 7,
+        "max": 7
+      },
+      "counts": {
+        "container": 4,
+        "road": 71,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 41
+      },
+      "adapter": {
+        "radius": 12,
+        "phase": 0,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 103.80000000000001,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.7,
+        "p95": 6,
+        "max": 9
+      },
+      "counts": {
+        "container": 4,
+        "road": 69,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 42
+      },
+      "adapter": {
+        "radius": 10,
+        "phase": 1,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 107.05,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 5.05,
+        "p95": 8,
+        "max": 8
+      },
+      "counts": {
+        "container": 4,
+        "road": 71,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 41
+      },
+      "adapter": {
+        "radius": 10,
+        "phase": 2,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 107.05,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 5.05,
+        "p95": 8,
+        "max": 8
+      },
+      "counts": {
+        "container": 4,
+        "road": 71,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 41
+      },
+      "adapter": {
+        "radius": 11,
+        "phase": 2,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 109.55000000000001,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.95,
+        "p95": 9,
+        "max": 10
+      },
+      "counts": {
+        "container": 4,
+        "road": 69,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 42
+      },
+      "adapter": {
+        "radius": 11,
+        "phase": 1,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    },
+    {
+      "score": 109.55000000000001,
+      "metrics": {
+        "count": 60,
+        "reachable": 60,
+        "unreachable": 0,
+        "mean": 4.95,
+        "p95": 9,
+        "max": 10
+      },
+      "counts": {
+        "container": 4,
+        "road": 69,
+        "spawn": 3,
+        "extension": 60,
+        "tower": 6,
+        "link": 3,
+        "extractor": 1,
+        "storage": 1,
+        "terminal": 1,
+        "factory": 1,
+        "lab": 10,
+        "observer": 1,
+        "nuker": 1,
+        "powerSpawn": 1,
+        "rampart": 42
+      },
+      "adapter": {
+        "radius": 12,
+        "phase": 1,
+        "lockedBuildings": 36,
+        "suppressedExitGridSeeds": true,
+        "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+        "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+        "optionalNotConstruction": true
+      }
+    }
+  ],
+  "failures": [
+    {
+      "radius": 10,
+      "phase": 3,
+      "error": "upstream road failed service:extension-3"
+    },
+    {
+      "radius": 11,
+      "phase": 3,
+      "error": "upstream road failed service:extension-3"
+    },
+    {
+      "radius": 12,
+      "phase": 2,
+      "error": "upstream road failed service:extension-2"
+    },
+    {
+      "radius": 12,
+      "phase": 3,
+      "error": "upstream road failed service:extension-3"
+    }
+  ]
+}

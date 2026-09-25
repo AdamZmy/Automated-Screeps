@@ -1,6 +1,30 @@
 'use strict';
 const VERSION=3;
 const ROAD_VERSION=1;
+// Reviewed offline layouts are activated once; heavy planning stays off-server.
+// Each id refers to an immutable payload in plans.js, retaining rollback versions.
+const REVIEWED_PLANS={"W21N26":{"id":"e34ce4906df4948c5e55da106059783b1a66f576404649bc211e1f0e529c9bda","revision":"2026-09-25-international-adapter-1","controllerId":"5982fd14b097071b4adbeb7a"}};
+function activateReviewedPlan(room,m){
+    const release=REVIEWED_PLANS[room.name];
+    if(!release||!room.controller||!room.controller.my||room.controller.id!==release.controllerId)return true;
+    if(m.plan&&m.plan.layoutRevision===release.revision)return true;
+    const previous=m.planMigration;
+    if(previous&&previous.id===release.id&&previous.status==='blocked'&&Game.time-previous.at<500)return false;
+    const saved=planArchive(),candidate=saved&&saved.load(room.name,release.id);
+    let reason=!candidate||!candidate.complete||candidate.layoutRevision!==release.revision?'reviewed archive unavailable or incomplete':null;
+    if(!reason){
+        const placements=new Set(candidate.structures.map(s=>s.type+':'+s.x+':'+s.y));
+        const conflicts=room.find(FIND_STRUCTURES).concat(room.find(FIND_MY_CONSTRUCTION_SITES)).filter(s=>
+            CONTROLLER_STRUCTURES[s.structureType]&&!placements.has(s.structureType+':'+s.pos.x+':'+s.pos.y));
+        if(conflicts.length)reason='new building/site outside reviewed layout: '+conflicts.slice(0,3).map(s=>s.structureType+'@'+s.pos.x+','+s.pos.y).join(' ');
+    }
+    if(reason){m.planMigration={id:release.id,status:'blocked',at:Game.time,reason};return false;}
+    const prior=m.plan&&m.plan.layoutRevision||'legacy-v3';
+    m.plan=candidate;
+    m.planMigration={id:release.id,status:'applied',at:Game.time,from:prior,revision:release.revision};
+    delete m.economyControl;delete m.upgradeStation;
+    return true;
+}
 // Full dormant layouts live in the deployed, immutable plans module. Memory
 // keeps candidate metadata; only current colonies and the active target execute
 // building lists. The offline archive is built from acknowledged API snapshots.
@@ -20,7 +44,7 @@ function executionActive(name,room){
 }
 function planSummary(plan,archiveId){
     const summary={};
-    for(const field of ['version','created','complete','missing','anchor','sourcePlans','controllerSpot','counts'])if(field in plan)summary[field]=plan[field];
+    for(const field of ['version','layoutRevision','created','complete','missing','anchor','sourcePlans','controllerSpot','counts'])if(field in plan)summary[field]=plan[field];
     summary.archiveId=archiveId;return summary;
 }
 function maintainColdPlans(activeRoom){
@@ -262,6 +286,7 @@ function classifyRoads(room,plan){
 }
 function ensure(room){
     const m=getMemory(room.name);
+    if(!activateReviewedPlan(room,m))return m.plan;
     if(m.plan&&m.plan.archiveId&&!Array.isArray(m.plan.structures)){
         // Scouts and candidate scoring need only the summary. Incomplete cold
         // archives stay ineligible; they do not trigger full-room work on visit.
@@ -277,7 +302,9 @@ function ensure(room){
     return m.plan;
 }
 function build(room,plan){
-    if(!plan.structures||!room.controller||!room.controller.my)return;
+    if(!plan||!plan.complete||!plan.structures||!room.controller||!room.controller.my)return;
+    const migration=getMemory(room.name).planMigration;
+    if(migration&&migration.status==='blocked')return;
     const level=room.controller.level;
     const structures=room.find(FIND_STRUCTURES),sites=room.find(FIND_MY_CONSTRUCTION_SITES);
     let slots=Math.min(5,8-sites.length,90-Object.keys(Game.constructionSites).length);if(slots<=0)return;
@@ -308,6 +335,6 @@ function build(room,plan){
 module.exports={ensure,makePlan,chooseAnchor,run(room){
     const p=ensure(room);
     if(Game.time%10===0)build(room,p);
-    if(Memory.frontier.showPlan&&p.structures)for(const s of p.structures){if(s.rcl>(Memory.frontier.planViewRcl||8))continue;room.visual.circle(s.x,s.y,{radius:s.type===STRUCTURE_ROAD?.08:.24,fill:room.controller&&s.rcl<=room.controller.level?'#6ce7a3':'#7593b8',opacity:.25,stroke:'transparent'});}
+    if(Memory.frontier.showPlan&&p&&p.structures)for(const s of p.structures){if(s.rcl>(Memory.frontier.planViewRcl||8))continue;room.visual.circle(s.x,s.y,{radius:s.type===STRUCTURE_ROAD?.08:.24,fill:room.controller&&s.rcl<=room.controller.level?'#6ce7a3':'#7593b8',opacity:.25,stroke:'transparent'});}
     maintainColdPlans(room);
 }};

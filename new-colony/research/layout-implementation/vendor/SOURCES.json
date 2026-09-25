@@ -1,0 +1,38 @@
+{
+  "international": {
+    "repository": "https://github.com/The-International-Screeps-Bot/The-International-Open-Source",
+    "commit": "7e5106eebffb9627cf08cf893b6846012d970b90",
+    "license": "MIT",
+    "licenseFile": "LICENSE-International",
+    "files": [
+      {
+        "path": "international/src/constants/general.ts",
+        "upstreamPath": "src/constants/general.ts",
+        "sha256": "8898176e47d38348f7d0825deea4f16f6a2940de05bbe6326505c95c9e4fdbec"
+      },
+      {
+        "path": "international/src/room/construction/communePlanner.ts",
+        "upstreamPath": "src/room/construction/communePlanner.ts",
+        "sha256": "962f245b0593eab25bd2a55e67025502581dcc00293b3bb2350072b67fbe1689"
+      },
+      {
+        "path": "international/src/room/construction/minCut.ts",
+        "upstreamPath": "src/room/construction/minCut.ts",
+        "sha256": "ee5eb7ed05d89634f5ec66f30ade8d03ee037e20812da6e44af0304d65670833"
+      }
+    ]
+  },
+  "overmind": {
+    "repository": "https://github.com/bencbartlett/Overmind",
+    "commit": "5eca49a0d988a1f810a11b9c73d4d8961efca889",
+    "license": "MIT",
+    "licenseFile": "LICENSE-Overmind",
+    "files": [
+      {
+        "path": "overmind/src/roomPlanner/RoadPlanner.ts",
+        "upstreamPath": "src/roomPlanner/RoadPlanner.ts",
+        "sha256": "6a831743ba0196b2a7e842e021e456ed5248b04e988db78d3e781d428fe23df4"
+      }
+    ]
+  }
+}

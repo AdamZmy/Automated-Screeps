@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
-const constants = require('/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/common/lib/constants');
+const constants = require('@screeps/common/lib/constants');
 const K = p => p.x + 50 * p.y;
 const P = k => ({ x: k % 50, y: Math.floor(k / 50) });
 const D = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -92,8 +92,10 @@ function auditDefense(plan, world) {
     // Extractors occupy wall/mineral tiles: their service edge, not the mineral
     // tile itself, establishes whether they are outside the defended perimeter.
     const exposed = !roofed && (outside.visited.has(k) || terrainWall && adjacentOutside.length > 0);
+    const closestExteriorRange = outside.visited.size ? Math.min(...[...outside.visited].map(n => D(P(n), s))) : null;
     return { ...brief(s), role: isResourceService(s) ? 'resource-service' : 'core', terrainWall, roofed,
       exitReachableTile: outside.visited.has(k), exteriorServiceNeighbors: adjacentOutside.map(P), exposed,
+      closestExteriorRange, unroofedWithinRangedReach: !roofed && closestExteriorRange !== null && closestExteriorRange <= 3,
       protectedWithoutIndividualRoof: !outsideWithoutRoofs.visited.has(k) && !(terrainWall && neighbors(k).some(n => outsideWithoutRoofs.visited.has(n))) };
   });
   const byType = {};
@@ -111,6 +113,7 @@ function auditDefense(plan, world) {
       exteriorTerrainTiles: outside.visited.size, byType, exposed: structures.filter(s => s.exposed),
       exposedCoreCount: structures.filter(s => s.exposed && s.role === 'core').length,
       exposedResourceServiceCount: structures.filter(s => s.exposed && s.role === 'resource-service').length,
+      unroofedCoreWithinThreeOfExterior: structures.filter(s => s.role === 'core' && s.unroofedWithinRangedReach).map(brief),
       allStructures: structures,
       currentBuilt: { barrierCount: builtDefenses.size, exposedCoreCount: (world.structures || []).filter(s => coreTypes.has(s.type) && builtOutside.visited.has(K(s))).length },
       limitation: 'This checks perimeter enclosure before breaches; it does not model ranged attack over barriers, tower coverage, barrier hitpoints, or defense cost.' },
@@ -203,7 +206,8 @@ function auditLinks(plan, world, distances) {
   const links = plan.structures.filter(s => s.type === 'link'), controller = world.objects.controller;
   const receiverCandidates = links.filter(l => controller && D(l, controller) <= 3);
   return { controllerReceiverCandidates: receiverCandidates.map(brief),
-    runtime: { minerDeposit: 'main.js:344-348 deposits into an adjacent owned link with room, before source container.',
+    legacyRuntimeReview: { scope: 'Reviewed before layout revision: historical version at tick73929558. This section does not claim that a subsequently edited main.js retains the same behavior.',
+      minerDeposit: 'main.js:344-348 deposits into an adjacent owned link with room, before source container.',
       haulerFill: 'main.js:390 fills ANY link with <600 energy, controller range >3, and no source at range <=2; tags and strategic roles are ignored.',
       routing: 'main.js:563-568 chooses the first owned link at controller range <=3; every other link sends to it when energy>100, cooldown=0, and receiver free>100.',
       withdrawal: 'main.js:225 permits workers to withdraw from any energized link.',
@@ -212,14 +216,17 @@ function auditLinks(plan, world, distances) {
       const adjacentMiners = (plan.sourcePlans || []).filter(s => D(link, s) <= 1);
       const haulerFillEligible = controller && D(link, controller) > 3 && !(world.objects.sources || []).some(s => D(link, s) <= 2);
       const metric = distances.origins.storage?.targets.find(t => t.type === 'link' && t.x === link.x && t.y === link.y);
-      return { ...brief(link), controllerRange: controller ? D(link, controller) : null,
+      return { ...brief(link), declaredRole: link.linkRole || link.role || null, declaredFlow: link.flow || null,
+        controllerRange: controller ? D(link, controller) : null,
         sourceRanges: (world.objects.sources || []).map(s => ({ sourceId: s.id, range: D(link, s) })),
         adjacentAssignedMinerSources: adjacentMiners.map(s => s.id), haulerFillEligible: !!haulerFillEligible,
-        runtimeRole: receiverCandidates.includes(link) ? 'controller receiver; worker withdrawal' : adjacentMiners.length ? 'miner-fed sender to controller' : haulerFillEligible ? 'hauler-fed sender to controller' : 'sender without a normal fill source',
+        legacyInferredRuntimeRole: receiverCandidates.includes(link) ? 'controller receiver; worker withdrawal' : adjacentMiners.length ? 'miner-fed sender to controller' : haulerFillEligible ? 'hauler-fed sender to controller' : 'sender without a normal fill source',
         storageServiceSteps: metric?.steps ?? null, protectedInteriorReachable: metric?.protectedInteriorReachable ?? null,
         selectedToFillQuota: /^link-extra-/.test(link.tag || '') };
     }),
-    finding: 'The two link-extra entries are explicitly added until link count=6 (planner.js:175,204). They are not strictly inert: generic haulers can fill them, then links() forwards energy to the controller. No separate logistical need or placement benefit is checked; the north-pocket extra also requires an exterior detour. Whether a link has actual in-game use is not measurable at RCL3 because no links are built.' };
+    finding: links.some(l => /^link-extra-/.test(l.tag || ''))
+      ? 'Quota-added extra links are present. In the legacy reviewed runtime generic haulers could fill them and forward to the controller; this is not proof of useful demand.'
+      : 'No quota-added extra links are present. Declared roles and spatial station feasibility still require verification against the revised runtime and actual future energy flow.' };
 }
 
 function auditPlan(plan, world) {
@@ -275,7 +282,8 @@ function selfTest() {
   console.log('audit-layout self-tests passed');
 }
 
-module.exports = { auditPlan, auditDefense, auditDistances, auditRoads, auditLinks, flood, summarize, acceptanceFailures, assertAcceptance };
+module.exports = { auditPlan, auditDefense, auditDistances, auditRoads, auditLinks, flood, summarize, acceptanceFailures, assertAcceptance,
+  movementBlocked, serviceTiles, naturalObjects, neighbors, exits };
 if (require.main === module) {
   if (process.argv.includes('--self-test')) selfTest();
   else {

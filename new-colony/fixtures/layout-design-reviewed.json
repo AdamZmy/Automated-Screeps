@@ -1,0 +1,4661 @@
+{
+  "version": 3,
+  "layoutRevision": "2026-09-25-international-adapter-1",
+  "created": 73930064,
+  "anchor": {
+    "x": 21,
+    "y": 28
+  },
+  "sourcePlans": [
+    {
+      "id": "5982fd14b097071b4adbeb7b",
+      "x": 25,
+      "y": 25,
+      "pathLength": 4
+    },
+    {
+      "id": "5982fd14b097071b4adbeb7c",
+      "x": 17,
+      "y": 41,
+      "pathLength": 13
+    }
+  ],
+  "controllerSpot": {
+    "x": 16,
+    "y": 23,
+    "pathLength": 3
+  },
+  "structures": [
+    {
+      "type": "container",
+      "x": 25,
+      "y": 25,
+      "rcl": 1,
+      "priority": 96,
+      "tag": "source-5982fd14b097071b4adbeb7b",
+      "locked": true
+    },
+    {
+      "type": "container",
+      "x": 16,
+      "y": 23,
+      "rcl": 2,
+      "priority": 96,
+      "tag": "controller",
+      "locked": true
+    },
+    {
+      "type": "container",
+      "x": 17,
+      "y": 41,
+      "rcl": 1,
+      "priority": 96,
+      "tag": "source-5982fd14b097071b4adbeb7c",
+      "locked": true
+    },
+    {
+      "type": "road",
+      "x": 21,
+      "y": 27,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "service:extension-3",
+        "service:extension-7",
+        "service:storage",
+        "service:factory-0",
+        "service:lab-output-2",
+        "service:lab-output-5",
+        "service:lab-output-6",
+        "service:spawn-2",
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:extension-3, service:extension-7, service:storage, service:factory-0, service:lab-output-2, service:lab-output-5, service:lab-output-6, service:spawn-2, service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": true
+    },
+    {
+      "type": "road",
+      "x": 24,
+      "y": 26,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7b",
+        "service:terminal-0",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-30",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-58",
+        "service:extension-59"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7b, service:terminal-0, service:tower-3, service:tower-4, service:tower-5, service:extension-11, service:extension-18, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-30, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-55, service:extension-56, service:extension-58, service:extension-59",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7b"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 0
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 40,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 0
+    },
+    {
+      "type": "road",
+      "x": 23,
+      "y": 27,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7b",
+        "service:terminal-0",
+        "service:hub-link",
+        "service:spawn-1",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-30",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-58",
+        "service:extension-59"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7b, service:terminal-0, service:hub-link, service:spawn-1, service:tower-3, service:tower-4, service:tower-5, service:extension-11, service:extension-18, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-30, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-55, service:extension-56, service:extension-58, service:extension-59",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7b"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 1
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 39,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 1
+    },
+    {
+      "type": "road",
+      "x": 22,
+      "y": 27,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7b",
+        "service:terminal-0",
+        "service:hub-link",
+        "service:lab-output-4",
+        "service:spawn-1",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-30",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-58",
+        "service:extension-59"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7b, service:terminal-0, service:hub-link, service:lab-output-4, service:spawn-1, service:tower-3, service:tower-4, service:tower-5, service:extension-11, service:extension-18, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-30, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-55, service:extension-56, service:extension-58, service:extension-59",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7b"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 2
+    },
+    {
+      "type": "road",
+      "x": 15,
+      "y": 38,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 2
+    },
+    {
+      "type": "road",
+      "x": 20,
+      "y": 27,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7b",
+        "source:5982fd14b097071b4adbeb7c",
+        "controller",
+        "service:primary",
+        "service:extension-0",
+        "service:extension-1",
+        "service:extension-2",
+        "service:extension-3",
+        "service:extension-4",
+        "service:tower-0",
+        "service:extension-5",
+        "service:extension-6",
+        "service:extension-7",
+        "service:extension-8",
+        "service:extension-9",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:controller-link",
+        "service:storage",
+        "service:terminal-0",
+        "service:hub-link",
+        "service:factory-0",
+        "service:lab-input-0",
+        "service:lab-input-1",
+        "service:lab-output-2",
+        "service:lab-output-3",
+        "service:lab-output-4",
+        "service:lab-output-5",
+        "service:lab-output-6",
+        "service:lab-output-7",
+        "service:lab-output-8",
+        "service:lab-output-9",
+        "service:spawn-1",
+        "service:spawn-2",
+        "service:tower-1",
+        "service:tower-2",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:observer-0",
+        "service:nuker-0",
+        "service:powerSpawn-0",
+        "service:extension-10",
+        "service:extension-11",
+        "service:extension-12",
+        "service:extension-13",
+        "service:extension-14",
+        "service:extension-15",
+        "service:extension-16",
+        "service:extension-17",
+        "service:extension-18",
+        "service:extension-19",
+        "service:extension-20",
+        "service:extension-21",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-27",
+        "service:extension-28",
+        "service:extension-29",
+        "service:extension-30",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-38",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-43",
+        "service:extension-44",
+        "service:extension-45",
+        "service:extension-46",
+        "service:extension-47",
+        "service:extension-48",
+        "service:extension-49",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-52",
+        "service:extension-53",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-57",
+        "service:extension-58",
+        "service:extension-59",
+        "mineral"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7b, source:5982fd14b097071b4adbeb7c, controller, service:primary, service:extension-0, service:extension-1, service:extension-2, service:extension-3, service:extension-4, service:tower-0, service:extension-5, service:extension-6, service:extension-7, service:extension-8, service:extension-9, service:source-link-5982fd14b097071b4adbeb7c, service:controller-link, service:storage, service:terminal-0, service:hub-link, service:factory-0, service:lab-input-0, service:lab-input-1, service:lab-output-2, service:lab-output-3, service:lab-output-4, service:lab-output-5, service:lab-output-6, service:lab-output-7, service:lab-output-8, service:lab-output-9, service:spawn-1, service:spawn-2, service:tower-1, service:tower-2, service:tower-3, service:tower-4, service:tower-5, service:observer-0, service:nuker-0, service:powerSpawn-0, service:extension-10, service:extension-11, service:extension-12, service:extension-13, service:extension-14, service:extension-15, service:extension-16, service:extension-17, service:extension-18, service:extension-19, service:extension-20, service:extension-21, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-27, service:extension-28, service:extension-29, service:extension-30, service:extension-31, service:extension-32, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-38, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-43, service:extension-44, service:extension-45, service:extension-46, service:extension-47, service:extension-48, service:extension-49, service:extension-50, service:extension-51, service:extension-52, service:extension-53, service:extension-54, service:extension-55, service:extension-56, service:extension-57, service:extension-58, service:extension-59, mineral",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7b",
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 3
+    },
+    {
+      "type": "road",
+      "x": 15,
+      "y": 37,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false,
+      "purpose": "保留已有经济道路"
+    },
+    {
+      "type": "road",
+      "x": 14,
+      "y": 36,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false,
+      "purpose": "保留已有经济道路"
+    },
+    {
+      "type": "road",
+      "x": 15,
+      "y": 35,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 14,
+      "y": 34,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "mineral"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c, mineral",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 6
+    },
+    {
+      "type": "road",
+      "x": 15,
+      "y": 33,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:extension-38",
+        "service:extension-57",
+        "mineral"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c, service:extension-38, service:extension-57, mineral",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 7
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 32,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:extension-8",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:extension-29",
+        "service:extension-38",
+        "service:extension-49",
+        "service:extension-57",
+        "mineral"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:extension-8, service:source-link-5982fd14b097071b4adbeb7c, service:extension-29, service:extension-38, service:extension-49, service:extension-57, mineral",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 8
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 31,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:extension-0",
+        "service:extension-8",
+        "service:extension-9",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:extension-27",
+        "service:extension-29",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-38",
+        "service:extension-49",
+        "service:extension-52",
+        "service:extension-53",
+        "service:extension-57",
+        "mineral"
+      ],
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:extension-0, service:extension-8, service:extension-9, service:source-link-5982fd14b097071b4adbeb7c, service:extension-27, service:extension-29, service:extension-31, service:extension-32, service:extension-38, service:extension-49, service:extension-52, service:extension-53, service:extension-57, mineral",
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 9
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 30,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "service:lab-output-9"
+      ],
+      "purpose": "service:lab-output-9",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 19,
+      "y": 29,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "service:extension-1",
+        "service:extension-2",
+        "service:tower-0",
+        "service:lab-input-1",
+        "service:lab-output-3",
+        "service:extension-12",
+        "service:extension-19",
+        "service:extension-20",
+        "service:extension-21"
+      ],
+      "purpose": "service:extension-1, service:extension-2, service:tower-0, service:lab-input-1, service:lab-output-3, service:extension-12, service:extension-19, service:extension-20, service:extension-21",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 24,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "controller",
+        "service:controller-link",
+        "service:extension-28",
+        "service:extension-43"
+      ],
+      "purpose": "controller, service:controller-link, service:extension-28, service:extension-43",
+      "roadClass": "economy",
+      "sourceIds": [],
+      "roadSwamp": false,
+      "roadOrder": 0
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 25,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "controller",
+        "service:controller-link",
+        "service:extension-14",
+        "service:extension-15",
+        "service:extension-28",
+        "service:extension-43"
+      ],
+      "purpose": "controller, service:controller-link, service:extension-14, service:extension-15, service:extension-28, service:extension-43",
+      "roadClass": "economy",
+      "sourceIds": [],
+      "roadSwamp": false,
+      "roadOrder": 1
+    },
+    {
+      "type": "road",
+      "x": 19,
+      "y": 26,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "controller",
+        "service:controller-link",
+        "service:powerSpawn-0",
+        "service:extension-10",
+        "service:extension-14",
+        "service:extension-15",
+        "service:extension-28",
+        "service:extension-43"
+      ],
+      "purpose": "controller, service:controller-link, service:powerSpawn-0, service:extension-10, service:extension-14, service:extension-15, service:extension-28, service:extension-43",
+      "roadClass": "economy",
+      "sourceIds": [],
+      "roadSwamp": false,
+      "roadOrder": 2
+    },
+    {
+      "type": "road",
+      "x": 20,
+      "y": 28,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road",
+      "locked": true,
+      "purposes": [
+        "service:lab-input-0"
+      ],
+      "purpose": "service:lab-input-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "spawn",
+      "x": 21,
+      "y": 28,
+      "rcl": 1,
+      "priority": 105,
+      "tag": "primary",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 19,
+      "y": 32,
+      "rcl": 2,
+      "priority": 90,
+      "tag": "extension-0",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 21,
+      "y": 32,
+      "rcl": 2,
+      "priority": 90,
+      "tag": "extension-1",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 23,
+      "y": 32,
+      "rcl": 2,
+      "priority": 90,
+      "tag": "extension-2",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 25,
+      "y": 32,
+      "rcl": 2,
+      "priority": 90,
+      "tag": "extension-3",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 27,
+      "rcl": 2,
+      "priority": 90,
+      "tag": "extension-4",
+      "locked": true
+    },
+    {
+      "type": "tower",
+      "x": 20,
+      "y": 31,
+      "rcl": 3,
+      "priority": 100,
+      "tag": "tower-0",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 29,
+      "rcl": 3,
+      "priority": 90,
+      "tag": "extension-5",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 31,
+      "rcl": 3,
+      "priority": 90,
+      "tag": "extension-6",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 26,
+      "y": 31,
+      "rcl": 3,
+      "priority": 90,
+      "tag": "extension-7",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 33,
+      "rcl": 3,
+      "priority": 90,
+      "tag": "extension-8",
+      "locked": true
+    },
+    {
+      "type": "extension",
+      "x": 18,
+      "y": 33,
+      "rcl": 3,
+      "priority": 90,
+      "tag": "extension-9",
+      "locked": true
+    },
+    {
+      "type": "link",
+      "x": 16,
+      "y": 40,
+      "rcl": 5,
+      "priority": 74,
+      "tag": "source-link-5982fd14b097071b4adbeb7c",
+      "linkRole": "source",
+      "sourceId": "5982fd14b097071b4adbeb7c",
+      "flow": "sender",
+      "targetTag": "controller-link",
+      "fallbackTargetTag": "hub-link",
+      "label": "远矿发送 Link",
+      "purpose": "由远矿固定矿工直接装载，优先发送控制器；其余发送核心以替代长途搬运。",
+      "serviceArea": "远矿矿工与核心/控制器链路",
+      "serviceSpot": {
+        "x": 17,
+        "y": 41
+      }
+    },
+    {
+      "type": "link",
+      "x": 17,
+      "y": 23,
+      "rcl": 6,
+      "priority": 74,
+      "tag": "controller-link",
+      "linkRole": "controller",
+      "flow": "receiver",
+      "label": "控制器接收 Link",
+      "purpose": "接收源端能量，供固定升级位取能；不作为搬运工填充目标。",
+      "serviceArea": "控制器升级区",
+      "serviceSpot": {
+        "x": 16,
+        "y": 23
+      }
+    },
+    {
+      "type": "extractor",
+      "x": 24,
+      "y": 44,
+      "rcl": 6,
+      "priority": 20,
+      "tag": "extractor"
+    },
+    {
+      "type": "container",
+      "x": 23,
+      "y": 43,
+      "rcl": 6,
+      "priority": 96,
+      "tag": "mineral",
+      "purpose": "矿物采集站"
+    },
+    {
+      "type": "road",
+      "x": 21,
+      "y": 26,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7b, service:terminal-0, service:hub-link, service:lab-output-4, service:spawn-1, service:tower-3, service:tower-4, service:tower-5, service:extension-11, service:extension-18, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-30, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-55, service:extension-56, service:extension-58, service:extension-59",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7b",
+        "service:terminal-0",
+        "service:hub-link",
+        "service:lab-output-4",
+        "service:spawn-1",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-30",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-58",
+        "service:extension-59"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7b"
+      ],
+      "roadSwamp": true,
+      "roadOrder": 3
+    },
+    {
+      "type": "road",
+      "x": 19,
+      "y": 28,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:extension-0, service:extension-1, service:extension-2, service:extension-4, service:tower-0, service:extension-5, service:extension-6, service:extension-8, service:extension-9, service:source-link-5982fd14b097071b4adbeb7c, service:lab-input-1, service:lab-output-3, service:lab-output-7, service:lab-output-8, service:lab-output-9, service:extension-12, service:extension-13, service:extension-16, service:extension-17, service:extension-19, service:extension-20, service:extension-21, service:extension-27, service:extension-29, service:extension-31, service:extension-32, service:extension-38, service:extension-44, service:extension-45, service:extension-46, service:extension-47, service:extension-48, service:extension-49, service:extension-52, service:extension-53, service:extension-57, mineral",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:extension-0",
+        "service:extension-1",
+        "service:extension-2",
+        "service:extension-4",
+        "service:tower-0",
+        "service:extension-5",
+        "service:extension-6",
+        "service:extension-8",
+        "service:extension-9",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:lab-input-1",
+        "service:lab-output-3",
+        "service:lab-output-7",
+        "service:lab-output-8",
+        "service:lab-output-9",
+        "service:extension-12",
+        "service:extension-13",
+        "service:extension-16",
+        "service:extension-17",
+        "service:extension-19",
+        "service:extension-20",
+        "service:extension-21",
+        "service:extension-27",
+        "service:extension-29",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-38",
+        "service:extension-44",
+        "service:extension-45",
+        "service:extension-46",
+        "service:extension-47",
+        "service:extension-48",
+        "service:extension-49",
+        "service:extension-52",
+        "service:extension-53",
+        "service:extension-57",
+        "mineral"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 12
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 29,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:extension-0, service:extension-5, service:extension-6, service:extension-8, service:extension-9, service:source-link-5982fd14b097071b4adbeb7c, service:lab-output-8, service:lab-output-9, service:extension-13, service:extension-16, service:extension-17, service:extension-27, service:extension-29, service:extension-31, service:extension-32, service:extension-38, service:extension-47, service:extension-48, service:extension-49, service:extension-52, service:extension-53, service:extension-57, mineral",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:extension-0",
+        "service:extension-5",
+        "service:extension-6",
+        "service:extension-8",
+        "service:extension-9",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:lab-output-8",
+        "service:lab-output-9",
+        "service:extension-13",
+        "service:extension-16",
+        "service:extension-17",
+        "service:extension-27",
+        "service:extension-29",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-38",
+        "service:extension-47",
+        "service:extension-48",
+        "service:extension-49",
+        "service:extension-52",
+        "service:extension-53",
+        "service:extension-57",
+        "mineral"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 11
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 30,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:extension-0, service:extension-5, service:extension-6, service:extension-8, service:extension-9, service:source-link-5982fd14b097071b4adbeb7c, service:extension-13, service:extension-27, service:extension-29, service:extension-31, service:extension-32, service:extension-38, service:extension-47, service:extension-48, service:extension-49, service:extension-52, service:extension-53, service:extension-57, mineral",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:extension-0",
+        "service:extension-5",
+        "service:extension-6",
+        "service:extension-8",
+        "service:extension-9",
+        "service:source-link-5982fd14b097071b4adbeb7c",
+        "service:extension-13",
+        "service:extension-27",
+        "service:extension-29",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-38",
+        "service:extension-47",
+        "service:extension-48",
+        "service:extension-49",
+        "service:extension-52",
+        "service:extension-53",
+        "service:extension-57",
+        "mineral"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 10
+    },
+    {
+      "type": "road",
+      "x": 13,
+      "y": 35,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 5
+    },
+    {
+      "type": "road",
+      "x": 13,
+      "y": 36,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 4
+    },
+    {
+      "type": "road",
+      "x": 14,
+      "y": 37,
+      "rcl": 2,
+      "priority": 94,
+      "tag": "economy-reserved",
+      "purpose": "source:5982fd14b097071b4adbeb7c, service:source-link-5982fd14b097071b4adbeb7c",
+      "purposes": [
+        "source:5982fd14b097071b4adbeb7c",
+        "service:source-link-5982fd14b097071b4adbeb7c"
+      ],
+      "roadClass": "economy",
+      "sourceIds": [
+        "5982fd14b097071b4adbeb7c"
+      ],
+      "roadSwamp": false,
+      "roadOrder": 3
+    },
+    {
+      "type": "storage",
+      "x": 24,
+      "y": 29,
+      "rcl": 4,
+      "priority": 82,
+      "tag": "storage",
+      "label": "核心仓库"
+    },
+    {
+      "type": "terminal",
+      "x": 26,
+      "y": 29,
+      "rcl": 6,
+      "priority": 56,
+      "tag": "terminal-0"
+    },
+    {
+      "type": "link",
+      "x": 25,
+      "y": 28,
+      "rcl": 5,
+      "priority": 74,
+      "tag": "hub-link",
+      "linkRole": "hub",
+      "flow": "receiver",
+      "label": "核心接收 Link",
+      "purpose": "接收远矿或已启用入口来能，由相邻核心工位移入Storage或供给本地。",
+      "serviceArea": "核心储存/补能区",
+      "serviceSpot": {
+        "x": 25,
+        "y": 29
+      },
+      "serviceMode": "adjacent-link-storage-transfer"
+    },
+    {
+      "type": "factory",
+      "x": 25,
+      "y": 30,
+      "rcl": 7,
+      "priority": 40,
+      "tag": "factory-0"
+    },
+    {
+      "type": "road",
+      "x": 24,
+      "y": 28,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-28",
+      "purposes": [
+        "service:hub-link"
+      ],
+      "purpose": "service:hub-link",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "lab",
+      "x": 21,
+      "y": 29,
+      "rcl": 6,
+      "priority": 35,
+      "tag": "lab-input-0"
+    },
+    {
+      "type": "lab",
+      "x": 21,
+      "y": 30,
+      "rcl": 6,
+      "priority": 35,
+      "tag": "lab-input-1"
+    },
+    {
+      "type": "lab",
+      "x": 22,
+      "y": 29,
+      "rcl": 6,
+      "priority": 35,
+      "tag": "lab-output-2"
+    },
+    {
+      "type": "lab",
+      "x": 22,
+      "y": 31,
+      "rcl": 7,
+      "priority": 35,
+      "tag": "lab-output-3"
+    },
+    {
+      "type": "lab",
+      "x": 23,
+      "y": 28,
+      "rcl": 7,
+      "priority": 35,
+      "tag": "lab-output-4"
+    },
+    {
+      "type": "lab",
+      "x": 23,
+      "y": 30,
+      "rcl": 7,
+      "priority": 35,
+      "tag": "lab-output-5"
+    },
+    {
+      "type": "lab",
+      "x": 23,
+      "y": 31,
+      "rcl": 8,
+      "priority": 35,
+      "tag": "lab-output-6"
+    },
+    {
+      "type": "lab",
+      "x": 20,
+      "y": 29,
+      "rcl": 8,
+      "priority": 35,
+      "tag": "lab-output-7"
+    },
+    {
+      "type": "lab",
+      "x": 19,
+      "y": 30,
+      "rcl": 8,
+      "priority": 35,
+      "tag": "lab-output-8"
+    },
+    {
+      "type": "lab",
+      "x": 19,
+      "y": 31,
+      "rcl": 8,
+      "priority": 35,
+      "tag": "lab-output-9"
+    },
+    {
+      "type": "spawn",
+      "x": 24,
+      "y": 27,
+      "rcl": 7,
+      "priority": 105,
+      "tag": "spawn-1"
+    },
+    {
+      "type": "spawn",
+      "x": 24,
+      "y": 31,
+      "rcl": 8,
+      "priority": 105,
+      "tag": "spawn-2"
+    },
+    {
+      "type": "tower",
+      "x": 20,
+      "y": 26,
+      "rcl": 5,
+      "priority": 100,
+      "tag": "tower-1"
+    },
+    {
+      "type": "tower",
+      "x": 19,
+      "y": 27,
+      "rcl": 7,
+      "priority": 100,
+      "tag": "tower-2"
+    },
+    {
+      "type": "tower",
+      "x": 26,
+      "y": 27,
+      "rcl": 8,
+      "priority": 100,
+      "tag": "tower-3"
+    },
+    {
+      "type": "tower",
+      "x": 27,
+      "y": 27,
+      "rcl": 8,
+      "priority": 100,
+      "tag": "tower-4"
+    },
+    {
+      "type": "tower",
+      "x": 27,
+      "y": 28,
+      "rcl": 8,
+      "priority": 100,
+      "tag": "tower-5"
+    },
+    {
+      "type": "observer",
+      "x": 27,
+      "y": 30,
+      "rcl": 8,
+      "priority": 25,
+      "tag": "observer-0"
+    },
+    {
+      "type": "nuker",
+      "x": 27,
+      "y": 31,
+      "rcl": 8,
+      "priority": 15,
+      "tag": "nuker-0"
+    },
+    {
+      "type": "powerSpawn",
+      "x": 18,
+      "y": 26,
+      "rcl": 8,
+      "priority": 20,
+      "tag": "powerSpawn-0"
+    },
+    {
+      "type": "extension",
+      "x": 18,
+      "y": 27,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-10"
+    },
+    {
+      "type": "extension",
+      "x": 26,
+      "y": 25,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-11"
+    },
+    {
+      "type": "extension",
+      "x": 24,
+      "y": 33,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-12"
+    },
+    {
+      "type": "extension",
+      "x": 18,
+      "y": 31,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-13"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 25,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-14"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 26,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-15"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 28,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-16"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 29,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-17"
+    },
+    {
+      "type": "extension",
+      "x": 27,
+      "y": 26,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-18"
+    },
+    {
+      "type": "extension",
+      "x": 20,
+      "y": 33,
+      "rcl": 4,
+      "priority": 90,
+      "tag": "extension-19"
+    },
+    {
+      "type": "extension",
+      "x": 21,
+      "y": 33,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-20"
+    },
+    {
+      "type": "extension",
+      "x": 22,
+      "y": 33,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-21"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 29,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-22"
+    },
+    {
+      "type": "extension",
+      "x": 26,
+      "y": 24,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-23"
+    },
+    {
+      "type": "extension",
+      "x": 27,
+      "y": 24,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-24"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 27,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-25"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 31,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-26"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 32,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-27"
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 25,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-28"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 33,
+      "rcl": 5,
+      "priority": 90,
+      "tag": "extension-29"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 25,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-30"
+    },
+    {
+      "type": "extension",
+      "x": 19,
+      "y": 34,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-31"
+    },
+    {
+      "type": "extension",
+      "x": 20,
+      "y": 34,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-32"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 28,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-33"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 29,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-34"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 30,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-35"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 32,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-36"
+    },
+    {
+      "type": "extension",
+      "x": 28,
+      "y": 23,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-37"
+    },
+    {
+      "type": "extension",
+      "x": 17,
+      "y": 34,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-38"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 32,
+      "rcl": 6,
+      "priority": 90,
+      "tag": "extension-39"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 24,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-40"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 25,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-41"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 26,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-42"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 24,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-43"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 26,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-44"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 27,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-45"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 28,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-46"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 30,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-47"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 31,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-48"
+    },
+    {
+      "type": "extension",
+      "x": 15,
+      "y": 32,
+      "rcl": 7,
+      "priority": 90,
+      "tag": "extension-49"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 22,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-50"
+    },
+    {
+      "type": "extension",
+      "x": 30,
+      "y": 23,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-51"
+    },
+    {
+      "type": "extension",
+      "x": 18,
+      "y": 35,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-52"
+    },
+    {
+      "type": "extension",
+      "x": 19,
+      "y": 35,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-53"
+    },
+    {
+      "type": "extension",
+      "x": 30,
+      "y": 27,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-54"
+    },
+    {
+      "type": "extension",
+      "x": 30,
+      "y": 31,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-55"
+    },
+    {
+      "type": "extension",
+      "x": 29,
+      "y": 33,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-56"
+    },
+    {
+      "type": "extension",
+      "x": 16,
+      "y": 35,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-57"
+    },
+    {
+      "type": "extension",
+      "x": 30,
+      "y": 29,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-58"
+    },
+    {
+      "type": "extension",
+      "x": 30,
+      "y": 33,
+      "rcl": 8,
+      "priority": 90,
+      "tag": "extension-59"
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 32,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-0",
+        "service:extension-9",
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-52",
+        "service:extension-53"
+      ],
+      "purpose": "service:extension-0, service:extension-9, service:extension-31, service:extension-32, service:extension-52, service:extension-53",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 20,
+      "y": 30,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-1",
+        "service:extension-2",
+        "service:tower-0",
+        "service:lab-input-1",
+        "service:lab-output-3",
+        "service:extension-12",
+        "service:extension-19",
+        "service:extension-20",
+        "service:extension-21"
+      ],
+      "purpose": "service:extension-1, service:extension-2, service:tower-0, service:lab-input-1, service:lab-output-3, service:extension-12, service:extension-19, service:extension-20, service:extension-21",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 21,
+      "y": 31,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-1",
+        "service:extension-2",
+        "service:lab-output-3",
+        "service:extension-12",
+        "service:extension-19",
+        "service:extension-20",
+        "service:extension-21"
+      ],
+      "purpose": "service:extension-1, service:extension-2, service:lab-output-3, service:extension-12, service:extension-19, service:extension-20, service:extension-21",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 22,
+      "y": 32,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-2",
+        "service:extension-12",
+        "service:extension-21"
+      ],
+      "purpose": "service:extension-2, service:extension-12, service:extension-21",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 22,
+      "y": 28,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-3",
+        "service:extension-7",
+        "service:storage",
+        "service:factory-0",
+        "service:lab-output-2",
+        "service:lab-output-5",
+        "service:lab-output-6",
+        "service:spawn-2",
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:extension-3, service:extension-7, service:storage, service:factory-0, service:lab-output-2, service:lab-output-5, service:lab-output-6, service:spawn-2, service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 23,
+      "y": 29,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-3",
+        "service:extension-7",
+        "service:storage",
+        "service:factory-0",
+        "service:lab-output-5",
+        "service:lab-output-6",
+        "service:spawn-2",
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:extension-3, service:extension-7, service:storage, service:factory-0, service:lab-output-5, service:lab-output-6, service:spawn-2, service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 24,
+      "y": 30,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-3",
+        "service:extension-7",
+        "service:factory-0",
+        "service:spawn-2",
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:extension-3, service:extension-7, service:factory-0, service:spawn-2, service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 25,
+      "y": 31,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-3",
+        "service:extension-7",
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:extension-3, service:extension-7, service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 28,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-4",
+        "service:extension-44",
+        "service:extension-45",
+        "service:extension-46"
+      ],
+      "purpose": "service:extension-4, service:extension-44, service:extension-45, service:extension-46",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 27,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-4",
+        "service:extension-44",
+        "service:extension-45",
+        "service:extension-46"
+      ],
+      "purpose": "service:extension-4, service:extension-44, service:extension-45, service:extension-46",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 25,
+      "y": 27,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:terminal-0",
+        "service:tower-3",
+        "service:tower-4",
+        "service:tower-5",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-22",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-26",
+        "service:extension-30",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-37",
+        "service:extension-39",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-58",
+        "service:extension-59"
+      ],
+      "purpose": "service:terminal-0, service:tower-3, service:tower-4, service:tower-5, service:extension-11, service:extension-18, service:extension-22, service:extension-23, service:extension-24, service:extension-25, service:extension-26, service:extension-30, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-37, service:extension-39, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-55, service:extension-56, service:extension-58, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 26,
+      "y": 28,
+      "rcl": 5,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:terminal-0",
+        "service:tower-5",
+        "service:extension-22",
+        "service:extension-26",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-39",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-59"
+      ],
+      "purpose": "service:terminal-0, service:tower-5, service:extension-22, service:extension-26, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-39, service:extension-55, service:extension-56, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 22,
+      "y": 30,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:lab-output-6"
+      ],
+      "purpose": "service:lab-output-6",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 26,
+      "y": 26,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:tower-4",
+        "service:extension-11",
+        "service:extension-18",
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-30",
+        "service:extension-37",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-58"
+      ],
+      "purpose": "service:tower-4, service:extension-11, service:extension-18, service:extension-23, service:extension-24, service:extension-25, service:extension-30, service:extension-37, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-58",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 26,
+      "y": 30,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:observer-0",
+        "service:nuker-0"
+      ],
+      "purpose": "service:observer-0, service:nuker-0",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 23,
+      "y": 33,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-12"
+      ],
+      "purpose": "service:extension-12",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 20,
+      "y": 32,
+      "rcl": 4,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-19",
+        "service:extension-20"
+      ],
+      "purpose": "service:extension-19, service:extension-20",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 27,
+      "y": 29,
+      "rcl": 5,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-22",
+        "service:extension-26",
+        "service:extension-33",
+        "service:extension-34",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-39",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-59"
+      ],
+      "purpose": "service:extension-22, service:extension-26, service:extension-33, service:extension-34, service:extension-35, service:extension-36, service:extension-39, service:extension-55, service:extension-56, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 27,
+      "y": 25,
+      "rcl": 5,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-23",
+        "service:extension-24",
+        "service:extension-25",
+        "service:extension-30",
+        "service:extension-37",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-42",
+        "service:extension-50",
+        "service:extension-51",
+        "service:extension-54",
+        "service:extension-58"
+      ],
+      "purpose": "service:extension-23, service:extension-24, service:extension-25, service:extension-30, service:extension-37, service:extension-40, service:extension-41, service:extension-42, service:extension-50, service:extension-51, service:extension-54, service:extension-58",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 28,
+      "y": 26,
+      "rcl": 5,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-25",
+        "service:extension-42",
+        "service:extension-54",
+        "service:extension-58"
+      ],
+      "purpose": "service:extension-25, service:extension-42, service:extension-54, service:extension-58",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 28,
+      "y": 30,
+      "rcl": 5,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-26",
+        "service:extension-35",
+        "service:extension-36",
+        "service:extension-39",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-59"
+      ],
+      "purpose": "service:extension-26, service:extension-35, service:extension-36, service:extension-39, service:extension-55, service:extension-56, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 19,
+      "y": 33,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-31",
+        "service:extension-32",
+        "service:extension-52",
+        "service:extension-53"
+      ],
+      "purpose": "service:extension-31, service:extension-32, service:extension-52, service:extension-53",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 28,
+      "y": 28,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-33",
+        "service:extension-34"
+      ],
+      "purpose": "service:extension-33, service:extension-34",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 29,
+      "y": 31,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-36",
+        "service:extension-39",
+        "service:extension-55",
+        "service:extension-56",
+        "service:extension-59"
+      ],
+      "purpose": "service:extension-36, service:extension-39, service:extension-55, service:extension-56, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 28,
+      "y": 24,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-37",
+        "service:extension-40",
+        "service:extension-41",
+        "service:extension-50",
+        "service:extension-51"
+      ],
+      "purpose": "service:extension-37, service:extension-40, service:extension-41, service:extension-50, service:extension-51",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 34,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-38",
+        "service:extension-57"
+      ],
+      "purpose": "service:extension-38, service:extension-57",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 24,
+      "rcl": 7,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-43"
+      ],
+      "purpose": "service:extension-43",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 26,
+      "rcl": 7,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-44",
+        "service:extension-45"
+      ],
+      "purpose": "service:extension-44, service:extension-45",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 28,
+      "rcl": 7,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-46"
+      ],
+      "purpose": "service:extension-46",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 30,
+      "rcl": 7,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-47",
+        "service:extension-48"
+      ],
+      "purpose": "service:extension-47, service:extension-48",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 29,
+      "y": 23,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-50",
+        "service:extension-51"
+      ],
+      "purpose": "service:extension-50, service:extension-51",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 34,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-52",
+        "service:extension-53"
+      ],
+      "purpose": "service:extension-52, service:extension-53",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 29,
+      "y": 27,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-54",
+        "service:extension-58"
+      ],
+      "purpose": "service:extension-54, service:extension-58",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 30,
+      "y": 32,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-56",
+        "service:extension-59"
+      ],
+      "purpose": "service:extension-56, service:extension-59",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 30,
+      "y": 28,
+      "rcl": 8,
+      "priority": 30,
+      "tag": "road-service",
+      "purposes": [
+        "service:extension-58"
+      ],
+      "purpose": "service:extension-58",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 16,
+      "y": 36,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 17,
+      "y": 37,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 18,
+      "y": 38,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 19,
+      "y": 39,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 20,
+      "y": 40,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 21,
+      "y": 41,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "road",
+      "x": 22,
+      "y": 42,
+      "rcl": 6,
+      "priority": 30,
+      "tag": "road-mineral",
+      "purposes": [
+        "mineral"
+      ],
+      "purpose": "mineral",
+      "roadClass": "access",
+      "sourceIds": [],
+      "roadSwamp": false
+    },
+    {
+      "type": "rampart",
+      "x": 12,
+      "y": 36,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 12,
+      "y": 37,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 12,
+      "y": 20,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 13,
+      "y": 20,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 22,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 21,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 20,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 23,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 24,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 25,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 26,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 27,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 28,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 14,
+      "y": 20,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 29,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 30,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 31,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 32,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 34,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 35,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 11,
+      "y": 36,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 15,
+      "y": 39,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 14,
+      "y": 39,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 12,
+      "y": 38,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 13,
+      "y": 39,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 12,
+      "y": 39,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 24,
+      "y": 17,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 23,
+      "y": 17,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 22,
+      "y": 17,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 21,
+      "y": 17,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 19,
+      "y": 42,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 20,
+      "y": 42,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 21,
+      "y": 42,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 22,
+      "y": 42,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 23,
+      "y": 42,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 39,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 38,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 37,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 36,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 40,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    },
+    {
+      "type": "rampart",
+      "x": 41,
+      "y": 47,
+      "rcl": 4,
+      "priority": 12,
+      "tag": "perimeter-mincut",
+      "purpose": "International最小割连续核心防线"
+    }
+  ],
+  "counts": {
+    "container": 4,
+    "road": 71,
+    "spawn": 3,
+    "extension": 60,
+    "tower": 6,
+    "link": 3,
+    "extractor": 1,
+    "storage": 1,
+    "terminal": 1,
+    "factory": 1,
+    "lab": 10,
+    "observer": 1,
+    "nuker": 1,
+    "powerSpawn": 1,
+    "rampart": 41
+  },
+  "complete": true,
+  "missing": null,
+  "roadVersion": 1,
+  "roadCore": {
+    "x": 20,
+    "y": 27
+  },
+  "roadRoutes": [
+    {
+      "id": "source:5982fd14b097071b4adbeb7b",
+      "kind": "source",
+      "tiles": [
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 1,
+      "sourceId": "5982fd14b097071b4adbeb7b",
+      "purpose": "矿边容器至核心的经济道路",
+      "fromTag": "road-core"
+    },
+    {
+      "id": "source:5982fd14b097071b4adbeb7c",
+      "kind": "source",
+      "tiles": [
+        2017,
+        1966,
+        1915,
+        1864,
+        1813,
+        1763,
+        1714,
+        1665,
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 14,
+      "complete": true,
+      "swampTiles": 0,
+      "sourceId": "5982fd14b097071b4adbeb7c",
+      "purpose": "矿边容器至核心的经济道路",
+      "fromTag": "road-core"
+    },
+    {
+      "id": "controller",
+      "kind": "controller",
+      "tiles": [
+        1217,
+        1268,
+        1319,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "控制器升级站至核心的经济道路",
+      "fromTag": "road-core"
+    },
+    {
+      "id": "service:primary",
+      "kind": "service",
+      "tiles": [
+        1370
+      ],
+      "length": 1,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "primary"
+    },
+    {
+      "id": "service:extension-0",
+      "kind": "service",
+      "tiles": [
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-0"
+    },
+    {
+      "id": "service:extension-1",
+      "kind": "service",
+      "tiles": [
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-1"
+    },
+    {
+      "id": "service:extension-2",
+      "kind": "service",
+      "tiles": [
+        1622,
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-2"
+    },
+    {
+      "id": "service:extension-3",
+      "kind": "service",
+      "tiles": [
+        1575,
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-3"
+    },
+    {
+      "id": "service:extension-4",
+      "kind": "service",
+      "tiles": [
+        1367,
+        1418,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-4"
+    },
+    {
+      "id": "service:tower-0",
+      "kind": "service",
+      "tiles": [
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-0"
+    },
+    {
+      "id": "service:extension-5",
+      "kind": "service",
+      "tiles": [
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-5"
+    },
+    {
+      "id": "service:extension-6",
+      "kind": "service",
+      "tiles": [
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-6"
+    },
+    {
+      "id": "service:extension-7",
+      "kind": "service",
+      "tiles": [
+        1575,
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-7"
+    },
+    {
+      "id": "service:extension-8",
+      "kind": "service",
+      "tiles": [
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-8"
+    },
+    {
+      "id": "service:extension-9",
+      "kind": "service",
+      "tiles": [
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-9"
+    },
+    {
+      "id": "service:source-link-5982fd14b097071b4adbeb7c",
+      "kind": "service",
+      "tiles": [
+        1966,
+        1915,
+        1864,
+        1813,
+        1763,
+        1714,
+        1665,
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 13,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "source-link-5982fd14b097071b4adbeb7c"
+    },
+    {
+      "id": "service:controller-link",
+      "kind": "service",
+      "tiles": [
+        1217,
+        1268,
+        1319,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "controller-link"
+    },
+    {
+      "id": "service:storage",
+      "kind": "service",
+      "tiles": [
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "storage"
+    },
+    {
+      "id": "service:terminal-0",
+      "kind": "service",
+      "tiles": [
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "terminal-0"
+    },
+    {
+      "id": "service:hub-link",
+      "kind": "service",
+      "tiles": [
+        1424,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "hub-link"
+    },
+    {
+      "id": "service:factory-0",
+      "kind": "service",
+      "tiles": [
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "factory-0"
+    },
+    {
+      "id": "service:lab-input-0",
+      "kind": "service",
+      "tiles": [
+        1420,
+        1370
+      ],
+      "length": 2,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-input-0"
+    },
+    {
+      "id": "service:lab-input-1",
+      "kind": "service",
+      "tiles": [
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-input-1"
+    },
+    {
+      "id": "service:lab-output-2",
+      "kind": "service",
+      "tiles": [
+        1422,
+        1371,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-2"
+    },
+    {
+      "id": "service:lab-output-3",
+      "kind": "service",
+      "tiles": [
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-3"
+    },
+    {
+      "id": "service:lab-output-4",
+      "kind": "service",
+      "tiles": [
+        1372,
+        1321,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-4"
+    },
+    {
+      "id": "service:lab-output-5",
+      "kind": "service",
+      "tiles": [
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-5"
+    },
+    {
+      "id": "service:lab-output-6",
+      "kind": "service",
+      "tiles": [
+        1522,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-6"
+    },
+    {
+      "id": "service:lab-output-7",
+      "kind": "service",
+      "tiles": [
+        1419,
+        1370
+      ],
+      "length": 2,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-7"
+    },
+    {
+      "id": "service:lab-output-8",
+      "kind": "service",
+      "tiles": [
+        1468,
+        1419,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-8"
+    },
+    {
+      "id": "service:lab-output-9",
+      "kind": "service",
+      "tiles": [
+        1518,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "lab-output-9"
+    },
+    {
+      "id": "service:spawn-1",
+      "kind": "service",
+      "tiles": [
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "spawn-1"
+    },
+    {
+      "id": "service:spawn-2",
+      "kind": "service",
+      "tiles": [
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "spawn-2"
+    },
+    {
+      "id": "service:tower-1",
+      "kind": "service",
+      "tiles": [
+        1370
+      ],
+      "length": 1,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-1"
+    },
+    {
+      "id": "service:tower-2",
+      "kind": "service",
+      "tiles": [
+        1370
+      ],
+      "length": 1,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-2"
+    },
+    {
+      "id": "service:tower-3",
+      "kind": "service",
+      "tiles": [
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-3"
+    },
+    {
+      "id": "service:tower-4",
+      "kind": "service",
+      "tiles": [
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-4"
+    },
+    {
+      "id": "service:tower-5",
+      "kind": "service",
+      "tiles": [
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "tower-5"
+    },
+    {
+      "id": "service:observer-0",
+      "kind": "service",
+      "tiles": [
+        1526,
+        1575,
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "observer-0"
+    },
+    {
+      "id": "service:nuker-0",
+      "kind": "service",
+      "tiles": [
+        1526,
+        1575,
+        1524,
+        1473,
+        1422,
+        1371,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "nuker-0"
+    },
+    {
+      "id": "service:powerSpawn-0",
+      "kind": "service",
+      "tiles": [
+        1319,
+        1370
+      ],
+      "length": 2,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "powerSpawn-0"
+    },
+    {
+      "id": "service:extension-10",
+      "kind": "service",
+      "tiles": [
+        1319,
+        1370
+      ],
+      "length": 2,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-10"
+    },
+    {
+      "id": "service:extension-11",
+      "kind": "service",
+      "tiles": [
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-11"
+    },
+    {
+      "id": "service:extension-12",
+      "kind": "service",
+      "tiles": [
+        1673,
+        1622,
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-12"
+    },
+    {
+      "id": "service:extension-13",
+      "kind": "service",
+      "tiles": [
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-13"
+    },
+    {
+      "id": "service:extension-14",
+      "kind": "service",
+      "tiles": [
+        1268,
+        1319,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-14"
+    },
+    {
+      "id": "service:extension-15",
+      "kind": "service",
+      "tiles": [
+        1268,
+        1319,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-15"
+    },
+    {
+      "id": "service:extension-16",
+      "kind": "service",
+      "tiles": [
+        1468,
+        1419,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-16"
+    },
+    {
+      "id": "service:extension-17",
+      "kind": "service",
+      "tiles": [
+        1468,
+        1419,
+        1370
+      ],
+      "length": 3,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-17"
+    },
+    {
+      "id": "service:extension-18",
+      "kind": "service",
+      "tiles": [
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-18"
+    },
+    {
+      "id": "service:extension-19",
+      "kind": "service",
+      "tiles": [
+        1620,
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-19"
+    },
+    {
+      "id": "service:extension-20",
+      "kind": "service",
+      "tiles": [
+        1620,
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-20"
+    },
+    {
+      "id": "service:extension-21",
+      "kind": "service",
+      "tiles": [
+        1622,
+        1571,
+        1520,
+        1469,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-21"
+    },
+    {
+      "id": "service:extension-22",
+      "kind": "service",
+      "tiles": [
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-22"
+    },
+    {
+      "id": "service:extension-23",
+      "kind": "service",
+      "tiles": [
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-23"
+    },
+    {
+      "id": "service:extension-24",
+      "kind": "service",
+      "tiles": [
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-24"
+    },
+    {
+      "id": "service:extension-25",
+      "kind": "service",
+      "tiles": [
+        1328,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-25"
+    },
+    {
+      "id": "service:extension-26",
+      "kind": "service",
+      "tiles": [
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-26"
+    },
+    {
+      "id": "service:extension-27",
+      "kind": "service",
+      "tiles": [
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-27"
+    },
+    {
+      "id": "service:extension-28",
+      "kind": "service",
+      "tiles": [
+        1217,
+        1268,
+        1319,
+        1370
+      ],
+      "length": 4,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-28"
+    },
+    {
+      "id": "service:extension-29",
+      "kind": "service",
+      "tiles": [
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-29"
+    },
+    {
+      "id": "service:extension-30",
+      "kind": "service",
+      "tiles": [
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-30"
+    },
+    {
+      "id": "service:extension-31",
+      "kind": "service",
+      "tiles": [
+        1669,
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-31"
+    },
+    {
+      "id": "service:extension-32",
+      "kind": "service",
+      "tiles": [
+        1669,
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 7,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-32"
+    },
+    {
+      "id": "service:extension-33",
+      "kind": "service",
+      "tiles": [
+        1428,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-33"
+    },
+    {
+      "id": "service:extension-34",
+      "kind": "service",
+      "tiles": [
+        1428,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-34"
+    },
+    {
+      "id": "service:extension-35",
+      "kind": "service",
+      "tiles": [
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-35"
+    },
+    {
+      "id": "service:extension-36",
+      "kind": "service",
+      "tiles": [
+        1579,
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-36"
+    },
+    {
+      "id": "service:extension-37",
+      "kind": "service",
+      "tiles": [
+        1228,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-37"
+    },
+    {
+      "id": "service:extension-38",
+      "kind": "service",
+      "tiles": [
+        1716,
+        1665,
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-38"
+    },
+    {
+      "id": "service:extension-39",
+      "kind": "service",
+      "tiles": [
+        1579,
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-39"
+    },
+    {
+      "id": "service:extension-40",
+      "kind": "service",
+      "tiles": [
+        1228,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-40"
+    },
+    {
+      "id": "service:extension-41",
+      "kind": "service",
+      "tiles": [
+        1228,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-41"
+    },
+    {
+      "id": "service:extension-42",
+      "kind": "service",
+      "tiles": [
+        1328,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 9,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-42"
+    },
+    {
+      "id": "service:extension-43",
+      "kind": "service",
+      "tiles": [
+        1216,
+        1217,
+        1268,
+        1319,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-43"
+    },
+    {
+      "id": "service:extension-44",
+      "kind": "service",
+      "tiles": [
+        1316,
+        1367,
+        1418,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-44"
+    },
+    {
+      "id": "service:extension-45",
+      "kind": "service",
+      "tiles": [
+        1316,
+        1367,
+        1418,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-45"
+    },
+    {
+      "id": "service:extension-46",
+      "kind": "service",
+      "tiles": [
+        1416,
+        1367,
+        1418,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-46"
+    },
+    {
+      "id": "service:extension-47",
+      "kind": "service",
+      "tiles": [
+        1516,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-47"
+    },
+    {
+      "id": "service:extension-48",
+      "kind": "service",
+      "tiles": [
+        1516,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 5,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-48"
+    },
+    {
+      "id": "service:extension-49",
+      "kind": "service",
+      "tiles": [
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 6,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-49"
+    },
+    {
+      "id": "service:extension-50",
+      "kind": "service",
+      "tiles": [
+        1179,
+        1228,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-50"
+    },
+    {
+      "id": "service:extension-51",
+      "kind": "service",
+      "tiles": [
+        1179,
+        1228,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-51"
+    },
+    {
+      "id": "service:extension-52",
+      "kind": "service",
+      "tiles": [
+        1718,
+        1669,
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-52"
+    },
+    {
+      "id": "service:extension-53",
+      "kind": "service",
+      "tiles": [
+        1718,
+        1669,
+        1618,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-53"
+    },
+    {
+      "id": "service:extension-54",
+      "kind": "service",
+      "tiles": [
+        1379,
+        1328,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-54"
+    },
+    {
+      "id": "service:extension-55",
+      "kind": "service",
+      "tiles": [
+        1579,
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 10,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-55"
+    },
+    {
+      "id": "service:extension-56",
+      "kind": "service",
+      "tiles": [
+        1630,
+        1579,
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 11,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-56"
+    },
+    {
+      "id": "service:extension-57",
+      "kind": "service",
+      "tiles": [
+        1716,
+        1665,
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 8,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-57"
+    },
+    {
+      "id": "service:extension-58",
+      "kind": "service",
+      "tiles": [
+        1430,
+        1379,
+        1328,
+        1277,
+        1326,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 11,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-58"
+    },
+    {
+      "id": "service:extension-59",
+      "kind": "service",
+      "tiles": [
+        1630,
+        1579,
+        1528,
+        1477,
+        1426,
+        1375,
+        1324,
+        1373,
+        1372,
+        1321,
+        1370
+      ],
+      "length": 11,
+      "complete": true,
+      "swampTiles": 1,
+      "purpose": "核心建筑服务道路",
+      "fromTag": "road-core",
+      "toTag": "extension-59"
+    },
+    {
+      "id": "mineral",
+      "kind": "mineral",
+      "tiles": [
+        2122,
+        2071,
+        2020,
+        1969,
+        1918,
+        1867,
+        1816,
+        1765,
+        1714,
+        1665,
+        1616,
+        1567,
+        1517,
+        1468,
+        1419,
+        1370
+      ],
+      "length": 16,
+      "complete": true,
+      "swampTiles": 0,
+      "purpose": "矿物采集站服务道路",
+      "fromTag": "road-core"
+    }
+  ],
+  "roadMissing": [],
+  "optionalReservations": [
+    {
+      "type": "link",
+      "x": 25,
+      "y": 26,
+      "rcl": 7,
+      "tag": "source-link-5982fd14b097071b4adbeb7b",
+      "linkRole": "source",
+      "sourceId": "5982fd14b097071b4adbeb7b",
+      "label": "近矿 Link 可选位",
+      "purpose": "近矿道路短；只有实测可节约至少2 CARRY或解决拥堵时启用。",
+      "flow": "sender",
+      "targetTag": "controller-link",
+      "fallbackTargetTag": "hub-link",
+      "serviceSpot": {
+        "x": 25,
+        "y": 25
+      },
+      "optional": true,
+      "enabled": false,
+      "activation": {
+        "minSavedCarry": 2,
+        "requiresMeasuredBenefit": true,
+        "notes": [
+          "短矿路目前继续由容器和道路搬运",
+          "不因RCL配额空余自动施工"
+        ]
+      }
+    },
+    {
+      "type": "link",
+      "x": 5,
+      "y": 12,
+      "rcl": 8,
+      "tag": "remote-entry-west",
+      "linkRole": "remote-entry",
+      "flow": "sender",
+      "targetTag": "hub-link",
+      "label": "西入口 Link 可选位",
+      "purpose": "仅在该入口存在持续外矿回流、可抵消装卸及损耗时启用。",
+      "serviceArea": "西侧外矿回流",
+      "serviceSpot": {
+        "x": 4,
+        "y": 11
+      },
+      "optional": true,
+      "enabled": false,
+      "activation": {
+        "requiresActiveRemote": true,
+        "minSavedCarry": 2,
+        "minExpectedEnergyPerTick": 5,
+        "notes": [
+          "此坐标仅由本房至出口路径生成，尚未经相邻房矿点路线验证",
+          "需外矿经济闭环稳定并实测节省搬运",
+          "需要安全装卸位和相应入口道路",
+          "目前不生成工地或出口支路"
+        ]
+      }
+    },
+    {
+      "type": "link",
+      "x": 5,
+      "y": 44,
+      "rcl": 8,
+      "tag": "remote-entry-south",
+      "linkRole": "remote-entry",
+      "flow": "sender",
+      "targetTag": "hub-link",
+      "label": "南入口 Link 可选位",
+      "purpose": "仅在该入口存在持续外矿回流、可抵消装卸及损耗时启用。",
+      "serviceArea": "南侧外矿回流",
+      "serviceSpot": {
+        "x": 6,
+        "y": 45
+      },
+      "optional": true,
+      "enabled": false,
+      "activation": {
+        "requiresActiveRemote": true,
+        "minSavedCarry": 2,
+        "minExpectedEnergyPerTick": 5,
+        "notes": [
+          "此坐标仅由本房至出口路径生成，尚未经相邻房矿点路线验证",
+          "需外矿经济闭环稳定并实测节省搬运",
+          "需要安全装卸位和相应入口道路",
+          "目前不生成工地或出口支路"
+        ]
+      }
+    }
+  ],
+  "hubServiceSpot": {
+    "x": 25,
+    "y": 29
+  },
+  "provenance": {
+    "generator": "research/layout-implementation/generate.cjs",
+    "worldSnapshot": "layout-world-implementation-before.json",
+    "tick": 73930064,
+    "terrainHash": "a78a8c7813098cf420300b0e555457db9e93034abde6d3754be01d08a9ad2f10",
+    "internationalCommit": "7e5106eebffb9627cf08cf893b6846012d970b90",
+    "overmindCommit": "5eca49a0d988a1f810a11b9c73d4d8961efca889",
+    "reused": [
+      "International.generateGrid/pruneGridCoords",
+      "International.planStamps/findDynamicStampAnchorWeighted",
+      "International.hub/labs/gridExtensions/observer/nuker/powerSpawn",
+      "International.minCutToExit",
+      "Overmind.RoadPlanner.generateRoadPlanningCostMatrix/generateRoadPath"
+    ],
+    "adapter": {
+      "radius": 10,
+      "phase": 0,
+      "lockedBuildings": 36,
+      "suppressedExitGridSeeds": true,
+      "linkPolicy": "far-source/hub RCL5; controller RCL6; near-source and entrances optional",
+      "protection": "Range-3 buffer around every core building; range-1 buffer around every core service path; common minimum cut",
+      "optionalNotConstruction": true
+    }
+  }
+}

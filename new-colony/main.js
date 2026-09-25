@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.8';
+const VERSION = '2026-09-25.9';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
 const range = (a,b) => a.pos ? a.pos.getRangeTo(b.pos || b) : Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
