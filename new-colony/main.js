@@ -1,9 +1,15 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.9';
+const VERSION = '2026-09-25.10';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
-const range = (a,b) => a.pos ? a.pos.getRangeTo(b.pos || b) : Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
+// Plans and station seats are plain local coordinates, which the engine's
+// RoomPosition.getRangeTo(object) overload does not accept. Normalize both ends
+// directly while preserving its known-different-room Infinity behavior.
+const range = (a,b) => {
+    const p=a.pos||a,q=b.pos||b;
+    return p.roomName&&q.roomName&&p.roomName!==q.roomName?Infinity:Math.max(Math.abs(p.x-q.x),Math.abs(p.y-q.y));
+};
 const energy = o => o.store ? o.store[E] || 0 : o.amount || 0;
 function near(c,arr) {
     if(!arr.length){movementCount('emptyChoices');return null;}

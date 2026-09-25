@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork}=ctx.module.exports.test;
+vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range};',ctx);
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range}=ctx.module.exports.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -21,8 +21,23 @@ function fixture(){
   getTerrain(){return{get:(x,y)=>this.walls.has(x+','+y)?C.TERRAIN_MASK_WALL:0};},
   lookForAt(type,x,y){return this.objects.filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
   find(type,opt){let a=type===C.FIND_SOURCES?this.objects.filter(o=>o.isSource):type===C.FIND_DROPPED_RESOURCES?this.objects.filter(o=>o.resourceType):type===C.FIND_MY_CREEPS?Object.values(ctx.Game.creeps):type===C.FIND_MY_CONSTRUCTION_SITES?this.sites:type===C.FIND_STRUCTURES?this.objects.filter(o=>o.structureType):type===C.FIND_MY_STRUCTURES?this.objects.filter(o=>o.structureType&&o.my):type===C.FIND_MY_SPAWNS?this.objects.filter(o=>o.structureType===C.STRUCTURE_SPAWN&&o.my):[];return opt&&opt.filter?a.filter(opt.filter):a;}};
- function pos(x,y){return{x,y,roomName:room.name,getRangeTo(t){t=t.pos||t;return Math.max(Math.abs(x-t.x),Math.abs(y-t.y));},findClosestByPath(a){return a.slice().sort((a,b)=>this.getRangeTo(a)-this.getRangeTo(b))[0]||null;},findClosestByRange(a,opt){return this.findClosestByPath(Array.isArray(a)?a:room.find(a,opt));},findInRange(type,r,opt){return room.find(type,opt).filter(o=>this.getRangeTo(o)<=r);}};}
- ctx.RoomPosition=function(x,y){return pos(x,y);};
+ // Match the engine's accepted overloads: plain coordinate objects are not
+ // RoomPosition instances and getRangeTo(plain) must return NaN.
+ class Position {
+  constructor(x,y,roomName=room.name){this.x=x;this.y=y;this.roomName=roomName;}
+  getRangeTo(first,second){
+   let x,y,roomName;
+   if(typeof second==='number'){x=first;y=second;}
+   else {const p=first instanceof Position?first:first&&first.pos instanceof Position?first.pos:null;if(p)({x,y,roomName}=p);}
+   if(roomName&&roomName!==this.roomName)return Infinity;
+   return Math.max(Math.abs(this.x-x),Math.abs(this.y-y));
+  }
+  findClosestByPath(a){return a.slice().sort((a,b)=>this.getRangeTo(a)-this.getRangeTo(b))[0]||null;}
+  findClosestByRange(a,opt){return this.findClosestByPath(Array.isArray(a)?a:room.find(a,opt));}
+  findInRange(type,r,opt){return room.find(type,opt).filter(o=>this.getRangeTo(o)<=r);}
+ }
+ const pos=(x,y,roomName)=>new Position(x,y,roomName);
+ ctx.RoomPosition=Position;
  function store(n,capacity){return{[C.RESOURCE_ENERGY]:n,getFreeCapacity(){return capacity-this[C.RESOURCE_ENERGY];}};}
  function source(id,x,y){const s={id,isSource:true,pos:pos(x,y),energy:3000};room.objects.push(s);return s;}
  function structure(type,id,x,y,n=0,capacity=2000){const s={id,structureType:type,my:true,pos:pos(x,y),store:store(n,capacity),hits:250000,hitsMax:250000};room.objects.push(s);if(type===C.STRUCTURE_STORAGE)room.storage=s;return s;}
@@ -37,6 +52,13 @@ function fixture(){
  room.controller={my:true,level:2,ticksToDowngrade:10000,pos:pos(16,21)};
  ctx.Game.rooms={[room.name]:room};ctx.Game.getObjectById=id=>room.objects.find(o=>o.id===id);
  return{room,pos,store,source,structure,creep};
+}
+{
+ const f=fixture(),a=f.pos(16,21),b=f.pos(17,23),plain={x:17,y:23},far=f.pos(17,23,'W22N26');
+ assert(Number.isNaN(a.getRangeTo(plain)),'fixture rejects plain-object overloads like the official engine');
+ assert.equal(a.getRangeTo(b),2);assert.equal(a.getRangeTo(17,23),2);assert.equal(a.getRangeTo(far),Infinity);
+ for(const left of [a,{pos:a},{x:16,y:21}])for(const right of [b,{pos:b},plain])assert.equal(range(left,right),2,'internal range accepts structures, RoomPositions and local plan coordinates symmetrically');
+ for(const [left,right] of [[a,far],[{pos:a},{pos:far}],[{x:16,y:21,roomName:'W21N26'},far],[far,a]])assert.equal(range(left,right),Infinity,'known different rooms retain Infinity semantics');
 }
 function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++)for(let x=23;x<=25;x++)if(!(x===24&&y===24||x===25&&y===25))f.room.walls.add(x+','+y);return s;}
 {
@@ -723,3 +745,34 @@ console.log('PASS: planned RCL5 source-to-hub, controller-first/link-full/cooldo
  assert.equal(builder.memory.workSupply.id,remote.id,'a prolonged outage rebinds to a reachable stocked fixed node');
 }
 console.log('PASS: empty construction buffers retain refill demand, self-harvest works while waiting, prolonged outages rebind');
+// Reproduce the production overload with the pinned engine's real argument
+// decoder and RoomPosition.getRangeTo implementation, not a permissive mock.
+{
+ const lodash=require(require.resolve('lodash',{paths:[engine]})),utilsSource=fs.readFileSync(engine+'/src/utils.js','utf8'),roomsSource=fs.readFileSync(engine+'/src/game/rooms.js','utf8');
+ const utility={};let start=utilsSource.indexOf('exports.fetchXYArguments = function('),end=utilsSource.indexOf('\n};',start)+3;
+ assert(start>=0&&end>start);vm.runInNewContext(utilsSource.slice(start,end),{exports:utility,_:lodash});
+ class EnginePosition{constructor(x,y,roomName){Object.assign(this,{x,y,roomName});}}
+ start=roomsSource.indexOf('RoomPosition.prototype.getRangeTo = register.wrapFn(');end=roomsSource.indexOf('\n    });',start)+8;
+ assert(start>=0&&end>start);vm.runInNewContext(roomsSource.slice(start,end),{RoomPosition:EnginePosition,register:{wrapFn:fn=>fn},utils:utility,globals:{RoomPosition:EnginePosition},max:Math.max,abs:Math.abs});
+ const controller={pos:new EnginePosition(16,21,'W21N26')},local={x:16,y:23},native=new EnginePosition(16,23,'W21N26'),other=new EnginePosition(16,23,'W22N26');
+ assert(Number.isNaN(controller.pos.getRangeTo(local)),'official getRangeTo rejects plain plan coordinates');
+ assert.equal(controller.pos.getRangeTo(16,23),2);assert.equal(controller.pos.getRangeTo(native),2);assert.equal(controller.pos.getRangeTo(other),Infinity);
+ assert.equal(range(controller,local),2,'internal range normalizes the plain coordinates that failed online');
+ assert.equal(range(local,controller),2);assert.equal(range(controller,native),2);assert.equal(range(controller,other),Infinity);
+}
+for(const planFile of ['fixtures/layout-plan-before.json','fixtures/layout-plan-reviewed.json']){
+ const f=stationFixture(),plan=JSON.parse(readSource(planFile)),world=JSON.parse(readSource('fixtures/layout-world-before.json'));
+ for(const s of world.structures)if(!f.room.objects.some(o=>o.id===s.id))f.structure(s.type,s.id,s.x,s.y,1000,1000);
+ ctx.Memory.frontier.rooms[f.room.name].plan=plan;
+ const station=controllerStation(f.room);assert(station,'full '+planFile+' must produce a real controller station');
+ assert.equal(station.seats.length,4,'full '+planFile+' retains four legal worker seats');assert.deepEqual([station.port.x,station.port.y],[17,24]);
+ const expected=plan.layoutRevision?['15,22','15,23','16,22','16,23']:['15,23','16,22','16,23','17,23'];
+ assert.deepEqual(Array.from(station.seats,p=>p.x+','+p.y).sort(),expected,'station excludes the selected plan future buildings and roads');
+ for(const c of f.ups)work(c);
+ assert.equal(new Set(f.ups.map(c=>c.memory.upgradeSeat.x+','+c.memory.upgradeSeat.y)).size,4);
+ const saved=ctx.Memory.frontier.rooms[f.room.name].upgradeStation;
+ ctx.Game.time++;controllerStation(f.room);assert.equal(ctx.Memory.frontier.rooms[f.room.name].upgradeStation,saved,'valid full-plan seats use the existing bounded cache');
+ f.box.store[C.RESOURCE_ENERGY]=10;const courier=f.haulers.find(c=>c.memory.loaded);assert.equal(haulTarget(courier),f.box,'low controller box becomes a fixed supply request under full '+planFile);
+ assert(ctx.Memory.frontier.rooms[f.room.name].controllerSupply.active);assert(courier.memory.haulDelivery.amount>0);
+}
+console.log('PASS: strict and official RoomPosition overloads, local coordinate normalization, cross-room Infinity, full old/reviewed plans each produce four cached seats plus fixed low-water box demand');
