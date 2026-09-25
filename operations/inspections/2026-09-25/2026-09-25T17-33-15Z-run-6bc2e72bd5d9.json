@@ -3,11 +3,11 @@
   "id": "2026-09-25T17-33-15Z-run-6bc2e72bd5d9",
   "kind": "scheduled",
   "startedAt": "2026-09-25T17:33:15.418Z",
-  "updatedAt": "2026-09-25T17:34:48.828Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-25T17:35:17.982Z",
+  "completedAt": "2026-09-25T17:35:17.944Z",
+  "status": "skipped",
   "title": "周期巡检：既有协调者仍运行",
-  "summary": "Coordinator 01a0d967-583b-7821-98d5-1f58e8f69084: previous coordinator remains active. Preparing to skip game inspection and publish only this independent journal.",
+  "summary": "Skipped: previous coordinator and Issue owner/child parent remain active. No game API, fresh tick, takeover, agent dispatch, source edits, Issue/CURRENT_STATE changes or deployment. This run records only the ownership check and journal publication.",
   "game": null,
   "findings": [
     {
@@ -64,8 +64,20 @@
     {
       "at": "2026-09-25T17:34:48.796Z",
       "description": "Publish initial journal",
+      "status": "done",
+      "result": "Initial log committed and pushed to origin/main: fe610f51bde060c0b86bd96a1e236b519e68fb4e. Isolated publication archive validated 19 runs; only own run and tool-generated indexes published."
+    },
+    {
+      "at": "2026-09-25T17:35:17.944Z",
+      "description": "Finalize skipped inspection",
+      "status": "done",
+      "result": "Kept game=null and existing ownership. Existing unfinished logs and unrelated working/index changes preserved. No duplicate diagnosis, schedule or dashboard redeployment."
+    },
+    {
+      "at": "2026-09-25T17:35:17.944Z",
+      "description": "Publish final skipped journal",
       "status": "in-progress",
-      "result": "Only this run JSON/Markdown and two consistent indexes from committed history; preserve unrelated changes."
+      "result": "Validated final record will be committed and pushed under the same ID; actual push receipt is recorded in automation memory after publication."
     }
   ],
   "checks": [
@@ -78,6 +90,11 @@
       "name": "Fresh game tick and energy health",
       "result": "pending",
       "detail": "Skipped while existing coordinator runs. No new game observation; saved ticks are not fresh evidence."
+    },
+    {
+      "name": "Journal archive validation",
+      "result": "passed",
+      "detail": "Initial local archive: 22 runs/1 day. Initial isolated published archive: 19 runs/1 day. Difference is unpublished records owned by other runs."
     }
   ],
   "next": [

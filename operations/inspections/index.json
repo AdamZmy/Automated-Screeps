@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T17:34:55.483Z",
+  "updatedAt": "2026-09-25T17:35:17.982Z",
   "days": [
     "2026-09-25"
   ],
@@ -39,11 +39,11 @@
       "id": "2026-09-25T17-33-15Z-run-6bc2e72bd5d9",
       "kind": "scheduled",
       "startedAt": "2026-09-25T17:33:15.418Z",
-      "updatedAt": "2026-09-25T17:34:48.828Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-25T17:35:17.982Z",
+      "completedAt": "2026-09-25T17:35:17.944Z",
+      "status": "skipped",
       "title": "周期巡检：既有协调者仍运行",
-      "summary": "Coordinator 01a0d967-583b-7821-98d5-1f58e8f69084: previous coordinator remains active. Preparing to skip game inspection and publish only this independent journal.",
+      "summary": "Skipped: previous coordinator and Issue owner/child parent remain active. No game API, fresh tick, takeover, agent dispatch, source edits, Issue/CURRENT_STATE changes or deployment. This run records only the ownership check and journal publication.",
       "tick": null,
       "issueNumbers": [
         1,
