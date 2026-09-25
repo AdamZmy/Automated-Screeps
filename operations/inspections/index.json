@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T14:19:28.957Z",
+  "updatedAt": "2026-09-25T14:20:20.650Z",
   "days": [
     "2026-09-25"
   ],
@@ -40,11 +40,11 @@
       "id": "2026-09-25T11-37-53Z-run-beb0f80b5444",
       "kind": "scheduled",
       "startedAt": "2026-09-25T11:37:53.117Z",
-      "updatedAt": "2026-09-25T13:29:09.334Z",
-      "completedAt": null,
-      "status": "running",
-      "title": "协调者状态待核验，保留现有工作归属",
-      "summary": "本轮协调者01a0d80c-c7af-7e73-a2b2-70a3ee7a6d0b已启动。Issue #1/#4仍归原协调者；当前未提供任务即时状态查询能力，暂不接管。",
+      "updatedAt": "2026-09-25T14:20:20.650Z",
+      "completedAt": "2026-09-25T14:20:20.622Z",
+      "status": "skipped",
+      "title": "本轮已跳过：原协调者状态未知",
+      "summary": "本轮协调者01a0d80c-c7af-7e73-a2b2-70a3ee7a6d0b完成交接检查。因缺少Codex任务即时状态查询工具，无法确认原协调者及子代理已停止；保留#1/#4现有owner，仅发布本轮跳过日志。未调用游戏API，没有新版本或tick证据。",
       "tick": null,
       "issueNumbers": [
         1,
