@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.13';
+const VERSION = '2026-09-25.14';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
 // Plans and station seats are plain local coordinates, which the engine's
@@ -621,18 +621,29 @@ function validDelivery(c,task) {
     return task&&task.room===c.room.name&&task.expires>Game.time&&task.amount>0&&
         (task.sent===undefined||task.sent===Game.time)&&target&&target.structureType&&target.store&&target.store.getFreeCapacity(E)>0;
 }
+// Pickup plans reserve future capacity, but loaded cargo and accepted intents
+// are firm. A ready carrier may reclaim only the unfunded portion of a pickup.
+function fundedDelivery(c,task) {
+    if(task.sent===Game.time||task.phase!=='pickup')return task.amount;
+    return Math.min(task.amount,energy(c)+(task.pickupTick===Game.time?task.pickupAmount||0:0));
+}
+function holdsDeliveryPort(c,task) {
+    return task&&task.phase==='deliver'&&task.sent===undefined&&task.port&&validDelivery(c,task)&&range(c,task.port)<=3;
+}
 function haulTarget(c,includeStorage=true) {
     const room=c.room,blocked=c.memory.haulBlocked||{};
     for(const id in blocked)if(blocked[id]<=Game.time)delete blocked[id];
     let task=c.memory.haulDelivery;
+    if(task&&task.pickupTick<Game.time){delete task.pickupTick;delete task.pickupAmount;}
     if(!validDelivery(c,task)||task.sent!==undefined&&task.sent<Game.time||blocked[task.id]){delete c.memory.haulDelivery;task=null;}
-    const reserved=id=>vals(Game.creeps).reduce((n,peer)=>{
-        const t=peer.memory.haulDelivery;
-        return n+(peer.name!==c.name&&t&&t.id===id&&validDelivery(peer,t)?t.amount:0);
-    },0);
-    const capacity=energy(c)+c.store.getFreeCapacity(E),load=c.memory.loaded?energy(c):capacity;
+    const capacity=energy(c)+c.store.getFreeCapacity(E);
+    const ready=energy(c)>0&&(c.memory.loaded||energy(c)>=Math.ceil(capacity*.9)||task&&energy(c)>=task.amount);
+    const load=ready?energy(c):capacity;
+    if(task&&task.sent===undefined)task.phase=ready?'deliver':'pickup';
+    const commitments=id=>vals(Game.creeps).filter(peer=>peer.name!==c.name&&peer.memory.haulDelivery&&peer.memory.haulDelivery.id===id&&validDelivery(peer,peer.memory.haulDelivery));
+    const reserved=id=>commitments(id).reduce((n,peer)=>n+(ready?fundedDelivery(peer,peer.memory.haulDelivery):peer.memory.haulDelivery.amount),0);
     const needs=deliveryNeeds(room,includeStorage).filter(n=>!blocked[n.node.id]&&n.node.id!==c.memory.withdrawnFrom)
-        .map(n=>({...n,amount:Math.max(0,n.high-energy(n.node)-reserved(n.node.id))})).filter(n=>n.amount>0);
+        .map(n=>({...n,gap:Math.max(0,n.high-energy(n.node)),amount:Math.max(0,n.high-energy(n.node)-reserved(n.node.id))})).filter(n=>n.amount>0);
     // Finish a batch inside its priority class; small normal gaps wait for the
     // next batch, while spawn/defense/controller emergency gaps remain urgent.
     needs.sort((a,b)=>a.priority-b.priority||Number(b.node.id===task?.id)-Number(a.node.id===task?.id)||range(c,a.node)-range(c,b.node));
@@ -640,11 +651,24 @@ function haulTarget(c,includeStorage=true) {
         const committed=task&&request.node.id===task.id;
         if(!committed&&request.priority>2&&request.priority<6&&request.amount<Math.min(50,Math.ceil(load/2)))continue;
         if(!committed&&!near(c,[request.node]))continue;
+        if(ready){
+            const peers=commitments(request.node.id),claim=committed?Math.min(task.amount,load,Math.floor(request.amount)):Math.min(load,Math.floor(request.amount));
+            let reclaim=Math.max(0,claim+peers.reduce((n,p)=>n+p.memory.haulDelivery.amount,0)-request.gap);
+            // Only edit pickup promises after choosing this destination. Existing
+            // cargo, same-tick transfers and accepted pickups cannot be stolen.
+            for(const peer of peers.sort((a,b)=>range(b,request.node)-range(a,request.node))){
+                if(reclaim<=0)break;
+                const t=peer.memory.haulDelivery,take=Math.min(reclaim,Math.max(0,t.amount-fundedDelivery(peer,t)));
+                if(!take)continue;
+                t.amount-=take;reclaim-=take;
+                if(t.amount<=0)delete peer.memory.haulDelivery;
+            }
+        }
         if(!committed){
             movementCount(task?'deliverySwitches':'deliveryStarts');
             task=c.memory.haulDelivery={id:request.node.id,room:room.name,amount:Math.min(load,Math.floor(request.amount)),priority:request.priority,
-                phase:energy(c)?'deliver':'pickup',expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time};
-        }else task.amount=Math.min(task.amount,Math.floor(request.amount));
+                phase:ready?'deliver':'pickup',expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time};
+        }else task.amount=Math.min(task.amount,load,Math.floor(request.amount));
         return request.node;
     }
     delete c.memory.haulDelivery;return null;
@@ -661,13 +685,18 @@ function deliveryPorts(room,target) {
 function deliveryPort(c,target,task,layout) {
     const peers=c.room.find(FIND_MY_CREEPS).concat(c.room.find(FIND_HOSTILE_CREEPS)).filter(o=>o.name!==c.name);
     const promised=vals(Game.creeps).filter(o=>o.name!==c.name).map(o=>({creep:o,task:o.memory.haulDelivery}))
-        .filter(o=>o.task&&o.task.room===c.room.name&&o.task.phase==='deliver'&&o.task.sent===undefined&&o.task.port&&validDelivery(o.creep,o.task)).map(o=>o.task.port);
+        .filter(o=>o.task&&o.task.room===c.room.name&&holdsDeliveryPort(o.creep,o.task)).map(o=>o.task.port);
     const avoid=task.portAvoid||{};
     for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
     const free=p=>!avoid[p.x+50*p.y]&&!peers.some(o=>range(o,p)===0)&&!promised.some(q=>range(q,p)===0);
     if(task.port&&layout.ports.some(p=>range(p,task.port)===0)&&free(task.port))return task.port;
     delete task.port;
     const candidates=layout.ports.filter(free).sort((a,b)=>Number(!!layout.preferred&&range(b,layout.preferred)===0)-Number(!!layout.preferred&&range(a,layout.preferred)===0)||range(c,a)-range(c,b));
+    if(!candidates.length&&layout.ports.some(p=>!avoid[p.x+50*p.y])){
+        // An occupied or near-term leased port is transient contention, not an
+        // unreachable room node. Keep the amount lease through a short wait.
+        if(task.portWaitSince===undefined)task.portWaitSince=Game.time;
+    }else delete task.portWaitSince;
     for(const p of candidates){
         // Exact range zero matters: reaching a neighboring tile does not prove
         // that this unloading tile itself is reachable. Bound each path search.
@@ -691,7 +720,7 @@ function clearStationTraffic(c,target=null) {
     const options=[];
     for(let y=c.pos.y-1;y<=c.pos.y+1;y++)for(let x=c.pos.x-1;x<=c.pos.x+1;x++){
         const p={x,y};if(walkable(c.room,p)&&!future.has(x+50*y)&&!endpoints.some(s=>range(s,p)===0)&&
-            !peers.some(o=>range(o,p)===0||o.memory&&o.memory.haulDelivery&&validDelivery(o,o.memory.haulDelivery)&&o.memory.haulDelivery.port&&range(o.memory.haulDelivery.port,p)===0))options.push(p);
+            !peers.some(o=>range(o,p)===0||o.memory&&holdsDeliveryPort(o,o.memory.haulDelivery)&&range(o.memory.haulDelivery.port,p)===0))options.push(p);
     }
     // Prefer parking off roads; a free outward road is still better than
     // holding the only transfer endpoint when all nearby parking is occupied.
@@ -727,7 +756,11 @@ function collectHaul(c) {
     const amount=Math.min(c.store.getFreeCapacity(E),delivery?Math.max(0,delivery.amount-energy(c)):c.store.getFreeCapacity(E));
     if(!amount)return false;
     const result=target.resourceType?c.pickup(target):c.withdraw(target,E,Math.min(amount,energy(target)));
-    if(result===OK){c.memory.withdrawnFrom=target.id;task.progress=Game.time;return true;}
+    if(result===OK){
+        c.memory.withdrawnFrom=target.id;task.progress=Game.time;
+        if(delivery){delivery.pickupTick=Game.time;delivery.pickupAmount=Math.min(target.resourceType?c.store.getFreeCapacity(E):amount,energy(target));}
+        return true;
+    }
     if(result===ERR_NOT_IN_RANGE&&go(c,target)!==ERR_NO_PATH)return true;
     c.memory.haulPickupAvoid={id:task.id,until:Game.time+15};delete c.memory.haulPickup;return false;
 }
@@ -743,7 +776,7 @@ function deliverHaul(c,target) {
     const result=c.transfer(target,E,amount);
     if(result===OK){
         task.amount=amount;task.sent=Game.time;task.progress=Game.time;
-        delete task.port;delete task.portAvoid;clearStationTraffic(c,target);return true;
+        delete task.port;delete task.portAvoid;delete task.portWaitSince;clearStationTraffic(c,target);return true;
     }
     if(result===ERR_TIRED||c.fatigue)return true;
     if(result===ERR_NOT_IN_RANGE){
@@ -762,6 +795,7 @@ function deliverHaul(c,target) {
             (task.portAvoid||(task.portAvoid={}))[port.x+50*port.y]=Game.time+15;delete task.port;delete c.memory._move;
         }
     }
+    if(task.portWaitSince!==undefined&&Game.time-task.portWaitSince<8)return true;
     c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;delete c.memory.haulDelivery;
     return false;
 }

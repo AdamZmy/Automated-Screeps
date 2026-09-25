@@ -6,6 +6,16 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.4.1 — 2026-09-25
+
+- Game build `2026-09-25.14` lets ready cargo reclaim only unfunded pickup
+  promises; preserve carried cargo and accepted same-tick pickup/transfer intents.
+- Limit exclusive unloading-tile reservations to nearby couriers. Distinguish
+  brief port contention from an unreachable destination, with bounded recovery.
+- Add independent counterfactual regressions for empty-carrier quantity blocking
+  and distant-carrier tile blocking; retain both as L003/L004 checks (#1, #5).
+- Live deployment and sustainable throughput acceptance are recorded separately.
+
 ## 0.4.0 — 2026-09-25
 
 - Require an independent fault reviewer after inspection findings: reuse known

@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts}=ctx.module.exports.test;
+vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts,collectHaul};',ctx);
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts,collectHaul}=ctx.module.exports.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -1049,3 +1049,85 @@ for(const release of ['death','expiry','completion','other-room']){
  assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id]);
 }
 console.log('PASS: real-terrain alternate unloading, exact endpoint reachability, fixed seats/future obstacles, preferred-port fallback, unique room-scoped port leases, same-node stall recovery, successful transfer/exit, death/expiry/completion release and bounded unreachable/fatigue handling');
+
+function cargoLeaseFixture(){
+ const f=unloadFixture();f.box.store[C.RESOURCE_ENERGY]=349;
+ Object.assign(f.control,{target:14,developmentBudget:14,routes:[{roundTrip:40}]});
+ f.truck=(name,x,y,held,capacity,amount,phase='deliver')=>{
+  const c=f.creep(name,'hauler',x,y,held,capacity,[...Array(capacity/50).fill(C.CARRY),...Array(capacity/50).fill(C.MOVE)]);c.memory.loaded=phase==='deliver'&&held>0;
+  c.transfer=function(t,res,n){const result=range(this,t)<=1?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['transfer',t.id,n,result]);return result;};
+  if(amount)c.memory.haulDelivery={id:f.box.id,room:f.room.name,amount,priority:4,phase,expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
+  return c;
+ };
+ f.large=f.truck('large',23,27,250,250,231);f.large.memory.haulDelivery.port={x:17,y:24};
+ f.far=f.truck('far',16,40,100,100,100);f.far.memory.haulDelivery.port={x:16,y:24};
+ f.emptyA=f.truck('empty-a',24,26,0,100,100,'pickup');f.emptyB=f.truck('empty-b',16,32,0,100,100,'pickup');
+ f.near=f.truck('near',20,27,200,200,0);
+ f.promised=()=>Object.values(ctx.Game.creeps).reduce((n,c)=>n+(c.memory.haulDelivery?.id===f.box.id?c.memory.haulDelivery.amount:0),0);
+ const request=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(request.high,880);assert.equal(f.promised(),531);
+ return f;
+}
+for(const order of ['empty-first','loaded-first']){
+ const f=cargoLeaseFixture();
+ if(order==='empty-first'){haulTarget(f.emptyA);haulTarget(f.emptyB);}
+ assert.equal(haulTarget(f.near),f.box,order+' ready nearby cargo can reclaim unfunded pickup promises');
+ assert.equal(f.near.memory.haulDelivery.amount,200);assert.equal(f.promised(),531,'reclamation is atomic and never overbooks the531-energy gap');
+ assert.equal(f.large.memory.haulDelivery.amount,231);assert.equal(f.far.memory.haulDelivery.amount,100,'existing real cargo keeps its delivery amount');
+ assert.equal(f.emptyA.memory.haulDelivery,undefined);assert.equal(f.emptyB.memory.haulDelivery,undefined);
+ assert.equal(haulTarget(f.emptyA),null);assert.equal(haulTarget(f.emptyB),null,'later empty turns cannot steal real cargo leases back');
+ assert(deliverHaul(f.near,f.box));assert.deepEqual([f.near.memory.haulDelivery.port.x,f.near.memory.haulDelivery.port.y],[17,24],'distant routing hints do not lock both unloading endpoints');
+ assert(!f.near.memory.haulBlocked||!f.near.memory.haulBlocked[f.box.id]);
+ f.far.pos=f.pos(18,25);ctx.Game.time++;deliverHaul(f.far,f.box);
+ assert.notDeepEqual([f.far.memory.haulDelivery.port.x,f.far.memory.haulDelivery.port.y],[17,24],'approaching far truck rechecks the near truck endpoint instead of driving into its claim');
+}
+{
+ const f=cargoLeaseFixture();f.emptyA.store[C.RESOURCE_ENERGY]=40;
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,160,'only the160 uncarried energy can be reclaimed');
+ assert.equal(f.emptyA.memory.haulDelivery.amount,40,'partly loaded pickup retains all actual cargo even when loaded=false');
+ assert.equal(f.promised(),531);
+}
+{
+ const f=cargoLeaseFixture();delete f.emptyA.memory.haulDelivery;f.emptyA.store[C.RESOURCE_ENERGY]=40;
+ assert.equal(haulTarget(f.emptyA),f.box);assert.equal(f.emptyA.memory.haulDelivery.phase,'pickup','partial non-ready cargo creates a pickup task rather than falsely firm whole-capacity delivery');
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,160);assert.equal(f.emptyA.memory.haulDelivery.amount,40);
+ assert.equal(f.promised(),531);
+}
+{
+ const f=cargoLeaseFixture();f.emptyA.store[C.RESOURCE_ENERGY]=100;f.emptyA.memory.haulDelivery.sent=ctx.Game.time;
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,100,'an accepted same-tick transfer is never reclaimed');
+ assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.promised(),531);
+}
+for(const action of ['withdraw','pickup']){
+ const f=cargoLeaseFixture();
+ f.emptyA.pos=f.pos(25,26);
+ if(action==='pickup')f.room.objects.push({id:'protected-drop',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)});
+ collectHaul(f.emptyA);
+ assert(f.emptyA.actions.some(a=>a[0]===action),'scenario executes the real collection branch');
+ assert.equal(f.emptyA.memory.haulDelivery.pickupTick,ctx.Game.time);assert.equal(f.emptyA.memory.haulDelivery.pickupAmount,100);
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,100,'accepted '+action+' intent remains firm before Store updates');
+ assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.promised(),531);
+ ctx.Game.time++;f.emptyA.store[C.RESOURCE_ENERGY]=100;haulTarget(f.emptyA);
+ assert.equal(f.emptyA.memory.haulDelivery.pickupTick,undefined,'one-tick intent protection is discarded after the real Store snapshot');
+ assert.equal(f.emptyA.memory.haulDelivery.phase,'deliver');
+}
+{
+ const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=749;
+ delete f.large.memory.haulDelivery;delete f.far.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
+ // Exactly31 unreserved +100 soft energy: the first loaded truck takes131.
+ const second=f.truck('second-near',21,27,200,200,0);
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,131);assert.equal(haulTarget(second),null);
+ assert.equal(f.promised(),131,'second loaded caller cannot revoke the first loaded caller in the same tick');
+ const spawn=f.room.find(C.FIND_MY_SPAWNS)[0];spawn.store[C.RESOURCE_ENERGY]=0;
+ assert.equal(haulTarget(f.near),spawn,'spawn emergency still preempts normal controller replenishment');
+}
+{
+ const f=unloadFixture(),first=f.courier('at-first',17,25),second=f.courier('at-second',16,25),waiting=f.courier('waiting-near',18,25);
+ deliverHaul(first,f.box);deliverHaul(second,f.box);assert(first.memory.haulDelivery.port&&second.memory.haulDelivery.port);
+ assert(deliverHaul(waiting,f.box));assert(waiting.memory.haulDelivery,'short near-port contention retains the delivery amount');
+ assert(!waiting.memory.haulBlocked||!waiting.memory.haulBlocked[f.box.id],'temporary near-port leases do not immediately blacklist the node');
+ delete ctx.Game.creeps[first.name];ctx.Game.time++;assert(deliverHaul(waiting,f.box));assert(waiting.memory.haulDelivery.port,'a released near port is taken on the next attempt');
+ const f2=unloadFixture(),blockA=f2.creep('a','upgrader',17,24),blockB=f2.creep('b','upgrader',16,24),c=f2.courier('bounded-wait');
+ assert(deliverHaul(c,f2.box));ctx.Game.time+=8;assert.equal(deliverHaul(c,f2.box),false,'persistent contention has a finite wait');
+ assert.equal(c.memory.haulDelivery,undefined);assert.equal(c.memory.haulBlocked[f2.box.id],ctx.Game.time+15);
+}
+console.log('PASS: live531-energy lease reproduction, loaded-first/empty-first conservation, partial cargo/new-task phase, accepted transfer/withdraw/pickup protection, two-loaded race, emergency priority, distant port hints and bounded near-port contention');
