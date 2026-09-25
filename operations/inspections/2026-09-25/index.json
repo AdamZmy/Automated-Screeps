@@ -4,6 +4,21 @@
   "day": "2026-09-25",
   "runs": [
     {
+      "id": "2026-09-25T11-37-53Z-run-beb0f80b5444",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T11:37:53.117Z",
+      "updatedAt": "2026-09-25T13:29:09.334Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态待核验，保留现有工作归属",
+      "summary": "本轮协调者01a0d80c-c7af-7e73-a2b2-70a3ee7a6d0b已启动。Issue #1/#4仍归原协调者；当前未提供任务即时状态查询能力，暂不接管。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
+    {
       "id": "2026-09-25T09-50-25Z-run-a015d2c17123",
       "kind": "scheduled",
       "startedAt": "2026-09-25T09:50:25.264Z",
