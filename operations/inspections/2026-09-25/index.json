@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T15:39:32.646Z",
+  "updatedAt": "2026-09-25T15:39:35.138Z",
   "day": "2026-09-25",
   "runs": [
     {
@@ -68,11 +68,11 @@
       "id": "2026-09-25T12-21-45Z-run-180b053940d3",
       "kind": "scheduled",
       "startedAt": "2026-09-25T12:21:45.432Z",
-      "updatedAt": "2026-09-25T13:39:29.551Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-25T15:39:35.138Z",
+      "completedAt": "2026-09-25T15:39:35.106Z",
+      "status": "skipped",
       "title": "巡检跳过：已有协调者运行",
-      "summary": "本轮协调者 01a0d83d-7ed6-7bf2-a8d1-a6eee1b731eb 已核验既有协调者仍active/inProgress；保留既有文件归属，本轮仅发布跳过日志。",
+      "summary": "本轮仅核验交接：原协调者及Issue #1/#4 owner仍active/inProgress，保留全部文件与部署归属。未获取游戏新tick；本轮跳过游戏巡检。",
       "tick": null,
       "issueNumbers": [
         1,
