@@ -1,11 +1,11 @@
-const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const C=require('/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/common/lib/constants');
+const vm=require('node:vm'),assert=require('node:assert/strict');
+const {constants:C,readSource}=require('./test-support/runtime.cjs');
 const logs=[],ctx={...C,module:{exports:{}},console:{log:s=>logs.push(s)},Memory:{frontier:{rooms:{R:{plan:{complete:true,roadVersion:1,roadMissing:[],structures:[{type:C.STRUCTURE_ROAD,x:21,y:21,roadClass:'economy',roadSwamp:true},{type:C.STRUCTURE_ROAD,x:22,y:22,roadClass:'economy',roadSwamp:false}],roadRoutes:[{id:'source:s',tiles:[1071,1122],complete:true}]}}}}},Game:{time:20,creeps:{},cpu:{getUsed:()=>5,bucket:10000,limit:20}}};
 vm.createContext(ctx);
 ctx.ledgerModule={exports:{}};
-vm.runInContext('(function(module){'+fs.readFileSync('ledger.js','utf8')+'})(ledgerModule);',ctx);
+vm.runInContext('(function(module){'+readSource('ledger.js')+'})(ledgerModule);',ctx);
 ctx.require=name=>{assert.equal(name,'ledger');return ctx.ledgerModule.exports;};
-vm.runInContext(fs.readFileSync('monitor.js','utf8'),ctx);
+vm.runInContext(readSource('monitor.js'),ctx);
 const pos=(x,y)=>({x,y,roomName:'R'}),store=(energy,capacity)=>({energy,getCapacity:()=>capacity,getFreeCapacity(){return capacity-this.energy;}});
 const source={id:'s',pos:pos(20,20),energy:3000,energyCapacity:3000,ticksToRegeneration:280};
 const box={id:'box',structureType:C.STRUCTURE_CONTAINER,pos:pos(21,20),store:store(2000,2000)};

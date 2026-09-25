@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const C=require('/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/common/lib/constants');
+const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(fs.readFileSync('main.js','utf8')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go}=ctx.module.exports.test;
+vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork};',ctx);
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork}=ctx.module.exports.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -218,46 +218,36 @@ console.log('PASS: adjacent miner requests worker yield, empty and partial-load 
 console.log('PASS: early capacity/mining stage gates, per-source production checks, no excess small-unit spawning, stable 2 WORK controller duty, temporary construction helpers, focused extension completion, miner-funding fallback, automatic role recovery');
 {
  const f=fixture();f.room.sites=[{id:'extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(22,28),progress:1803}];
- const c=f.creep('hauler','hauler',16,25,89,200,[C.CARRY,C.CARRY,C.CARRY,C.CARRY,C.MOVE]);c.memory.loaded=true;
- const up=f.creep('upgrader','upgrader',15,24,98,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ const haul=f.creep('hauler','hauler',16,25,100,100,[C.CARRY,C.MOVE]);
  const builder=f.creep('builder','builder',23,27,0,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
- assert.equal(haulTarget(c),builder,'a nearby 98/100 upgrader must not monopolize the carrier over a distant empty builder');
- c.transfer=function(t){this.actions.push(['transfer',t.name]);return this.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;};haul(c);
- assert.deepEqual(c.actions.at(-1),['move',23,27,1]);assert.equal(up.memory.haulSupply,undefined);
- builder.store[C.RESOURCE_ENERGY]=20;up.store[C.RESOURCE_ENERGY]=10;
- assert.equal(haulTarget(c),builder,'two build ticks remaining must outrank five upgrade ticks, despite higher absolute energy');
+ const up=f.creep('upgrader','upgrader',15,24,10,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ assert.equal(haulTarget(haul),null,'workers are never moving delivery endpoints, including an empty builder without a station');
+ const src=f.source('source',25,25),box=f.structure(C.STRUCTURE_CONTAINER,'source-box',24,25,500);
+ work(builder);assert.equal(builder.memory.workSupply.id,box.id,'builder binds an existing supply building to the current job');
+ assert.deepEqual(builder.actions[0],['withdraw',box.id]);
+ const closer=f.structure(C.STRUCTURE_CONTAINER,'new-closer-box',23,28,500);ctx.Game.time++;builder.actions.length=0;work(builder);
+ assert.equal(builder.memory.workSupply.id,box.id,'worker retains its supply binding during a batch');
+ f.room.sites=[{id:'new-job',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(23,29),progress:0}];ctx.Game.time++;work(builder);
+ assert.equal(builder.memory.workSupply.id,closer.id,'changing jobs reevaluates the nearest supply node');
+ box.store[C.RESOURCE_ENERGY]=0;closer.store[C.RESOURCE_ENERGY]=0;ctx.Game.time++;work(builder);
+ assert.equal(builder.memory.refuelTarget.kind,'harvest','empty infrastructure can fall back to legal self-harvest');
 }
 {
- const f=fixture(),c=f.creep('hauler','hauler',16,25,50,200,[C.CARRY,C.MOVE]);c.memory.loaded=true;
- const up=f.creep('upgrader','upgrader',15,24,19,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
- assert.equal(haulTarget(c),up,'a sole upgrader close to running out must request supply');
- up.store[C.RESOURCE_ENERGY]=40;assert.equal(haulTarget(c),up,'a partial delivery must keep the batch request open');
- up.store[C.RESOURCE_ENERGY]=98;assert.equal(haulTarget(c),null,'near-full inventory must close its supply request');
- up.store[C.RESOURCE_ENERGY]=70;assert.equal(haulTarget(c),null,'the closed request must remain off until the low-water mark');
- up.store[C.RESOURCE_ENERGY]=20;assert.equal(haulTarget(c),up,'the request must reopen before the worker is empty');
-}
-{
- const f=fixture(),c=f.creep('hauler','hauler',16,25,1,50,[C.CARRY,C.MOVE]);c.memory.loaded=true;
- const small=f.creep('small-upgrader','upgrader',15,24,0,10);haul(c);
- assert.deepEqual(c.actions[0],['transfer',small.name],'a tiny worker and a carrier with only one energy must still receive emergency supply');
- small.store[C.RESOURCE_ENERGY]=9;assert.equal(haulTarget(c),null,'small capacity must still support a reachable high-water mark');
+ const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',16,23,500),source=f.source('open',24,25);
+ f.room.sites=[{id:'extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(22,28),progress:0}];
+ const builder=f.creep('builder','builder',16,24,0,100),primary=f.creep('up0','upgrader',16,22,20,100,[C.WORK,C.WORK,C.CARRY,C.MOVE]);
+ const support=f.creep('up1','upgrader',20,27,0,100);
+ for(const worker of [builder,support]){work(worker);assert(worker.actions.some(a=>a[0]==='harvest'),'construction workers retain bootstrap recovery');assert(!worker.actions.some(a=>a[0]==='withdraw'&&a[1]===box.id),'construction does not consume the dedicated controller reserve');}
 }
 {
  const f=fixture();f.structure(C.STRUCTURE_STORAGE,'storage',17,24,1000,1000000);
  const c=f.creep('hauler','hauler',16,25,0,200,[C.CARRY,C.MOVE]);
- const up=f.creep('upgrader','upgrader',15,24,98,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);up.memory.haulSupply=true;
- haul(c);assert.equal(c.actions.length,0,'no valid worker demand must not cause a storage withdrawal');assert.equal(up.memory.haulSupply,undefined);
+ const up=f.creep('upgrader','upgrader',15,24,98,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ haul(c);assert.equal(c.actions.length,0,'no fixed demand must not cause a storage withdrawal');
  c.store[C.RESOURCE_ENERGY]=89;c.memory.loaded=true;c.memory.withdrawnFrom='storage';haul(c);
  assert.equal(c.actions.length,0,'an existing storage withdrawal may wait without returning energy in a loop');
 }
-{
- const f=fixture();f.room.sites=[{id:'extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(22,28),progress:100}];
- const c=f.creep('hauler','hauler',16,25,100,200,[C.CARRY,C.MOVE]);
- const primary=f.creep('up0','upgrader',15,24,10,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
- const helper=f.creep('up1','upgrader',23,27,20,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
- assert.equal(haulTarget(c),helper,'temporary construction helpers must be ranked by build consumption, not upgrade consumption');
-}
-console.log('PASS: batch worker supply, distant empty builder beats nearby nearly-full upgrader, work-time urgency, refill hysteresis, tiny/low-energy delivery, no-demand storage safety, temporary construction consumption');
+console.log('PASS: no worker delivery endpoints, fixed job supply bindings, job-change/depletion recovery, construction self-harvest and controller reserve protection, no-demand storage safety');
 {
  const f=fixture();f.source('near',24,24);f.source('far',16,42);
  const near=f.structure(C.STRUCTURE_CONTAINER,'near-box',25,25,243),far=f.structure(C.STRUCTURE_CONTAINER,'far-box',17,41,2000);
@@ -268,9 +258,9 @@ console.log('PASS: batch worker supply, distant empty builder beats nearby nearl
  const selected=c.memory.haulPickup.id;near.store[C.RESOURCE_ENERGY]=2000;ctx.Game.time++;c.pos=f.pos(20,29);haul(c);
  assert.equal(c.memory.haulPickup.id,selected,'new nearby stock must not reverse an established remote pickup trip');
  drop.amount=0;far.store[C.RESOURCE_ENERGY]=0;ctx.Game.time++;haul(c);assert.equal(c.memory.haulPickup.id,'near-box','depleted source must release its committed pickup');
- const worker=f.creep('upgrader','upgrader',20,30,0,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ const worker=f.structure(C.STRUCTURE_SPAWN,'spawn',20,30,0,300);
  c.store[C.RESOURCE_ENERGY]=247;c.memory.loaded=false;c.actions.length=0;haul(c);
- assert.equal(c.memory.loaded,true);assert.equal(c.memory.haulPickup,undefined);assert.deepEqual(c.actions[0],['transfer',worker.name],'247/250 carrier must deliver instead of chasing three energy');
+ assert.equal(c.memory.loaded,true);assert.equal(c.memory.haulPickup,undefined);assert.deepEqual(c.actions[0],['transfer',worker.id],'247/250 carrier must deliver instead of chasing three energy');
 }
 {
  const f=fixture();f.source('near',24,24);f.source('far',16,42);f.structure(C.STRUCTURE_CONTAINER,'near-box',25,25,150);f.structure(C.STRUCTURE_CONTAINER,'far-box',17,41,2000);
@@ -282,7 +272,8 @@ console.log('PASS: batch worker supply, distant empty builder beats nearby nearl
 function deliveryFixture(){
  const f=fixture();f.room.controller.pos=f.pos(16,21);const box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',16,23,0);
  f.room.sites=[{id:'extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(23,27),progress:0}];
- const builder=f.creep('builder','builder',23,27,0,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ const builder=f.structure(C.STRUCTURE_CONTAINER,'work-box',23,27,0);
+ const worker=f.creep('builder','builder',23,28,0,100);worker.memory.workSupply={id:builder.id,job:'extension',room:f.room.name};
  const c=f.creep('hauler','hauler',16,26,200,250,[C.CARRY,C.MOVE]);c.memory.loaded=true;
  c.transfer=function(t){this.actions.push(['transfer',t.id||t.name]);return this.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;};
  return{...f,box,builder,c};
@@ -292,11 +283,11 @@ function deliveryFixture(){
  for(let i=0;i<4;i++){ctx.Game.time=start+i;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);}
  assert.equal(f.c.memory.moveAttempt,ctx.Game.time,'movement telemetry must identify a current move attempt');
  ctx.Game.time=start+4;f.c.actions.length=0;haul(f.c);
- assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.name);
+ assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.id);
  assert.deepEqual(f.c.actions.at(-1),['move',23,27,1],'blocked controller access must fall through to another live delivery request');
  ctx.Game.time+=15;assert.equal(haulTarget(f.c),f.box);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'delivery exclusion must expire after 15 ticks');
  const previousMove=f.c.memory.moveAttempt;
- f.c.pos=f.pos(16,24);for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'successful transfer must never create a permanent blacklist');assert.equal(f.c.memory.moveAttempt,previousMove,'successful stationary supply must not be reported as another move attempt');}
+ f.c.pos=f.pos(16,24);for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'successful transfer must never create a permanent blacklist');assert(f.c.actions.some(a=>a[0]==='transfer'),'successful delivery may clear the station approach while retaining access');}
 }
 {
  const f=deliveryFixture();haul(f.c);f.c.fatigue=20;
@@ -305,8 +296,8 @@ function deliveryFixture(){
 }
 {
  const f=deliveryFixture(),move=f.c.moveTo;
- f.c.moveTo=function(p,opts){const result=move.call(this,p,opts);return p.x===16&&p.y===23?C.ERR_NO_PATH:result;};
- haul(f.c);assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.name,'explicit no-path error must fall back immediately');
+ f.c.moveTo=function(p,opts){const result=move.call(this,p,opts);return p.x===controllerStation(f.room).port.x&&p.y===controllerStation(f.room).port.y?C.ERR_NO_PATH:result;};
+ haul(f.c);assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.id,'explicit no-path error must fall back immediately');
 }
 {
  const f=fixture();const site=(id,type,x,progress=0)=>({id,structureType:type,pos:f.pos(x,28),progress});
@@ -466,17 +457,13 @@ console.log('PASS: in-range fueled builders retain budget despite retired miner 
  const f=pipelineFixture();delete ctx.Game.creeps.builder;
  f.room.sites=[{id:'live-extension',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(16,33),progress:2665,progressTotal:3000}];
  const builder=f.creep('builder','builder',18,30,35,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE,C.MOVE]);builder.memory.loaded=true;
- const helper=f.creep('helper','builder',14,36,20,50,[C.WORK,C.CARRY,C.MOVE]);helper.memory.loaded=true;
- const box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',16,23,760);
- const carrier=f.creep('urgent-carrier','hauler',16,30,15,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);carrier.memory.loaded=true;
- carrier.transfer=function(t){this.actions.push(['transfer',t.id||t.name]);return this.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;};
- assert.equal(haulTarget(carrier),builder,'a healthy 760-energy controller buffer must not preempt a builder with 3.5 working ticks of fuel');
- haul(carrier);assert.deepEqual(carrier.actions.at(-1),['move',18,30,1],'a nearby loaded carrier must approach the starving builder instead of taking a long controller detour');
- builder.store[C.RESOURCE_ENERGY]=95;helper.store[C.RESOURCE_ENERGY]=48;
- assert.equal(haulTarget(carrier),null,'two WORK of controller consumption do not justify topping up an already healthy 760-energy buffer');
- box.store[C.RESOURCE_ENERGY]=60;assert.equal(haulTarget(carrier),box,'idle logistics may top up the fifty-tick controller buffer after worker demands are satisfied');
- builder.store[C.RESOURCE_ENERGY]=35;assert.equal(haulTarget(carrier),builder,'ordinary controller reserve replenishment stays below active worker demand');
- box.store[C.RESOURCE_ENERGY]=10;assert.equal(haulTarget(carrier),box,'a nearly empty controller reserve retains emergency priority');
+ const box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',16,23,760),supply=f.structure(C.STRUCTURE_CONTAINER,'work-box',17,32,0);
+ builder.memory.workSupply={id:supply.id,job:'live-extension',room:f.room.name};
+ const carrier=f.creep('urgent-carrier','hauler',16,30,100,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);carrier.memory.loaded=true;
+ assert.equal(haulTarget(carrier),supply,'active construction uses its fixed supply building before a healthy controller reserve');
+ assert.equal(carrier.memory.haulDelivery.amount,100);
+ supply.store[C.RESOURCE_ENERGY]=200;box.store[C.RESOURCE_ENERGY]=10;
+ assert.equal(haulTarget(carrier),box,'a nearly empty controller reserve retains emergency priority');
  const spawn=f.room.objects.find(o=>o.structureType===C.STRUCTURE_SPAWN);spawn.store[C.RESOURCE_ENERGY]=100;
  assert.equal(haulTarget(carrier),spawn,'spawn replenishment keeps its original priority');
 }
@@ -492,7 +479,7 @@ console.log('PASS: in-range fueled builders retain budget despite retired miner 
  assert.equal(buildAllowed(builder),false,'a builder below its completed-batch threshold is not counted as work-ready');
  work(builder);assert.equal(builder.actions[0][0],'withdraw','the threshold does not indiscriminately turn partial loads into ready builders');
 }
-console.log('PASS: live-shaped starving builder preempts excess controller reserve, consumption-sized buffer, emergency/spawn priorities, matching 90% construction readiness and hauling completion');
+console.log('PASS: fixed construction supply priority, controller emergency/spawn priorities, matching 90% construction readiness');
 {
  const f=fixture(),c=f.creep('searcher','hauler',20,20),adjacent=f.structure(C.STRUCTURE_EXTENSION,'adjacent',21,21),blocked=f.structure(C.STRUCTURE_EXTENSION,'blocked',23,23),reachable=f.structure(C.STRUCTURE_EXTENSION,'reachable',27,27);
  let searches=0;c.pos.findClosestByPath=items=>{searches++;assert(items.includes(reachable));return reachable;};
@@ -501,19 +488,20 @@ console.log('PASS: live-shaped starving builder preempts excess controller reser
 }
 {
  const f=fixture();f.room.sites=[{id:'site',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(20,30),progress:0}];
- const first=f.creep('first-worker','builder',25,25,0,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]),second=f.creep('second-worker','builder',15,25,30,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ const first=f.structure(C.STRUCTURE_CONTAINER,'first-node',25,25,0),second=f.structure(C.STRUCTURE_CONTAINER,'second-node',15,25,30);
+ for(const node of [first,second]){const worker=f.creep(node.id+'-worker','builder',20,30,0,100);worker.memory.workSupply={id:node.id,job:'site',room:f.room.name};}
  const c=f.creep('courier','hauler',20,20,200,200,[C.CARRY,C.MOVE]);c.memory.loaded=true;
  c.transfer=t=>c.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;
  let searches=0;const locate=c.pos.findClosestByPath;c.pos.findClosestByPath=function(a){searches++;return locate.call(this,a);};
- haul(c);assert.equal(c.memory.haulDelivery.id,first.name);assert.equal(searches,1);
+ haul(c);assert.equal(c.memory.haulDelivery.id,first.id);assert.equal(searches,1);
  first.store[C.RESOURCE_ENERGY]=20;second.store[C.RESOURCE_ENERGY]=0;
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,first.name,'a fluctuating equal-priority urgency score must not reverse a valid trip');assert.equal(searches,1,'committed delivery must reuse its existing route instead of searching every tick');
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,first.id,'a fluctuating equal-priority gap must not reverse a valid trip');assert.equal(searches,1,'committed delivery reuses its existing route');
  const emergency=f.structure(C.STRUCTURE_SPAWN,'emergency-spawn',19,19,0,300);
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,emergency.id,'new spawn demand immediately preempts a worker delivery');
- emergency.store[C.RESOURCE_ENERGY]=300;first.store[C.RESOURCE_ENERGY]=95;
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,second.name,'filled targets leave the candidate set and release the commitment');
- c.memory.haulBlocked={[second.name]:ctx.Game.time+15};first.store[C.RESOURCE_ENERGY]=20;
- assert.equal(haulTarget(c),first,'blocked commitments must not override target exclusion');
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,emergency.id,'new spawn demand immediately preempts a normal delivery');
+ emergency.store[C.RESOURCE_ENERGY]=300;first.store[C.RESOURCE_ENERGY]=200;
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,second.id,'filled targets release commitments');
+ c.memory.haulBlocked={[second.id]:ctx.Game.time+15};first.store[C.RESOURCE_ENERGY]=20;
+ assert.equal(haulTarget(c),first,'blocked commitments cannot override target exclusion');
 }
 {
  const f=fixture(),c=f.creep('mover','hauler',20,20),destination=f.pos(28,28),calls=[];
@@ -533,7 +521,7 @@ console.log('PASS: empty/adjacent path fast paths, genuine reachability, stable 
  let used=0,memoryTick=-1;const mem={};
  const prof={...C,module:{exports:{}},console,global:{},Game:{time:1,creeps:{},rooms:{},gcl:{},cpu:{bucket:10000,getUsed(){used+=.01;return used;}}},require:()=>({tick(){},run(){}})};
  Object.defineProperty(prof,'Memory',{get(){if(memoryTick!==prof.Game.time){used+=3;memoryTick=prof.Game.time;}return mem;}});
- vm.createContext(prof);vm.runInContext(fs.readFileSync('main.js','utf8'),prof);
+ vm.createContext(prof);vm.runInContext(readSource('main.js'),prof);
  for(let tick=1;tick<=20;tick++){prof.Game.time=tick;used=0;prof.module.exports.loop();}
  const first=mem.frontier.performance;
  assert.equal(first.samples,20);assert.equal(first.from,1);assert.equal(first.tick,20);
@@ -589,3 +577,149 @@ for(const scenario of ['rcl1','downgrade','bootstrap','pioneer']){
  assert.equal(c.memory.role,role,scenario+' must preserve its existing role');assert(c.actions.some(a=>a[0]==='upgrade'),scenario+' retains its previous upgrade behavior');
 }
 console.log('PASS: retired growth builder joins shared upgrade budget without transition overspend, spawn accounting, later builder demand, infrastructure/RCL1/emergency and other-role protection');
+// Replay the historical duplicate-delivery bug against the actual terrain and
+// unchanged execution plan. This is an offline fixture, not live throughput.
+function stationFixture(){
+ const f=fixture(),flow=JSON.parse(readSource('fixtures/fixed-logistics.json')),world=flow,plan=flow.plan;
+ ctx.Game.time=flow.tick;f.room.controller.level=3;f.room.energyAvailable=f.room.energyCapacityAvailable=800;
+ f.room.getTerrain=()=>({get:(x,y)=>Number(world.terrain[x+50*y])});
+ const a=f.source('near',24,24),b=f.source('far',16,42);
+ for(const item of flow.boxes)f.structure(C.STRUCTURE_CONTAINER,item.id,...item.pos,item.energy);
+ for(const item of flow.creeps){const c=f.creep(item.name,item.memory.role,...item.pos,item.energy,item.capacity,[...Array(item.work).fill(C.WORK),...Array(item.capacity/50).fill(C.CARRY),C.MOVE]);
+  c.memory.loaded=item.memory.loaded;if(item.memory.delivery)c.memory.haulDelivery={...item.memory.delivery};
+  if(item.memory.role==='miner')c.memory.source=item.pos[1]===25?a.id:b.id;
+ }
+ ctx.Memory.frontier.rooms[f.room.name]={plan,economyControl:{at:ctx.Game.time,baseMode:'growth',mode:'growth',target:14,routes:[{roundTrip:22},{roundTrip:40}]}};
+ return {...f,flow,box:f.room.objects.find(s=>s.structureType===C.STRUCTURE_CONTAINER&&s.pos.x===16),ups:Object.values(ctx.Game.creeps).filter(c=>c.memory.role==='upgrader'),haulers:Object.values(ctx.Game.creeps).filter(c=>c.memory.role==='hauler')};
+}
+{
+ const f=stationFixture(),station=controllerStation(f.room);
+ assert.deepEqual([station.port.x,station.port.y],[17,24],'the existing controller road is the fixed delivery port');
+ assert.deepEqual(Array.from(station.seats,p=>p.x+','+p.y).sort(),['15,23','16,22','16,23','17,23'],'four seats exclude future extension/link, terrain walls and both planned access roads');
+ for(const c of f.ups)work(c);
+ const seats=f.ups.map(c=>c.memory.upgradeSeat.x+','+c.memory.upgradeSeat.y);
+ assert.equal(new Set(seats).size,4,'each living primary upgrader owns a unique seat');
+ const saved=JSON.stringify(f.ups.map(c=>c.memory.upgradeSeat));ctx.Game.time++;for(const c of f.ups)work(c);
+ assert.equal(JSON.stringify(f.ups.map(c=>c.memory.upgradeSeat)),saved,'position fluctuations cannot reshuffle persistent seats');
+ for(const c of f.haulers){const target=haulTarget(c);assert(!target||target.structureType,'historical three-hauler pursuit must not survive migration');assert.notEqual(c.memory.haulDelivery?.id,f.ups[0].name);}
+ // A stationary courier on the approach clears it even when no demand remains.
+ f.box.store[C.RESOURCE_ENERGY]=2000;const c=f.haulers.find(c=>c.store[C.RESOURCE_ENERGY]>0);c.pos=f.pos(17,24);c.actions.length=0;c.memory.loaded=true;haul(c);
+ assert(c.actions.some(a=>a[0]==='move'),'idle loaded couriers yield the delivery port');
+}
+{
+ const f=stationFixture();for(const c of f.ups)work(c);
+ for(const c of f.ups)c.pos=f.pos(c.memory.upgradeSeat.x,c.memory.upgradeSeat.y);
+ let upgrades=0,concurrent=0;
+ for(let tick=0;tick<32;tick++){
+  ctx.Game.time=f.flow.tick+tick;f.box.store[C.RESOURCE_ENERGY]=2000;
+  for(const c of f.ups){c.store[C.RESOURCE_ENERGY]=8;c.actions.length=0;work(c);
+   assert(c.actions.some(a=>a[0]==='withdraw'),'prefuel begins while the worker still has initial energy');
+   assert(!c.actions.some(a=>a[0]==='move'),'fixed workers neither chase fuel nor move on duty-off ticks');
+   if(c.actions.some(a=>a[0]==='upgrade')){upgrades+=4;concurrent++;}
+  }
+ }
+ assert.equal(upgrades/32,14,'fixed prefueling preserves the original fourteen-energy upgrade duty budget');assert(concurrent>0);
+ const c=f.ups[0];c.store[C.RESOURCE_ENERGY]=0;c.actions.length=0;work(c);
+ assert(c.actions.some(a=>a[0]==='withdraw'));assert(!c.actions.some(a=>a[0]==='upgrade'),'newly withdrawn energy cannot fund an upgrade from zero initial energy');
+ assert(JSON.stringify(ctx.Memory.frontier.rooms[f.room.name].upgradeStation).length<700,'runtime station state remains compact');
+}
+{
+ const f=stationFixture();f.box.store[C.RESOURCE_ENERGY]=600;
+ for(const c of f.haulers){c.store[C.RESOURCE_ENERGY]=c.store[C.RESOURCE_ENERGY]+c.store.getFreeCapacity();c.memory.loaded=true;delete c.memory.haulDelivery;}
+ const need=deliveryNeeds(f.room).find(n=>n.node.id===f.box.id),gap=need.high-600;
+ for(const c of f.haulers)haulTarget(c);
+ const promised=f.haulers.reduce((n,c)=>n+(c.memory.haulDelivery?.amount||0),0);
+ assert(promised<=gap,'carriers subtract other live commitments before reserving the same deficit');
+ const selected=f.haulers.filter(c=>c.memory.haulDelivery);assert(selected.length<f.haulers.length,'the final small gap cannot attract every truck');
+ const first=selected[0],amount=first.memory.haulDelivery.amount;delete ctx.Game.creeps[first.name];
+ const waiting=f.haulers.find(c=>!c.memory.haulDelivery);assert.equal(haulTarget(waiting),f.box,'a dead carrier releases its amount without stale room-level reservations');
+ assert(waiting.memory.haulDelivery.amount<=amount+50);
+ waiting.memory.haulDelivery.expires=ctx.Game.time;const old=waiting.memory.haulDelivery;haulTarget(waiting);
+ assert.notEqual(waiting.memory.haulDelivery,old,'expired commitments are released and may be reassigned');
+ f.room.objects=f.room.objects.filter(s=>s.id!==f.box.id);assert.equal(haulTarget(waiting),null,'destroyed destination cannot retain a delivery commitment');
+}
+{
+ const f=fixture(),spawn=f.structure(C.STRUCTURE_SPAWN,'small-spawn-gap',20,20,220,300);
+ const first=f.creep('first','hauler',19,20,100,100,[C.CARRY,C.MOVE]),second=f.creep('second','hauler',18,20,100,100,[C.CARRY,C.MOVE]);
+ first.memory.loaded=second.memory.loaded=true;let sent;
+ first.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};haul(first);
+ assert.equal(sent,80,'transfer is capped to the promised deficit, not the full cargo');
+ assert.equal(haulTarget(second),null,'a successful pending transfer stays reserved until the next Store snapshot');
+ ctx.Game.time++;spawn.store[C.RESOURCE_ENERGY]=300;assert.equal(haulTarget(second),null);assert.equal(haulTarget(first),null);assert.equal(first.memory.haulDelivery,undefined);
+ spawn.store[C.RESOURCE_ENERGY]=0;first.store[C.RESOURCE_ENERGY]=0;first.memory.loaded=false;
+ const source=f.source('source',25,25),box=f.structure(C.STRUCTURE_CONTAINER,'source-box',24,25,500);
+ first.withdraw=()=>C.ERR_NOT_IN_RANGE;haul(first);
+ assert.equal(first.memory.haulDelivery.phase,'pickup');assert.equal(first.memory.haulDelivery.source,box.id,'an empty delivery reserves a destination and records its fixed source during pickup');
+ const reserved=first.memory.haulDelivery.amount;assert.equal(haulTarget(second),spawn);assert(first.memory.haulDelivery.amount+second.memory.haulDelivery.amount<=300);
+}
+{
+ const f=stationFixture();for(const c of f.ups)work(c);
+ const first=f.ups[0],seat=first.memory.upgradeSeat;
+ f.structure(C.STRUCTURE_EXTENSION,'unexpected-obstacle',seat.x,seat.y,0,50);ctx.Game.time++;work(first);
+ assert(!first.memory.upgradeSeat||first.memory.upgradeSeat.x!==seat.x||first.memory.upgradeSeat.y!==seat.y,'a newly blocked seat is invalidated');
+ const link=f.structure(C.STRUCTURE_LINK,'controller-link',16,24,600,800);f.room.controller.level=5;ctx.Game.time++;
+ f.room.objects=f.room.objects.filter(s=>s.id!==f.box.id);const station=controllerStation(f.room);
+ assert.equal(station.node.id,link.id,'destroyed container plus RCL5 link rebuilds the station around a valid node');
+ for(const p of station.seats){assert(f.pos(p.x,p.y).getRangeTo(link)<=1);assert(f.pos(p.x,p.y).getRangeTo(f.room.controller)<=3);}
+ f.room.objects=f.room.objects.filter(s=>s.id!==link.id);ctx.Game.time++;first.store[C.RESOURCE_ENERGY]=0;first.memory.loaded=false;first.actions.length=0;work(first);
+ assert.equal(first.memory.upgradeSeat,undefined);assert(first.actions.some(a=>a[0]==='withdraw'),'no-box workers retain source-container recovery');
+}
+{
+ const f=stationFixture(),c=f.ups[0];c.pos=f.pos(25,28);c.moveTo=()=>C.ERR_NO_PATH;work(c);
+ assert.equal(c.memory.upgradeSeat,undefined);assert(c.memory.stationAvoid.until>ctx.Game.time,'an unreachable seat releases its claim with a bounded cooldown');
+ ctx.Game.time++;c.actions.length=0;work(c);assert.equal(c.memory.upgradeSeat,undefined,'another worker assignment cannot force a cooling-down worker back into a failed seat');
+ const starving=stationFixture(),worker=starving.ups[0];starving.box.store[C.RESOURCE_ENERGY]=0;worker.store[C.RESOURCE_ENERGY]=0;worker.memory.loaded=false;
+ work(worker);ctx.Game.time+=21;worker.actions.length=0;work(worker);
+ assert(worker.actions.some(a=>a[0]==='withdraw'&&a[1]!==starving.box.id),'prolonged station outage invokes bounded self-refuel recovery');
+}
+console.log('PASS: actual-terrain four fixed seats and open delivery/access roads, historical duplicate-target migration, prewithdraw plus upgrade with initial-stock guard and conserved budget, batch promises/death/expiry/destruction/same-tick completion, RCL5/blocked-seat/no-box/station-outage recovery');
+{
+ const f=fixture(),near=f.source('near-source',25,25),far=f.source('far-source',17,41);
+ const hub=f.structure(C.STRUCTURE_LINK,'hub',21,26,0,800),source=f.structure(C.STRUCTURE_LINK,'source-link',16,40,700,800);
+ ctx.Memory.frontier.rooms[f.room.name]={plan:{structures:[{type:'link',x:21,y:26,tag:'hub-link'},{type:'link',x:16,y:40,tag:'source-link-far-source'},{type:'link',x:16,y:24,tag:'controller-link'}]}};
+ const sent=[];for(const node of [hub,source])node.transferEnergy=(target,amount)=>{sent.push([node.id,target.id,amount]);return C.OK;};
+ f.room.controller.level=5;links(f.room);assert.deepEqual(sent,[['source-link','hub',700]],'RCL5 source link can operate before a controller link exists');
+ source.cooldown=1;sent.length=0;links(f.room);assert.equal(sent.length,0,'cooling links do not claim delivery capacity');source.cooldown=0;
+ const controller=f.structure(C.STRUCTURE_LINK,'controller-link',16,24,0,800);f.room.controller.level=6;
+ sent.length=0;links(f.room);assert.deepEqual(sent,[['source-link','controller-link',700]],'source input prefers the controller when present');
+ controller.store[C.RESOURCE_ENERGY]=800;sent.length=0;links(f.room);assert.deepEqual(sent,[['source-link','hub',700]],'full controller redirects source input to hub');
+ source.store[C.RESOURCE_ENERGY]=0;hub.store[C.RESOURCE_ENERGY]=500;controller.store[C.RESOURCE_ENERGY]=100;sent.length=0;links(f.room);
+ assert.deepEqual(sent,[['hub','controller-link',500]],'hub can forward initial stock to the controller');
+ controller.store[C.RESOURCE_ENERGY]=800;
+ const spawn=f.structure(C.STRUCTURE_SPAWN,'spawn',21,28,0,300),carrier=f.creep('hub-courier','hauler',22,27,0,100,[C.CARRY,C.MOVE]);
+ haul(carrier);assert.deepEqual(carrier.actions.at(-1),['withdraw',hub.id],'haulers drain received hub stock for spawn/core delivery');
+ carrier.store[C.RESOURCE_ENERGY]=100;carrier.memory.loaded=true;spawn.store[C.RESOURCE_ENERGY]=300;
+ const storage=f.structure(C.STRUCTURE_STORAGE,'storage',19,28,0,1000000);assert.equal(haulTarget(carrier),storage,'received hub stock can also move into storage');
+ hub.store[C.RESOURCE_ENERGY]=0;delete carrier.memory.withdrawnFrom;spawn.store[C.RESOURCE_ENERGY]=300;storage.store[C.RESOURCE_ENERGY]=1000000;
+ assert.notEqual(haulTarget(carrier),hub,'haulers never refill the hub receiver');
+}
+// Exercise the pinned official processor's action dispatcher and both intents.
+// The runtime API rejects an upgrade from zero initial energy before dispatch.
+{
+ const lodash=require(require.resolve('lodash',{paths:[engine]})),processors={};
+ const utility={getDriver:()=>({constants:C}),calcResources:o=>Object.values(o.store||{}).reduce((n,v)=>n+v,0)};
+ for(const name of ['withdraw','upgradeController']){
+  const mod={exports:{}};vm.runInNewContext(fs.readFileSync(engine+'/src/processor/intents/creeps/'+name+'.js','utf8'),{module:mod,require(id){if(id==='lodash')return lodash;if(id==='../../../utils')return utility;if(id==='../../../config')return{};throw Error(id);}});processors[name]=mod.exports;
+ }
+ const dispatch={exports:{}};vm.runInNewContext(fs.readFileSync(engine+'/src/processor/intents/creeps/intents.js','utf8'),{module:dispatch,__dirname:'.',require(id){if(id==='lodash')return lodash;if(id==='bulk-require')return()=>processors;throw Error(id);}});
+ const object={_id:'upgrader',type:'creep',user:'me',x:16,y:22,store:{energy:8},storeCapacity:100,body:Array.from({length:4},()=>({type:C.WORK,hits:100})),actionLog:{}};
+ const box={_id:'box',type:'container',x:16,y:23,store:{energy:500}},controller={_id:'controller',type:'controller',user:'me',x:16,y:21,level:3,progress:100,downgradeTime:10000};
+ const events=[];dispatch.exports(object,{withdraw:{id:'box',resourceType:C.RESOURCE_ENERGY,amount:92},upgradeController:{id:'controller'}},{roomObjects:{box,controller,upgrader:object},bulk:{update(){}},bulkUsers:{},stats:{inc(){}},roomController:controller,gameTime:100,eventLog:events});
+ assert.equal(object.store.energy,96);assert.equal(box.store.energy,408);assert.equal(controller.progress,104);
+ assert(events.some(e=>e.event===C.EVENT_TRANSFER)&&events.some(e=>e.event===C.EVENT_UPGRADE_CONTROLLER),'official dispatcher applies withdrawal and upgrade in the same tick');
+ assert.equal(object.store.energy+box.store.energy,508-4,'same-tick work spends exactly the original four-WORK budget');
+}
+console.log('PASS: planned RCL5 source-to-hub, controller-first/link-full/cooldown fallbacks, hub-to-controller and hauler drain with no reverse refill; official processor confirms simultaneous withdraw and upgrade');
+{
+ const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'work-buffer',25,30,40),source=f.source('fallback-source',30,30);
+ f.room.sites=[{id:'job',structureType:C.STRUCTURE_EXTENSION,pos:f.pos(25,32),progress:0}];
+ const builder=f.creep('builder','builder',25,31,0,100);work(builder);assert.equal(builder.memory.workSupply.id,box.id);
+ box.store[C.RESOURCE_ENERGY]=0;ctx.Game.time++;builder.actions.length=0;work(builder);
+ assert.equal(builder.memory.workSupply.id,box.id,'a briefly depleted fixed work buffer retains its delivery binding');
+ const carrier=f.creep('carrier','hauler',26,30,100,100,[C.CARRY,C.MOVE]);carrier.memory.loaded=true;
+ assert.equal(haulTarget(carrier),box,'haulers can refill a temporarily empty construction buffer');
+ assert(builder.actions.some(a=>a[0]==='harvest'),'the waiting builder may recover by self-harvest while delivery is pending');
+ const remote=f.structure(C.STRUCTURE_CONTAINER,'backup-buffer',29,31,500);ctx.Game.time+=21;work(builder);
+ assert.equal(builder.memory.workSupply.id,remote.id,'a prolonged outage rebinds to a reachable stocked fixed node');
+}
+console.log('PASS: empty construction buffers retain refill demand, self-harvest works while waiting, prolonged outages rebind');

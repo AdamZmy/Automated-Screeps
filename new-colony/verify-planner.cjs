@@ -7,7 +7,7 @@ Module._load=function(request,parent,isMain){
  if(request==='plans'){if(!archiveModule)throw Error('Archive module unavailable');return archiveModule;}
  return originalLoad.call(this,request,parent,isMain);
 };
-Object.assign(global,require('/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/common/lib/constants'));
+Object.assign(global,require('./test-support/runtime.cjs').constants);
 global.Game={time:1,constructionSites:{}};global.Memory={frontier:{rooms:{}}};
 class Pos{constructor(x,y,roomName){Object.assign(this,{x,y,roomName});}getRangeTo(p){p=p.pos||p;return Math.max(Math.abs(this.x-p.x),Math.abs(this.y-p.y));}}
 global.RoomPosition=Pos;
@@ -34,7 +34,8 @@ const planner=require('./planner');
 const K=p=>p.x+p.y*50;
 const D=(a,b)=>Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
 const name='W21N26';
-const encoded=JSON.parse(fs.readFileSync('/tmp/screeps-'+name+'-terrain.json')).terrain[0].terrain;
+const encoded=require('./fixtures/terrain-W21N26.json').terrain;
+assert.match(encoded,/^[0-3]{2500}$/,'The committed terrain fixture must contain all 2,500 cells');
 const object=(p,id,type)=>({id,pos:new Pos(p[0],p[1],name),structureType:type,my:true});
 const fromPlan=p=>object([p.x,p.y],p.tag,p.type);
 function fixture({spawn=true,extra=[],sites=[]}={}){
@@ -165,7 +166,7 @@ console.log('Road policy: metadata-only v3 migration; RCL2 economic roads; swamp
 // The static archive retains every executable field from acknowledged API data.
 // Cold Memory only retains candidate metadata, and readers do not decode plans.
 const clone=value=>JSON.parse(JSON.stringify(value));
-const snapshotFile=__dirname+'/state/room-plans-before.json';
+const snapshotFile=__dirname+'/fixtures/room-plans-before.json';
 const snapshots=JSON.parse(fs.readFileSync(snapshotFile));
 const realArchive=archiveModule;
 for(const [n,m] of Object.entries(snapshots)){
@@ -176,6 +177,8 @@ for(const [n,m] of Object.entries(snapshots)){
 const home=fixture().room;
 Game.rooms={[name]:home};Game.cpu={limit:20,bucket:10000,getUsed:()=>0};
 Memory.frontier={rooms:clone(snapshots),intel:{}};Game.time=100001;
+// Preserve the ownership/metadata regression without committing live economy data.
+Object.assign(Memory.frontier.rooms[name],{economy:{mode:'fixture',upgradeWorkTarget:7},economyControl:{at:99999,target:7}});
 const ownedBefore=clone(Memory.frontier.rooms[name]);
 const coldNames=Object.keys(snapshots).filter(n=>n!==name);
 const fullCount=()=>coldNames.filter(n=>Array.isArray(Memory.frontier.rooms[n].plan.structures)).length;

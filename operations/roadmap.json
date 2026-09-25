@@ -1,0 +1,56 @@
+{
+  "repository": "AdamZmy/Automated-Screeps",
+  "milestones": [
+    {"title": "M1 · RCL3 稳定能源链路", "description": "先让主基地持续采运、升级，再验证可持续总用能率与开发管理闭环。"},
+    {"title": "M2 · RCL4 仓储与扩张准备", "description": "仓储过渡、经济储备、侦察与真实路线评估，满足门槛后开启首个辅房。"},
+    {"title": "M3 · RCL5–6 能源网络", "description": "按需投产Link与高级设施，所有新成本纳入可核验账本。"},
+    {"title": "M4 · RCL7–8 成熟基地", "description": "供需驱动的高级生产、防线、容量与多房调度。"}
+  ],
+  "issues": [
+    {
+      "key": "fixed-logistics", "title": "固定节点能源交接：拆开运输与升级/建造职责",
+      "status": "in-progress", "area": "logistics", "priority": "p1", "milestone": "M1 · RCL3 稳定能源链路",
+      "body": "## 问题证据\nAPI tick73929779/73929792：控制器容器分别有891/791能量，4个升级工在取能距离内，仍有3个hauler同时以同一升级工为配送目标。重复追随移动工人造成耦合和额外配送。\n\n## 实现范围\n矿工到源侧箱；hauler仅向固定建筑交付，并按在途数量预约；upgrader绑定可用固定工位并从控制器设施提前取能；builder按作业区固定补给。失效、死亡、完成和超时释放预约。保持升级预算、续代与防御门槛。未来Link按source→controller/hub、hub→controller工作，避免回流。\n\n## 验收\n- 离线覆盖同tick预约、容量、失效恢复、固定席与升级预算。\n- API新tick确认hauler不再以creep为交付目标，升级持续且CPU无持续回退。\n- 短期交接证据与长期90%验收分别记录，不用静态测试冒充实测。\n\n当前实现由协调者的 implement_fixed_logistics 子代理负责；main.js/verify-economy.cjs唯一写入者。后续owner以checkpoint为准。"
+    },
+    {
+      "key": "github-operations", "title": "接通Git版本、Issue状态、巡检恢复与离线CI",
+      "status": "in-progress", "area": "operations", "priority": "p1", "milestone": "M1 · RCL3 稳定能源链路",
+      "body": "## 范围\n复用现有Automated-Screeps历史，保存当前World/网站基线，建立语义版本、变更日志、Issue与RCL里程碑。原20分钟heartbeat核验真实任务状态，续做现有工作或恢复未完成任务。CI只跑离线检查，不持有游戏Token。\n\n## 验收\n- 基线和后续修改可在GitHub查看，tag/变更日志与实际部署相符。\n- Issue有唯一状态、负责人、下一检查点和验收证据；重复初始化不会创建重复问题或覆盖工作中状态。\n- heartbeat已更新；真实运行的工作不重复启动，验证等待不误当无人处理。\n- 干净检出可运行测试，Actions可查看。\n\nGitHub插件读取可用但创建Issue曾返回403；如CLI仍未授权，记录blocked并继续本地可执行工作。不能宣称尚未上传的记录已在GitHub。"
+    },
+    {
+      "key": "reviewed-layout", "title": "基于成熟方案审查并实现RCL1–8布局、道路和防线",
+      "status": "in-progress", "area": "layout", "priority": "p1", "milestone": "M1 · RCL3 稳定能源链路",
+      "body": "## 范围\n研究可核验的GitHub源码、作者说明和玩家实践，记录许可及实际地形验证；比较布局紧凑度、运输距离、防线闭合和已有建筑兼容。将审查布局写入静态执行计划和网站分级地图，避免游戏每tick重新规划。\n\n## 验收\n- 来源/许可/候选对比与实际地形检查有记录；不能仅以数量和可达合格代替质量验收。\n- 保留已有设施，按RCL分批施工；计划更新可幂等迁移，冷房恢复仍精确。\n- Link根据远近源、hub、controller的真实需求配置；外矿入口仅按路线预留。\n- 游戏API回读与网站快照版本相符，明确区分快照和实时遥测。\n\n负责任务：开启 Scrip World 新游戏 (2)，Codex任务ID 01a0d746-f0e4-78a3-9093-43f8f506a26d。该任务负责planner/plans/layout工具/dashboard；主协调者负责联合游戏部署。不要重复派工或覆盖其文件。"
+    },
+    {
+      "key": "sustainable-utilization", "title": "验证可持续总用能率≥90%，逐段消除漏采、积压和断能",
+      "status": "ready", "area": "energy", "priority": "p1", "milestone": "M1 · RCL3 稳定能源链路",
+      "body": "## 目标\n按ENERGY_METRICS口径，在同一完整1500tick窗口内计算总用能率，目标≥90%；保留升级+计划建设G、发展转化率eta、费用必要性、库存、损失及残差。\n\n## 依赖与工作方式\n与固定交接Issue联动：当前可读基线，代码调整等待其完成以免冲突。发布后先验证新版本纯样本；明确的矿工缺失、满箱掉落或升级停工不必等待完整窗口才处理。\n\n## 验收\n- 独立覆盖合格、无外援/库存透支掩盖、窗口纯度明确；至少连续两个合格主窗口达到目标。\n- 两矿漏采、地面衰减、运输、工人断能及必要运营成本有证据和归因。\n- 不能靠额外孵化/维修或改变分母刷指标；若暂未达标，记录未解决原因与下一实验。"
+    },
+    {
+      "key": "movement-cost", "title": "补齐运输周期和工人断能观测，按实际移动成本优化",
+      "status": "ready", "area": "observability", "priority": "p2", "milestone": "M1 · RCL3 稳定能源链路",
+      "body": "## 范围\n基于固定节点交接，量化取货/载货行程/空返/交付等待，以及升级和建造缺能tick。先利用现有遥测和有界API探针；只有不能可靠归因时才增加少量运行计数。\n\n## 验收\n- moveTo调用数不冒充实际移动步数；疲劳、合法驻守、等待预算单列。\n- 比较直送与经仓库的完整往返和装卸成本，样本注明版本/路线。\n- 监控开销、Memory大小有上界；前端如增加展示不得额外频繁拉取游戏数据。\n- 有实测证据的局部调整才实施，避免制造无必要框架。"
+    },
+    {
+      "key": "rcl4-storage", "title": "RCL4仓储过渡与施工/升级预算验收",
+      "status": "planned", "area": "energy", "priority": "p2", "milestone": "M2 · RCL4 仓储与扩张准备",
+      "body": "## 启动门槛\n主房达到RCL4；现有矿工、运输与升级稳定。\n\n## 范围与验收\n按审查布局建storage和本级必要设施，确认不会形成source↔storage回流；施工与升级分配不牺牲续代及防御。建立储备后以新鲜API样本核验库存趋势、岗位覆盖、CPU与运输周期。地图建造快照随里程碑更新。"
+    },
+    {
+      "key": "first-expansion", "title": "评估外矿与首个双能源辅房，满足门槛后逐房开拓",
+      "status": "planned", "area": "expansion", "priority": "p2", "milestone": "M2 · RCL4 仓储与扩张准备",
+      "body": "## 门槛\n母房RCL≥4、storage≥12000、最近100tick储备不下降、关键岗位覆盖、CPU EMA≤12、bucket≥7000；侦察/安全/路线信息仍有效。门槛以实际代码和后续证据校正，不能只看候选分数。\n\n## 验收\n比较双能源、往返成本、出口可达、邻接扩展空间和风险；外矿与正式殖民分别核算。先完成候选RCL1–8计划及路线，再一次开一房。新spawn、采运、RCL2和持续升级满足自给检查才完成，之后至少等待1000tick。账本先扩范围再宣称多房效率达标。"
+    },
+    {
+      "key": "link-network", "title": "RCL5–6 Link投产及按需评估外矿入口中继",
+      "status": "planned", "area": "logistics", "priority": "p2", "milestone": "M3 · RCL5–6 能源网络",
+      "body": "## 门槛与计划\n达到相应RCL并有能源收益依据。审查计划采用远源Link+hub于RCL5、controller于RCL6；近源和西/南入口只预留，按真实外矿路线、吞吐和损耗决定是否建设。\n\n## 验收\nsource优先controller否则hub，hub可供controller，普通hauler从hub取能供核心/储存但不向hub回填；冷却、容量、损耗、失效与补给覆盖测试通过。上线后用真实tick验证，RCL3离线测试不能算投产完成。"
+    },
+    {
+      "key": "mature-base", "title": "RCL7–8按供需启用成熟基地设施与高级生产",
+      "status": "planned", "area": "strategy", "priority": "p3", "milestone": "M4 · RCL7–8 成熟基地",
+      "body": "## 门槛\n达到相应RCL且主房/辅房能源链稳定；高级设施启用前有明确供需与必要成本估算。\n\n## 验收\n按审查地图逐级建设更多spawn、必要防线和高级生产设施；先扩展能源账本的统计边界。基于实际瓶颈决定容量，避免为了建筑配额或总用能率多造设施。具体高级生产策略在解锁时拆成有证据的子问题。"
+    }
+  ]
+}

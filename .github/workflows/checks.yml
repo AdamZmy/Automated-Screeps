@@ -1,0 +1,56 @@
+name: Offline checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  colony:
+    name: Colony and API regression checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline test dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify colony behavior and mocked HTTP client
+        run: npm test
+
+  dashboard:
+    name: Dashboard API and DOM checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install dashboard test dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify dashboard HTTP behavior
+        run: npm test
+      - name: Verify energy dashboard DOM
+        run: node verify-ui.cjs
+      - name: Verify layout dashboard DOM
+        run: node verify-layout-ui.cjs

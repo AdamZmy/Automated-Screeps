@@ -1,0 +1,31 @@
+name: 游戏故障或持续低效
+description: 用新鲜API证据定位问题，并明确验收与下一步。
+title: "[问题] "
+labels: ["status:ready", "priority:p1"]
+body:
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 现场证据
+      description: 游戏版本、房间、API tick/窗口、预期与实际。不要粘贴凭据或完整Memory。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围与假设
+      description: 哪个环节异常、相关Issue、受影响文件或任务；避免重复派工。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收条件
+      description: 离线行为检查与上线后的实际新tick观测分别列出。
+    validations:
+      required: true
+  - type: textarea
+    id: checkpoint
+    attributes:
+      label: 负责者与下一检查点
+      description: 有真实工作者才改in-progress；无工作者保持ready。验证等待使用verifying。

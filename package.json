@@ -1,0 +1,18 @@
+{
+  "name": "automated-screeps-checks",
+  "private": true,
+  "description": "Offline verification for the Screeps World colony",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "test": "npm run test:game && npm run test:api && npm run test:operations",
+    "test:game": "node new-colony/verify-economy.cjs && node new-colony/verify-planner.cjs && node new-colony/verify-expansion.cjs && node new-colony/verify-monitor.cjs && node new-colony/verify-ledger.cjs",
+    "test:api": "python3 new-colony/verify-api.py",
+    "test:operations": "python3 tools/verify-github-ops.py"
+  },
+  "devDependencies": {
+    "@screeps/common": "2.16.0-beta",
+    "@screeps/engine": "4.3.0-beta"
+  }
+}

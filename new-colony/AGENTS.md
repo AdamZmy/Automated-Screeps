@@ -26,6 +26,8 @@
 
 ## 子代理分工
 
+- GitHub 工作管理的唯一规范见父目录 `OPERATIONS.md`，长期阶段见 `ROADMAP.md`。巡检读取真实 Issue/checkpoint 与实际任务状态，按 planned/ready/in-progress/verifying/blocked/done 推进；已有运行任务不重复派工，代码完成后的等待窗口保持 verifying，失去工作者的未完成任务从检查点恢复。父仓库保留所有版本，只有有验收证据才关闭 Issue。
+
 - root是唯一凭据持有、API采样、Console提交、整合和部署者。子代理默认只读root提供的脱敏state工件，注明fetchedAt和tick；不重复调用API或自行部署。
 - 能源代理负责main.js及经济测试；布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
 - 每次启动有限、独立的小任务，约定文件归属，交付发现/测试/待验证点并释放。不要把子代理当永久运行进程；游戏代码逐tick工作，heartbeat定期复查。

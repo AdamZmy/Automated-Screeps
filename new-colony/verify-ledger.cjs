@@ -1,9 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const engine='/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/engine';
-const C=require(engine+'/../common/lib/constants');
+const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 function fixture(){
     const ctx={...C,module:{exports:{}},Memory:{frontier:{rooms:{R:{plan:{structures:[{type:C.STRUCTURE_ROAD,x:25,y:25}]}}}}},Game:{time:100,creeps:{}}};
-    vm.createContext(ctx);vm.runInContext(fs.readFileSync('ledger.js','utf8'),ctx);
+    vm.createContext(ctx);vm.runInContext(readSource('ledger.js'),ctx);
     const pos=(x=20,y=20,roomName='R')=>({x,y,roomName});
     const unit=(id,energy=100,parts=[C.WORK,C.CARRY,C.MOVE])=>({id,name:id,my:true,pos:pos(),store:{energy},spawning:false,memory:{home:'R',role:'worker'},body:parts.map(type=>({type,hits:100}))});
     const builder=unit('builder'),miner=unit('miner');ctx.Game.creeps={builder,miner};

@@ -1,5 +1,5 @@
-const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const C=require('/Users/zmy/Library/Application Support/Steam/steamapps/common/Screeps/server/package/node_modules/@screeps/common/lib/constants');
+const vm=require('node:vm'),assert=require('node:assert/strict');
+const {constants:C,readSource}=require('./test-support/runtime.cjs');
 function fixture(){
  const homeName='W21N26',targetName='W21N25';
  function room(name,owned,level){const sourceList=[{id:name+'a',pos:{x:10,y:10}},{id:name+'b',pos:{x:30,y:30}}];return{name,sourceList,controller:{my:owned,owner:owned?{username:'AdamZmy'}:undefined,level,pos:{x:20,y:20}},storage:{store:{energy:20000}},find(k){if(k===C.FIND_SOURCES)return sourceList;if(k===C.FIND_MY_SPAWNS)return[{}];return[];},getTerrain:()=>({get:()=>0})};}
@@ -8,7 +8,7 @@ function fixture(){
  const history=Array.from({length:6},(_,i)=>({bank:10000+i*100}));
  const root={rooms:{[homeName]:{plan:{complete:true}},[targetName]:{plan:{complete:true,sourcePlans:[{pathLength:10},{pathLength:15}]}}},intel:{[homeName]:{terrain:{plain:1500,swamp:0}},[targetName]:{seen:1000,controller:{},sources:[{},{}],exits:{1:'W21N26'},terrain:{plain:1500,swamp:0},hostiles:0}},status:{cpu:8},telemetry:{cpuEMA:8,alerts:{},rooms:{[homeName]:{history},[targetName]:{history,upgradeEMA:.5}}}};
  const ctx={...C,module:{exports:{}},require:()=>({ensure:()=>({complete:true}),chooseAnchor:()=>({x:20,y:20})}),console:{log(){}},Memory:{frontier:root},Game:{time:1000,cpu:{bucket:9000},gcl:{level:7},rooms:{[homeName]:home},creeps:{a:unit('miner',homeName,homeName+'a'),b:unit('miner',homeName,homeName+'b'),h:unit('hauler',homeName,null,8)},map:{getRoomStatus:()=>({status:'normal'}),describeExits:()=>({3:targetName}),findRoute:()=>[{exit:3,room:targetName}]}}};
- vm.createContext(ctx);vm.runInContext(fs.readFileSync('expansion.js','utf8'),ctx);
+ vm.createContext(ctx);vm.runInContext(readSource('expansion.js'),ctx);
  return {ctx,root,home,target,homeName,targetName,unit,run:()=>ctx.module.exports.tick([home])};
 }
 let f=fixture();f.run();assert.equal(f.root.expansion.target,f.targetName);assert.equal(f.root.expansion.state,'launching');

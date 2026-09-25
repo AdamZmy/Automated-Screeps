@@ -173,6 +173,103 @@ function upgradeAllowed(c,assignment=upgraderAssignment(c.room)) {
     // Rotate duty so oversized existing cohorts also leave energy for storage and expansion.
     return (Game.time+before)%total<target;
 }
+function walkable(room,p) {
+    return p.x>0&&p.y>0&&p.x<49&&p.y<49&&!(room.getTerrain().get(p.x,p.y)&TERRAIN_MASK_WALL)&&
+        !room.lookForAt(LOOK_STRUCTURES,p.x,p.y).some(s=>OBSTACLE_OBJECT_TYPES.includes(s.structureType)||s.structureType===STRUCTURE_RAMPART&&!s.my&&!s.isPublic)&&
+        !sources(room).some(s=>range(s,p)===0)&&(!room.controller||range(room.controller,p)!==0);
+}
+function controllerStation(room) {
+    const ctrl=room.controller;if(!ctrl||!ctrl.my)return null;
+    const m=economyMemory(room),plan=m.plan,ss=sources(room);
+    const nodes=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_LINK].includes(s.structureType)&&range(s,ctrl)<=3&&!ss.some(src=>range(src,s)<=1));
+    // Keep the container's four seats while it exists. A later link can feed
+    // adjacent seats; losing the container rebuilds the station around the link.
+    nodes.sort((a,b)=>Number(a.structureType===STRUCTURE_LINK)-Number(b.structureType===STRUCTURE_LINK)||range(a,ctrl)-range(b,ctrl));
+    const node=nodes[0];if(!node){delete m.upgradeStation;return null;}
+    const key=nodes.map(s=>s.id).join(',')+':'+ctrl.level+':'+(plan&&plan.version||0)+':'+(plan&&plan.structures||[]).length;
+    let station=m.upgradeStation;
+    if(!station||station.key!==key||station.until<=Game.time||station.until>Game.time+25||
+        ![station.port,...station.seats].every(p=>walkable(room,p))){
+        const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
+        const roads=new Set((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD).map(s=>s.x+50*s.y));
+        const core=plan&&(plan.roadCore||plan.anchor)||room.find(FIND_MY_SPAWNS)[0]?.pos||{x:25,y:25};
+        const options=[];
+        for(let y=node.pos.y-1;y<=node.pos.y+1;y++)for(let x=node.pos.x-1;x<=node.pos.x+1;x++){
+            const p={x,y};if(walkable(room,p)&&!future.has(x+50*y)&&range(ctrl,p)<=3)options.push(p);
+        }
+        options.sort((a,b)=>Number(roads.has(b.x+50*b.y))-Number(roads.has(a.x+50*a.y))||range(a,core)-range(b,core)||range(ctrl,b)-range(ctrl,a));
+        const port=options.shift();if(!port){delete m.upgradeStation;return null;}
+        // Planned approach roads stay open, including the second access route.
+        const seats=options.filter(p=>!roads.has(p.x+50*p.y));
+        station=m.upgradeStation={key,node:node.id,port,seats,until:Game.time+25};
+    }
+    return {...station,node,nodes};
+}
+function stationUpgrade(c,assignment) {
+    const station=controllerStation(c.room),avoid=c.memory.stationAvoid;
+    if(!station||avoid&&avoid.until>Game.time&&avoid.id===station.node.id){delete c.memory.upgradeSeat;return false;}
+    const peers=assignment.primary,used=new Set(),key=p=>p.x+50*p.y;
+    for(const peer of peers){const seat=peer.memory.upgradeSeat;
+        if(seat&&seat.id===station.node.id&&station.seats.some(p=>key(p)===key(seat))&&!used.has(key(seat)))used.add(key(seat));
+        else delete peer.memory.upgradeSeat;
+    }
+    for(const peer of peers)if(!peer.memory.upgradeSeat){
+        const seat=station.seats.filter(p=>!used.has(key(p))).sort((a,b)=>range(peer,a)-range(peer,b))[0];
+        if(seat){peer.memory.upgradeSeat={id:station.node.id,x:seat.x,y:seat.y};used.add(key(seat));}
+    }
+    const seat=c.memory.upgradeSeat;if(!seat)return false;
+    delete c.memory.haulSupply;delete c.memory.refuelTarget;
+    const held=energy(c),work=c.getActiveBodyparts(WORK),capacity=held+c.store.getFreeCapacity(E);
+    if(!held&&!station.nodes.some(s=>energy(s)>0)){
+        if(c.memory.stationEmptySince===undefined)c.memory.stationEmptySince=Game.time;
+        if(Game.time-c.memory.stationEmptySince>=20){c.memory.stationAvoid={id:station.node.id,until:Game.time+25};delete c.memory.upgradeSeat;return false;}
+    }else delete c.memory.stationEmptySince;
+    // Withdrawal and upgrading use separate intents. An empty creep cannot
+    // issue upgrade at tick start merely because its withdrawal will succeed.
+    if(held<=Math.min(capacity/2,Math.max(work*3,1))){
+        const supply=station.nodes.filter(s=>range(c,s)<=1&&energy(s)>0).sort((a,b)=>Number(b.structureType===STRUCTURE_LINK)-Number(a.structureType===STRUCTURE_LINK))[0];
+        if(supply)c.withdraw(supply,E);
+    }
+    if(held>0&&(c.room.controller.ticksToDowngrade<4000||c.room.controller.level===1||upgradeAllowed(c,assignment)))upgrade(c);
+    if(c.pos.x!==seat.x||c.pos.y!==seat.y){
+        const result=go(c,new RoomPosition(seat.x,seat.y,c.room.name),0);
+        if(result===ERR_NO_PATH||!c.fatigue&&c.memory.stuck>=6){
+            c.memory.stationAvoid={id:station.node.id,until:Game.time+15};delete c.memory.upgradeSeat;delete c.memory._move;
+        }
+    }
+    return true;
+}
+function workerSupply(c,job) {
+    const room=c.room,station=controllerStation(room),old=c.memory.workSupply;
+    let target=old&&old.job===job.id&&old.room===room.name&&Game.getObjectById(old.id);
+    const excluded=s=>station&&station.nodes.some(n=>n.id===s.id);
+    const avoid=c.memory.refuelAvoid,allowed=s=>!excluded(s)&&(!avoid||avoid.until<=Game.time||avoid.id!==s.id);
+    if(target&&(!target.store||!allowed(target)))target=null;
+    const depleted=target&&energy(target)<=0;
+    if(depleted){
+        if(old.emptySince===undefined)old.emptySince=Game.time;
+        // Keep the fixed building's refill request alive while the worker can
+        // still use general self-refuel recovery during a short stock outage.
+        if(Game.time-old.emptySince<20)return false;
+        target=null;
+    }else if(target)delete old.emptySince;
+    if(!target){
+        const candidates=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>0&&allowed(s));
+        candidates.sort((a,b)=>range(job,a)-range(job,b));
+        // Check reachability once per binding, rather than chasing a worker or
+        // reconsidering a closer drop while the worker travels for a full batch.
+        for(const candidate of candidates)if(near(c,[candidate])){target=candidate;break;}
+        if(target)c.memory.workSupply={id:target.id,job:job.id,room:room.name};else if(!depleted)delete c.memory.workSupply;
+    }
+    if(!target)return false;
+    const position=c.pos.x+','+c.pos.y;let task=c.memory.refuelTarget;
+    if(!task||task.id!==target.id)task=c.memory.refuelTarget={id:target.id,kind:'take',room:room.name,position,progress:Game.time};
+    if(task.position!==position||c.fatigue){task.position=position;task.progress=Game.time;}
+    const result=c.withdraw(target,E);
+    if(result===OK){task.progress=Game.time;return true;}
+    if(result===ERR_NOT_IN_RANGE&&Game.time-task.progress<=15&&go(c,target)!==ERR_NO_PATH)return true;
+    c.memory.refuelAvoid={id:target.id,until:Game.time+15};delete c.memory.refuelTarget;delete c.memory.workSupply;return false;
+}
 function workReady(c) {
     const held=energy(c),free=c.store.getFreeCapacity(E),capacity=held+free;
     if(c.memory.loaded||free===0)return true;
@@ -205,6 +302,8 @@ function buildAllowed(c) {
     return (Game.time*37+offset)%100<allowedTicks;
 }
 function refuel(c,harvest=true) {
+    const station=controllerStation(c.room),dedicated=station&&!(c.memory.role==='upgrader'&&upgraderAssignment(c.room).primary.includes(c));
+    const protectedStock=t=>dedicated&&station.nodes.some(n=>n.id===t.id);
     const peers=c.room.find(FIND_MY_CREEPS).filter(o=>o.name!==c.name);
     const free=p=>!peers.some(o=>{
         const reserved=o.memory.refuelTarget;
@@ -215,14 +314,14 @@ function refuel(c,harvest=true) {
     let task=c.memory.refuelTarget,target=task&&Game.getObjectById(task.id);
     if(task&&task.position!==position){task.position=position;task.progress=Game.time;}
     const stalled=task&&!c.fatigue&&Game.time-task.progress>15;
-    if(task&&(!target||task.room!==c.room.name||stalled||(task.kind==='harvest'? !harvest||target.energy<=0||!miningSpots(c.room,target).some(p=>p.x===task.x&&p.y===task.y&&free(p)):energy(target)<=0))){
+    if(task&&(!target||protectedStock(target)||task.room!==c.room.name||stalled||(task.kind==='harvest'? !harvest||target.energy<=0||!miningSpots(c.room,target).some(p=>p.x===task.x&&p.y===task.y&&free(p)):energy(target)<=0))){
         if(stalled)c.memory.refuelAvoid={id:task.id,until:Game.time+10};
         delete c.memory.refuelTarget;task=null;target=null;
     }
     if(!task){
         const avoid=c.memory.refuelAvoid,allowed=t=>!avoid||avoid.until<=Game.time||avoid.id!==t.id;
         const dropped=c.room.find(FIND_DROPPED_RESOURCES,{filter:d=>d.resourceType===E&&d.amount>=20&&allowed(d)});
-        const stock=stores(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>=20&&allowed(s));
+        const stock=stores(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>=20&&allowed(s)&&!protectedStock(s));
         const loot=c.room.find(FIND_TOMBSTONES).concat(c.room.find(FIND_RUINS)).filter(s=>energy(s)>0&&allowed(s));
         target=near(c,dropped.concat(stock,loot));
         if(target)task={id:target.id,kind:'take'};
@@ -266,6 +365,10 @@ function work(c) {
         if(source&&range(c,source)<=1){const home=c.room.find(FIND_MY_SPAWNS)[0]||ctrl;if(home)go(c,home);return;}
         delete c.memory.yieldSource;
     }
+    delete c.memory.haulSupply;
+    const assignment=c.memory.role==='upgrader'?upgraderAssignment(c.room):null;
+    if(assignment&&assignment.primary.includes(c)&&stationUpgrade(c,assignment))return;
+    if(!assignment||!assignment.primary.includes(c))delete c.memory.upgradeSeat;
     // Retired construction workers can distribute surplus without withdrawing and
     // returning it to storage as an endless idle job.
     if(c.room.storage&&c.memory.role!=='upgrader'&&ctrl&&ctrl.my&&ctrl.ticksToDowngrade>=4000&&
@@ -277,12 +380,15 @@ function work(c) {
     // supply closes while the worker keeps travelling for its final few energy.
     if(workReady(c))c.memory.loaded=true;
     if(c.memory.loaded)delete c.memory.refuelTarget;
-    if(!c.memory.loaded){if(refuel(c)||!energy(c))return;c.memory.loaded=true;}
+    if(!c.memory.loaded){
+        const job=constructionJobs(c.room,!!assignment)[0];
+        if(job&&workerSupply(c,job)||refuel(c)||!energy(c))return;
+        c.memory.loaded=true;
+    }
     if(ctrl&&ctrl.my&&(ctrl.ticksToDowngrade<4000 || ctrl.level===1)&&c.memory.role!=='bootstrap'){upgrade(c);return;}
     if(c.memory.role==='bootstrap'&&urgentFill(c))return;
     let infrastructureSites;
     if(c.memory.role==='upgrader'){
-        const assignment=upgraderAssignment(c.room);
         if(!assignment.support.includes(c)){if(upgradeAllowed(c,assignment))upgrade(c);return;}
         infrastructureSites=constructionJobs(c.room,true);
         // Between construction and miner arrival, help fund the replacement body.
@@ -351,45 +457,89 @@ function mine(c) {
     }
     c.harvest(s);
 }
-function haulTarget(c,includeStorage=true) {
-    const room=c.room,stock=stores(room),ctrl=room.controller;
-    const blocked=c.memory.haulBlocked||{};for(const id in blocked)if(blocked[id]<=Game.time)delete blocked[id];
-    const delivery=c.memory.haulDelivery;
-    const committed=arr=>delivery&&delivery.room===room.name&&arr.find(t=>(t.id||t.name)===delivery.id&&!blocked[delivery.id]);
-    // Preserve a valid trip inside its priority class. Higher-priority classes
-    // are still checked first every tick, so emergencies can preempt the trip.
-    const reachable=arr=>committed(arr)||near(c,arr.filter(t=>!blocked[t.id||t.name]));
-    let t=reachable(stock.filter(s=>s.my&&[STRUCTURE_SPAWN,STRUCTURE_EXTENSION].includes(s.structureType)&&s.store.getFreeCapacity(E)>0));if(t)return t;
-    t=reachable(stock.filter(s=>s.my&&s.structureType===STRUCTURE_TOWER&&energy(s)<(room.find(FIND_HOSTILE_CREEPS).length?900:400)));if(t)return t;
-    // Source containers are collection points, even if a controller happens to be nearby.
-    const ss=sources(room),isSource=s=>ss.some(src=>range(src,s)<=1);
-    const assignment=upgraderAssignment(room);
-    const controllerRate=Math.min(assignment.policy.target,assignment.primary.reduce((n,o)=>n+o.getActiveBodyparts(WORK),0));
-    const controllerLow=Math.max(25,controllerRate*10),controllerHigh=Math.min(1500,Math.max(100,controllerRate*50));
-    const controllerBoxes=stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&!isSource(s)&&ctrl&&range(s,ctrl)<=3);
-    // Protect a short controller reserve, but do not send every carrier to a
-    // 1500-energy buffer while builders have only a few ticks of fuel left.
-    t=reachable(controllerBoxes.filter(s=>energy(s)<controllerLow));if(t)return t;
-    const building=room.find(FIND_MY_CONSTRUCTION_SITES).length>0;
-    const support=building?assignment.support:[],requests=[];
-    for(const worker of vals(Game.creeps).filter(o=>o.name!==c.name&&!o.spawning&&o.room.name===room.name&&(o.memory.role==='upgrader'||o.memory.role==='builder'&&building))){
-        const held=energy(worker),free=worker.store.getFreeCapacity(E),capacity=held+free;
-        if(!capacity)continue;
-        const rate=Math.max(1,worker.getActiveBodyparts(WORK))*(worker.memory.role==='builder'||support.includes(worker)?BUILD_POWER:1);
-        const low=Math.min(Math.floor(capacity/2),rate*10),high=Math.max(low+1,Math.ceil(capacity*.9));
-        // Request a batch at low inventory; finish it near full instead of
-        // attracting a hauler again for each tick's two-energy upgrade expense.
-        if(held>=high)delete worker.memory.haulSupply;
-        else if(held<=low)worker.memory.haulSupply=true;
-        if(free>0&&worker.memory.haulSupply)requests.push({worker,ticks:held/rate});
+function deliveryNeeds(room,includeStorage=true) {
+    const stock=stores(room),ss=sources(room),ctrl=room.controller,needs=[];
+    const add=(node,high,priority)=>{if(node&&node.store.getFreeCapacity(E)>0)needs.push({node,high:Math.min(high,energy(node)+node.store.getFreeCapacity(E)),priority});};
+    for(const s of stock)if(s.my&&[STRUCTURE_SPAWN,STRUCTURE_EXTENSION].includes(s.structureType))add(s,energy(s)+s.store.getFreeCapacity(E),0);
+    const threatened=room.find(FIND_HOSTILE_CREEPS).length>0;
+    for(const s of stock)if(s.my&&s.structureType===STRUCTURE_TOWER)add(s,threatened?900:400,1);
+    const station=controllerStation(room),assignment=upgraderAssignment(room),m=economyMemory(room);
+    const rate=Math.min(assignment.policy.target,assignment.primary.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0));
+    const carriers=vals(Game.creeps).filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='hauler');
+    const batch=Math.max(100,...carriers.map(c=>energy(c)+c.store.getFreeCapacity(E)));
+    // Existing round trips include empty return, pickup, delivery and terrain.
+    // They are conservative planning estimates, not measured travel times.
+    const routes=m.economyControl&&m.economyControl.routes||[];
+    const lead=Math.max(10,...(routes.length?routes.map(r=>r.roundTrip||0):ss.map(s=>2*(routeTravel(room,s)+4)+4)));
+    if(station){
+        const node=station.node,capacity=energy(node)+node.store.getFreeCapacity(E);
+        const low=Math.min(capacity*.65,Math.max(25,rate*(lead+5))),high=Math.min(capacity,Math.max(100,low+batch));
+        let request=m.controllerSupply;
+        if(!request||request.id!==node.id)request=m.controllerSupply={id:node.id,active:false};
+        if(energy(node)<=low)request.active=true;else if(energy(node)>=high)request.active=false;
+        // Retain the high watermark for already committed batches after recovery.
+        if(request.active)add(node,high,energy(node)<Math.max(25,rate*10)?2:4);
+    }else delete m.controllerSupply;
+    const jobIds=new Set(constructionJobs(room).map(s=>s.id)),workNodes=new Map();
+    for(const c of vals(Game.creeps)){
+        const binding=c.memory.workSupply;
+        if(c.room.name!==room.name||!binding||!jobIds.has(binding.job))continue;
+        const node=Game.getObjectById(binding.id);
+        if(node&&node.structureType===STRUCTURE_CONTAINER&&(!station||!station.nodes.some(s=>s.id===node.id))&&!ss.some(s=>range(s,node)<=1))
+            workNodes.set(node.id,{node,capacity:Math.max(batch,(workNodes.get(node.id)?.capacity||0)+energy(c)+c.store.getFreeCapacity(E))});
     }
-    requests.sort((a,b)=>a.ticks-b.ticks||range(c,a.worker)-range(c,b.worker));
-    t=committed(requests.map(r=>r.worker));if(t)return t;
-    for(const request of requests){t=reachable([request.worker]);if(t)return t;}
-    t=reachable(controllerBoxes.filter(s=>energy(s)<controllerHigh));if(t)return t;
-    t=reachable(stock.filter(s=>s.my&&s.structureType===STRUCTURE_LINK&&energy(s)<600&&ctrl&&range(s,ctrl)>3&&!ss.some(src=>range(src,s)<=2)));if(t)return t;
-    if(includeStorage&&room.storage&&!blocked[room.storage.id]&&room.storage.id!==c.memory.withdrawnFrom&&room.storage.store.getFreeCapacity(E)>0)return room.storage;
-    return null;
+    for(const {node,capacity} of workNodes.values())add(node,capacity,3);
+    // The hub is an inbound link receiver. Refilling it by hauler would send
+    // received energy back through the same link network in a hauling loop.
+    const hub=linkNetwork(room).hub;
+    for(const s of stock)if(s.my&&s.structureType===STRUCTURE_LINK&&s.id!==hub?.id&&ctrl&&range(s,ctrl)>3&&!ss.some(src=>range(src,s)<=2))add(s,600,5);
+    if(includeStorage&&room.storage)add(room.storage,energy(room.storage)+room.storage.store.getFreeCapacity(E),6);
+    return needs.filter(n=>energy(n.node)<n.high);
+}
+function validDelivery(c,task) {
+    const target=task&&Game.getObjectById(task.id);
+    return task&&task.room===c.room.name&&task.expires>Game.time&&task.amount>0&&
+        (task.sent===undefined||task.sent===Game.time)&&target&&target.structureType&&target.store&&target.store.getFreeCapacity(E)>0;
+}
+function haulTarget(c,includeStorage=true) {
+    const room=c.room,blocked=c.memory.haulBlocked||{};
+    for(const id in blocked)if(blocked[id]<=Game.time)delete blocked[id];
+    let task=c.memory.haulDelivery;
+    if(!validDelivery(c,task)||task.sent!==undefined&&task.sent<Game.time||blocked[task.id]){delete c.memory.haulDelivery;task=null;}
+    const reserved=id=>vals(Game.creeps).reduce((n,peer)=>{
+        const t=peer.memory.haulDelivery;
+        return n+(peer.name!==c.name&&t&&t.id===id&&validDelivery(peer,t)?t.amount:0);
+    },0);
+    const capacity=energy(c)+c.store.getFreeCapacity(E),load=c.memory.loaded?energy(c):capacity;
+    const needs=deliveryNeeds(room,includeStorage).filter(n=>!blocked[n.node.id]&&n.node.id!==c.memory.withdrawnFrom)
+        .map(n=>({...n,amount:Math.max(0,n.high-energy(n.node)-reserved(n.node.id))})).filter(n=>n.amount>0);
+    // Finish a batch inside its priority class; small normal gaps wait for the
+    // next batch, while spawn/defense/controller emergency gaps remain urgent.
+    needs.sort((a,b)=>a.priority-b.priority||Number(b.node.id===task?.id)-Number(a.node.id===task?.id)||range(c,a.node)-range(c,b.node));
+    for(const request of needs){
+        const committed=task&&request.node.id===task.id;
+        if(!committed&&request.priority>2&&request.priority<6&&request.amount<Math.min(50,Math.ceil(load/2)))continue;
+        if(!committed&&!near(c,[request.node]))continue;
+        if(!committed){
+            movementCount(task?'deliverySwitches':'deliveryStarts');
+            task=c.memory.haulDelivery={id:request.node.id,room:room.name,amount:Math.min(load,Math.floor(request.amount)),priority:request.priority,
+                phase:energy(c)?'deliver':'pickup',expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time};
+        }else task.amount=Math.min(task.amount,Math.floor(request.amount));
+        return request.node;
+    }
+    delete c.memory.haulDelivery;return null;
+}
+function clearStationTraffic(c) {
+    const station=controllerStation(c.room);if(!station)return;
+    const reserved=[station.port,...station.seats];
+    if(!reserved.some(p=>range(c,p)===0))return;
+    const options=[];
+    for(let y=c.pos.y-1;y<=c.pos.y+1;y++)for(let x=c.pos.x-1;x<=c.pos.x+1;x++){
+        const p={x,y};if(walkable(c.room,p)&&!reserved.some(s=>range(s,p)===0)&&
+            !c.room.find(FIND_MY_CREEPS).some(o=>o.name!==c.name&&range(o,p)===0))options.push(p);
+    }
+    const p=options.sort((a,b)=>range(station.node,b)-range(station.node,a))[0];
+    if(p)go(c,new RoomPosition(p.x,p.y,c.room.name),0);
 }
 function collectHaul(c) {
     const position=c.pos.x+','+c.pos.y;
@@ -402,19 +552,24 @@ function collectHaul(c) {
     }
     if(!task){
         const ss=sources(c.room),stock=stores(c.room),avoid=c.memory.haulPickupAvoid;
-        const allowed=t=>!avoid||avoid.until<=Game.time||avoid.id!==t.id;
+        const allowed=t=>(!avoid||avoid.until<=Game.time||avoid.id!==t.id)&&t.id!==c.memory.haulDelivery?.id;
         const allDrops=c.room.find(FIND_DROPPED_RESOURCES,{filter:d=>d.resourceType===E&&d.amount>0}),drops=allDrops.filter(d=>d.amount>=25);
         const boxes=stock.filter(s=>energy(s)>=25&&s.structureType===STRUCTURE_CONTAINER&&ss.some(src=>range(src,s)<=1));
         const loot=c.room.find(FIND_TOMBSTONES).concat(c.room.find(FIND_RUINS)).filter(s=>energy(s)>0);
         const pressure=new Map(ss.map(src=>[src.id,stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&range(src,s)<=1).reduce((n,s)=>n+energy(s),0)+allDrops.filter(d=>range(src,d)<=2).reduce((n,d)=>n+energy(d),0)]));
         const free=c.store.getFreeCapacity(E);
         const score=t=>{const src=ss.find(s=>range(s,t)<=2);return Math.min(energy(t),free)/(range(c,t)+3)*(1+(src?pressure.get(src.id):energy(t))/500);};
-        const choices=drops.concat(boxes,loot).filter(allowed).sort((a,b)=>score(b)-score(a));
-        target=choices[0]||(!energy(c)&&haulTarget(c,false)&&c.room.storage&&energy(c.room.storage)>0&&allowed(c.room.storage)?c.room.storage:null);
+        const hub=linkNetwork(c.room).hub,receivers=hub&&energy(hub)>=25?[hub]:[];
+        const choices=drops.concat(boxes,loot,receivers).filter(allowed).sort((a,b)=>score(b)-score(a));
+        target=choices[0]||(!energy(c)&&c.memory.haulDelivery&&c.room.storage&&energy(c.room.storage)>0&&allowed(c.room.storage)?c.room.storage:null);
         if(!target)return false;
         task=c.memory.haulPickup={id:target.id,room:c.room.name,position,progress:Game.time};
     }
-    const result=target.resourceType?c.pickup(target):c.withdraw(target,E);
+    const delivery=c.memory.haulDelivery;
+    if(delivery)delivery.source=target.id;
+    const amount=Math.min(c.store.getFreeCapacity(E),delivery?Math.max(0,delivery.amount-energy(c)):c.store.getFreeCapacity(E));
+    if(!amount)return false;
+    const result=target.resourceType?c.pickup(target):c.withdraw(target,E,Math.min(amount,energy(target)));
     if(result===OK){c.memory.withdrawnFrom=target.id;task.progress=Game.time;return true;}
     if(result===ERR_NOT_IN_RANGE&&go(c,target)!==ERR_NO_PATH)return true;
     c.memory.haulPickupAvoid={id:task.id,until:Game.time+15};delete c.memory.haulPickup;return false;
@@ -422,16 +577,22 @@ function collectHaul(c) {
 function deliverHaul(c,target) {
     const id=target.id||target.name,position=c.pos.x+','+c.pos.y;
     let task=c.memory.haulDelivery;
-    if(!task||task.id!==id||task.room!==c.room.name){
-        movementCount(task?'deliverySwitches':'deliveryStarts');
-        task=c.memory.haulDelivery={id,room:c.room.name,position,progress:Game.time};
-    }
+    if(!task||task.id!==id||task.room!==c.room.name)return false;
+    task.phase='deliver';
     if(task.position!==position||c.fatigue||range(c,target)<=1){task.position=position;task.progress=Game.time;}
     let blocked=range(c,target)>1&&!c.fatigue&&Game.time-task.progress>=4;
     if(!blocked){
-        const result=c.transfer(target,E);
-        if(result===OK){task.progress=Game.time;return true;}
-        if(result===ERR_NOT_IN_RANGE){if(go(c,target)!==ERR_NO_PATH)return true;}
+        const amount=Math.min(task.amount,energy(c),target.store.getFreeCapacity(E));
+        const result=c.transfer(target,E,amount);
+        if(result===OK){
+            // Keep this intent reserved until the next tick's actual Store is
+            // visible. Releasing now would dispatch another truck into the gap.
+            task.amount=amount;task.sent=Game.time;task.progress=Game.time;clearStationTraffic(c);return true;
+        }
+        if(result===ERR_NOT_IN_RANGE){
+            const station=controllerStation(c.room),port=station&&station.node.id===id&&station.port;
+            if(go(c,port?new RoomPosition(port.x,port.y,c.room.name):target,port?0:1)!==ERR_NO_PATH)return true;
+        }
         else if(result===ERR_TIRED)return true;
         blocked=true;
     }
@@ -440,16 +601,16 @@ function deliverHaul(c,target) {
 }
 function haul(c) {
     if(!energy(c)){c.memory.loaded=false;delete c.memory.withdrawnFrom;}
+    let target=haulTarget(c);
     const capacity=energy(c)+c.store.getFreeCapacity(E);
-    if(energy(c)>0&&energy(c)>=Math.ceil(capacity*.9))c.memory.loaded=true;
+    if(energy(c)>0&&(energy(c)>=Math.ceil(capacity*.9)||c.memory.haulDelivery&&energy(c)>=c.memory.haulDelivery.amount))c.memory.loaded=true;
     if(c.memory.loaded)delete c.memory.haulPickup;
     if(!c.memory.loaded){
-        delete c.memory.haulDelivery;
         if(collectHaul(c))return;
-        if(energy(c))c.memory.loaded=true;else return;
+        if(energy(c))c.memory.loaded=true;else{clearStationTraffic(c);return;}
     }
     for(let attempt=0;attempt<2;attempt++){
-        const target=haulTarget(c);if(!target){delete c.memory.haulDelivery;return;}
+        target=haulTarget(c);if(!target){delete c.memory.haulDelivery;clearStationTraffic(c);return;}
         if(deliverHaul(c,target))return;
     }
 }
@@ -560,11 +721,25 @@ function defend(room){
         if(room.find(FIND_MY_SPAWNS).some(s=>hostile.some(c=>range(c,s)<6)))room.controller.activateSafeMode();
     }
 }
+function linkNetwork(room) {
+    const ls=room.find(FIND_MY_STRUCTURES,{filter:s=>s.structureType===STRUCTURE_LINK}),plan=economyMemory(room).plan;
+    const tags=new Map((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_LINK).map(s=>[s.x+50*s.y,s.tag||'']));
+    const tag=l=>tags.get(l.pos.x+50*l.pos.y)||'';
+    const hub=ls.find(l=>tag(l)==='hub-link');
+    const controller=ls.find(l=>tag(l)==='controller-link')||ls.find(l=>l!==hub&&room.controller&&range(l,room.controller)<=3);
+    const ss=sources(room),inputs=ls.filter(l=>l!==hub&&l!==controller&&(tag(l).startsWith('source-link-')||ss.some(s=>range(s,l)<=2)));
+    return {hub,controller,inputs};
+}
 function links(room){
-    const ls=room.find(FIND_MY_STRUCTURES,{filter:s=>s.structureType===STRUCTURE_LINK});
-    const target=ls.find(l=>range(l,room.controller)<=3);if(!target)return;
-    let free=target.store.getFreeCapacity(E);
-    for(const l of ls)if(l.id!==target.id&&!l.cooldown&&energy(l)>100&&free>100){const n=Math.min(energy(l),free);if(l.transferEnergy(target,n)===OK)free-=n;}
+    const {hub,controller,inputs}=linkNetwork(room),free=new Map([hub,controller].filter(Boolean).map(l=>[l.id,l.store.getFreeCapacity(E)]));
+    const send=(from,to)=>{
+        if(!from||!to||from.cooldown||energy(from)<=100||(free.get(to.id)||0)<=100)return false;
+        const amount=Math.min(energy(from),free.get(to.id));
+        if(from.transferEnergy(to,amount)!==OK)return false;
+        free.set(to.id,free.get(to.id)-amount);return true;
+    };
+    for(const source of inputs)if(!send(source,controller))send(source,hub);
+    send(hub,controller);
 }
 // Rebuildable, bounded heap counters; no prototype hooks or per-creep histories.
 // Published every 20 ticks so subsequent CPU investigations have attribution.
