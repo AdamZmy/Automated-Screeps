@@ -1,55 +1,37 @@
-# Screeps World 巡检交接
+# Screeps World 当前交接
 
-更新日期：2026-09-25。此文件是短交接摘要，不是实时游戏数据；每轮用新 API tick 和 GitHub Issue 校准。
-只保留最新状态，最多 80 行。重要历史按需查 `new-colony/LIVE_STATUS.md`。
+- 唯一World源码new-colony，AdamZmy/shard1/frontier24；Arena不属于本任务。
+- root任务01a0d7a3-fbe2-72e3-9871-1b834e8eb22d；下一轮先核验真实状态，active/unknown不接管。
+- 独立20分钟自动巡检保持；先读AGENTS/OPERATIONS/相关故障目录和Issue，不重放历史。
+- 用户最终原则：所有卸货按实际持能/空位，预约不截断动作；已有能源的升级/建设工人就绪即工作，预算仅作人数/身体/供给规划。
+- 新限制需明确依据；已知故障先复验，未解释异常交独立审视，多假设沙盒确认后入库。
 
-## 入口与目标
+## 最新核验
 
-- 仓库：https://github.com/AdamZmy/Automated-Screeps；本地 `/Users/zmy/screepsworld`。
-- 活动源码 `new-colony` 六模块；AdamZmy / shard1 / frontier24，主房 W21N26。
-- 优先主房升级与可持续总用能率≥90%，再按实际经济/路线条件扩张双矿房；API only。
-- 操作约束见 `new-colony/AGENTS.md`、`OPERATIONS.md` 和 `screeps-world-api` skill。
-- 唯一巡检 `screeps-world`：已回读cron/ACTIVE、每20分钟独立新对话，无旧target_thread_id或重复活动调度。
-- GitHub/Vercel登录已完成；相同旧设备授权阻碍已经解决，不再次要求登录。
-- 巡检日志 https://screeps-energy-observatory.vercel.app/logs 已部署，生产 `dpl_BResWyWLagg3GKWRPZ7UPXTZuP2X`；每轮按OPERATIONS用inspection_log工具记录/发布，动态读取GitHub，无需逐轮部署。
+- v0.4.2 / build2026-09-25.16，代码99202bb已推送并打tag；API备份及六模块回读verified，仅main变化。
+- .16删除Container人工水位、全部目标卸货额度截断、最小配送批量/20与25取货门槛、升级/建设动作credit与轮休、强制蓄满才工作。
+- 修复有storage的完工Builder永远haul；删除1000身体预算/Hauler8CARRY/worker10WORK/房总36CARRY固定cap，保留真实需求、房容量与50parts。
+- Link允许小批实际有用转入，保留原生cooldown与正净到货；布局/扩张的现有战略门槛未盲删，逐项理由见限制审计报告。
+- .14/.15此前修正空车未来货量抢占、远车过早占口与小数预约；新回归保留这些机制，但不恢复旧水位/动作阀门。
+- 2026-09-25T15:38:29Z / tick73937780：RCL4，进度7470/405000，energy800/800，storage0，8个extension工地，地面能源0，无alerts。
+- 73937761–780实际升级350、有效建设105、采集400、库存-55、残差0；即升级17.5/t+建设5.25/t，允许消耗已有库存。
+- 同20tick CPU平均8.7854/峰9.643、bucket10000；这是短窗，非长期吞吐保证。
+- 300tick U102.72%/库存-163/残差0；1500tick U107.36%/库存-3313/残差475，均不可当可持续效率验收；6000tick U97.55%亦库存透支。
+- 全npm test通过，包含两套独立引擎/真实地形oracle及新增policy审计；发布后CI另查，不假称已确认本次CI。
+- 末次补采Console超时，flowProbe回读仍73936566，未当新证据；clear-diagnostics已accepted，确认回读连接超时，下轮检查残留probe，当前不声称清理已确认。
 
-## 本轮正在执行（先核验 owner，勿竞争）
+## 下一步
 
-- 当前 root `01a0d7a3-fbe2-72e3-9871-1b834e8eb22d` 仍运行；独立审视机制已写 OPERATIONS、AGENTS 和唯一 automation，commit724162a。
-- `.12` 代码31f0203已部署；73931540确认新版本，20tick升级13.4/t，CPU10.4193/峰11.6776，地面2736；完整90%验收未完成。
-- `energy_fault_review`（父任务=current root）独占本轮诊断报告和 `tools/verify-hauling-hypotheses.cjs`，正在独立审视。
-- `energy_capacity`（父任务=current root）再次独占main.js/verify-economy.cjs，正修复已沙盒证实的单卸货口失败：主口堵塞但相邻格可达，仍对整节点冷却。
-- 本轮批次 `2026-09-25T08-18-14Z-run-358131860170` 继续 running；下一轮08:38任务已按占用规则跳过，未采样或改游戏。
+- #1/#4 verifying：连续真实交付/升级/建设及至少两个合格1500tick窗口；.16保守纯窗口不早于73938080。
+- #5 ready：运输跨矿/部分装载绕路的真实完整周期，固定分矿/合并小身体收益仍待证；没有部署该猜测。
+- #6 RCL4门槛已达到、storage未建，转ready按原Issue推进；#7/#8/#10仍受各自储备/布局/RCL等门槛约束。
+- #9 ready；升RCL4后的网页布局静态快照可在其既有范围更新，当前本轮未改网站资产。
+- 故障目录operations/fault-catalog.md；完整审计operations/diagnostics/policy-restriction-review-2026-09-25.md。
+- 本轮批次2026-09-25T08-18-14Z-run-358131860170；用户连续修正使本轮延长，记录实际过程而非新造历史。
 
-## 最近核验证据（旧快照，下轮必须取新数据）
+## 文件归属与异常
 
-- 游戏 build `2026-09-25.11`，代码commit `2c1c04a` 已推送；08:09Z通过API部署，仅main改变，六模块回读一致。仓库版本以VERSION为准。
-- 本轮落实用户规则：升级/施工份额只作优先权，按就绪动作双向借用，失败额度同tick再分配；共同总额保留续代/维护/储备扣除，控制器补给覆盖借用。
-- 五组test:game及新增共享额度回归通过。新runtime记录development/developmentCredit均为固定尺寸；IntentEnergy仅是意图费用，真实耗能看ledger。
-- tick73931220（08:11:30Z）线上`.11`，纯20tick73931200–220升级219，即10.95/t；原角色份额6/t，共同预算15.1/t，现有11WORK基本全部兑现。
-- 这证明错误限流已解除，尚不等于P0完成：两矿理论20/t、该窗采集20/t，全房地面3128仍高；工人体型、有效WORK不足及补给周期继续优先处理。
-- 纯新20tick CPU均值8.2202、峰值10.6989，新增development阶段0.2515/t，bucket10000。角色/行动负载变化，不能称CPU已改善。
-- `.11`首次观测运行tick73931191；首个保守纯1500tick窗口不早于73932691，完整覆盖、库存持续性、残差和两个合格窗口≥90%仍须验收。
-- 主房复核布局 `2026-09-25-international-adapter-1`，205项；其他冷房仍旧v3。网站布局/#layout的建造状态仍是有日期快照。
-- GitHub #4为独占priority:p0；本轮使用原工单，没有新增重复能源问题。项目0.3.0含独立日志页和预算共享修复；日志系统建设与本轮游戏修复补录均已归档。
-
-## 下轮读取远端 Issue，以下仅为交接索引
-
-- #1 fixed-logistics：verifying，检查完整固定节点补货/换体/建造取能和同负载CPU。
-- #4 sustainable-utilization：**priority:p0 / ready**，预算共享已上线并有实测；下一有限任务改进有效WORK需求/体型与补给周期、消减积压；长期验收不得阻挡明确容量缺口的修复。
-- #5 movement-cost、#9 neighbor-layout-review：ready，按优先级与文件归属认领。
-- #6/#7/#8/#10：planned，分别受仓储、扩张、Link及成熟基地阶段门槛约束。
-- #2 GitHub管理、#3 主房复核布局：已done，不重复初始化或重开已完成工作。
-- #11记录独立巡检迁移；以 `python3 tools/github_ops.py list` 返回状态和最新检查点为准。
-- #12为逐轮日志/网页实现，生产页面及真实GitHub数据链路已通过验证；后续日志不改变Issue真实状态。
-
-## 协调者交接
-
-- 当前接管协调者：`01a0d7a3-fbe2-72e3-9871-1b834e8eb22d`，2026-09-25T08:18Z即时核验下列旧任务均已结束；本轮负责P0诊断、main/经济测试、API/Git/日志。
-
-- 本轮游戏协调者任务ID：`01a0d78f-8784-79d2-aeda-5f6987b8836e`；预算共享修复/部署/短期验证完成，结束后释放main/经济测试等文件，无运行子代理。
-- 日志协调者 `01a0d3ca-10e0-7362-a9d0-1f3c60a63853` 已完成日志/网页/OPERATIONS，子代理已交付；结束后释放这些文件。下轮仍核验真实owner，游戏P0优先接续。
-- 固定交接/CI/主房地图子代理已交付；布局任务 `01a0d746-f0e4-78a3-9093-43f8f506a26d` 已完成。
-- 启动写入前，用即时任务状态核验上轮协调者和Issue owner；新代理列表为空不代表旧代理停止。
-- 若仍运行则本轮不竞争写入/部署；确认停止后记录本轮协调者ID再接管。阶段变化写Issue检查点。
-- 每轮结束覆盖本文件的最新核验tick/风险/下一检查点/协调者；不要追加完整巡检流水。
+- energy_fault_review与restriction_audit completed且释放文件；energy_capacity最终服务连接失败，root已接管完成测试与部署。父任务均为上述root。
+- 服务403/断流中断不属于Screeps认证失败；两独立审视已恢复并完成，root补正两项旧fixture同tick/转岗断言后全回归通过。
+- 多个后续自动巡检因root仍active跳过；仍存在其他批次未完成/未发布日志及已暂存改动，保留其文件，不把这些日志当游戏代码修改。
+- root结束后释放本轮源码/测试/文档；统一API/Git部署已完成。后续接管仍先检查任务实际状态。

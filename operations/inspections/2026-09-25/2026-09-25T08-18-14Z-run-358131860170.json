@@ -3,25 +3,25 @@
   "id": "2026-09-25T08-18-14Z-run-358131860170",
   "kind": "scheduled",
   "startedAt": "2026-09-25T08:18:14.542Z",
-  "updatedAt": "2026-09-25T08:32:21.277Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "主房能效与矿区积压巡检",
-  "summary": ".12已部署并回读一致；初步新tick显示占港工人让开，Hauler对控制器容器发生100能量真实转入；仍在验证工位和持续吞吐。",
+  "updatedAt": "2026-09-25T17:35:46.823Z",
+  "completedAt": "2026-09-25T17:34:27Z",
+  "status": "completed",
+  "title": "能源执行限制全面清理并上线",
+  "summary": ".16已部署：全部目标整批卸货、升级建设不再动作限流；独立审计/全回归通过。RCL4实际升级建设22.75/t，库存支出另记，长期验收继续。",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26"
     ],
-    "version": "2026-09-25.11",
-    "tick": 73931320,
-    "fetchedAt": "2026-09-25T08:18:57Z"
+    "version": "2026-09-25.16",
+    "tick": 73937780,
+    "fetchedAt": "2026-09-25T15:38:29Z"
   },
   "findings": [
     {
       "severity": "critical",
       "title": "矿区积压与有效WORK不足",
-      "detail": "无施工时现有11WORK低于共同发展预算15.63/t；两矿源箱满载，地面能源增加。",
+      "detail": "无施工时现有11WORK低于共同发展预算15.63/t；两矿源箱满载，地面能源增加。 .12已按职责/工位/补给周期估算身体与需求，尚未观测新6WORK体出生；本轮改善不能全部归因新身体。",
       "evidence": [
         "73931320：两矿各5WORK在位，20/t理论供给；源箱均2000，地面3774；73931369地面4003。",
         "截至73931320：1500tick总用能75.43%，完整覆盖但unexplained-balance不合格；300tick47.77%，6000tick84.64%且仍预热；窗口包含旧版本。",
@@ -32,12 +32,59 @@
     {
       "severity": "critical",
       "title": "无座位升级工挡住卸货入口",
-      "detail": "固定节点有4座位，第5名升级工长期占用port；附近携能运输者无法顺利送达。",
+      "detail": "固定节点有4座位，第5名升级工长期占用port；附近携能运输者无法顺利送达。 .12已修停车，实际控制箱transfer恢复；仍需验收完整换席与配送周期。",
       "evidence": [
         "73931352→73931363：无座位1WORK工人持续在17,24，三辆携能Hauler位于17,25/16,25/18,25且stuck3；控制箱212→27。",
         "73931363事件显示该无座位工人从控制箱取50能量；固定席4W+4W+1W+1W保持工作。"
       ],
       "issue": 1
+    },
+    {
+      "severity": "critical",
+      "title": "L002：单入口受阻导致放弃可达节点",
+      "detail": "独立真实地形沙盒确认主口17,24被占时备用16,24可达，.12却对整节点冷却；.13已修复本房空间预约与同节点备用格回退。",
+      "evidence": [
+        "旧.12正向oracle exit1；.13同一oracle通过，覆盖双车/固定席位/未来障碍/疲劳/死亡/过期/跨房隔离。",
+        "73931759两个Hauler分别预约17,24与16,24；实际拥堵下备用口完成交付仍待连续事件证据。"
+      ],
+      "issue": 1
+    },
+    {
+      "severity": "warning",
+      "title": "总用能短窗达90%仍不可持续验收",
+      "detail": "截至73931800，1500tick U75.78%且残差不合格；300tick U90.57%仍库存透支/残差不合格；6000tick覆盖70.07%仍预热。",
+      "evidence": [
+        "1500tick库存+1568、残差5129；300tick库存-510、残差1026。",
+        "纯.13 73931760–780：采集400、升级296、孵化200、库存-156、残差60，不能把高短窗总用能当持续效率。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "critical",
+      "title": "L003/L004空车货量与远车卸货格双重预约",
+      "detail": "73931921箱349，旧high880；实货331+空车200占满531，近200满载无任务。独立单变量反事实确认两个机制；.14/.15修复，.16进一步按物理容量调度与整批卸货。",
+      "evidence": [
+        "空车数量和远途port分别移除均独立恢复对应动作；后续版本保留保护实际货物/同tick意图的回归。"
+      ],
+      "issue": 1
+    },
+    {
+      "severity": "critical",
+      "title": "U001规划预算压住已就绪WORK",
+      "detail": "73932212升级18WORK就绪，但budget14.73只提交12；用户要求全面移除动作阀门，.16预算仅作容量规划。",
+      "evidence": [
+        "独立18WORK/15规划连续tick oracle修复前红、修复后绿；部分持能、移动/取能、建造及原生RCL8边界通过。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "新版本已RCL4并实际消耗冗余",
+      "detail": "73937761–780升级350+有效建设105、采集400、库存-55、残差0，地面能源0；不能将库存消耗作为可持续效率达标。",
+      "evidence": [
+        "CPU平均8.7854/峰9.643，bucket10000；RCL4进度7470，storage0，8个extension工地。"
+      ],
+      "issue": 4
     }
   ],
   "tasks": [
@@ -45,17 +92,25 @@
       "issue": 4,
       "title": "有效WORK、补给周期与能源积压",
       "status": "verifying",
-      "progress": "修复31f0203已推送，五组游戏回归通过，API只更新main并核对六模块；有限子代理已交付释放。",
-      "next": "修复固定席需求、体型、溢出工人停车并回归。",
-      "owner": "01a0d7a3-fbe2-72e3-9871-1b834e8eb22d"
+      "progress": "v0.4.2/build.16/99202bb已部署，全npm与两独立oracle通过；RCL4实际新tick确认。",
+      "next": "检查完整交付及有效工作周期、库存和纯版本长期窗口；预算仅用于规划。",
+      "owner": "root本轮结束后释放，后续先核验父任务状态"
     },
     {
       "issue": 1,
       "title": "固定节点通道恢复",
       "status": "verifying",
-      "progress": "修复31f0203已推送，五组游戏回归通过，API只更新main并核对六模块；有限子代理已交付释放。",
-      "next": "验证卸货口释放、真实容器转入事件和工人断能情况。",
-      "owner": "01a0d7a3-fbe2-72e3-9871-1b834e8eb22d / energy_capacity"
+      "progress": "v0.4.2/build.16/99202bb已部署，全npm与两独立oracle通过；RCL4实际新tick确认。",
+      "next": "检查完整交付及有效工作周期、库存和纯版本长期窗口；预算仅用于规划。",
+      "owner": "root本轮结束后释放，后续先核验父任务状态"
+    },
+    {
+      "issue": 5,
+      "title": "按真实周转验证分矿与运输体型",
+      "status": "ready",
+      "progress": "20假设已分级；固定分矿和合并小Hauler收益未证，不与多口补丁混改。",
+      "next": "先测至少两个最长线路完整周期、逐矿服务间隔、空载跨矿和CPU，再做单变量实验。",
+      "owner": "下一轮核验owner后接续"
     }
   ],
   "actions": [
@@ -70,6 +125,48 @@
       "description": "提交并串行部署2026-09-25.12。",
       "status": "done",
       "result": "代码31f0203；API status verified，只变main，完整备份与六模块回读通过。"
+    },
+    {
+      "at": "2026-09-25T08:53:59Z",
+      "description": "将用户要求的独立问题审视、假设区分、沙盒验证、已知故障复用写入OPERATIONS/AGENTS与原automation。",
+      "status": "done",
+      "result": "唯一调度仍ACTIVE、20分钟独立对话；目录含E001/L001/W001/L002，20假设报告和独立回归已入Git/默认CI。"
+    },
+    {
+      "at": "2026-09-25T08:53:59Z",
+      "description": "完成.13串行API部署、实际新tick与CPU检查，发布v0.4.0。",
+      "status": "done",
+      "result": "897ea25推送、备份及六模块回读一致；73931800新版本，纯20tick CPU10.0674/max13.8946 bucket10000、升级14/t。"
+    },
+    {
+      "at": "2026-09-25T08:53:59Z",
+      "description": "复核并记录本轮日志写入中途失败。",
+      "status": "failed",
+      "result": "一次write因路径包含父目录跳转被拒绝，进度JSON一度先提交而渲染/索引未同步；已立即用仓库相对路径重写，60fecc1修复并推送，最终validate全部4轮通过。"
+    },
+    {
+      "at": "2026-09-25T08:53:59Z",
+      "description": "收齐子代理、记录08:38重叠巡检跳过、清理有界诊断并完成最终交接。",
+      "status": "done",
+      "result": "审视/实现均completed；重叠任务未采API/改游戏且已idle。flowProbe/lossProbe API回读null；CURRENT_STATE小于80行。"
+    },
+    {
+      "at": "2026-09-25T15:40:59Z",
+      "description": "连续用户纠正后全面审视并清理人为限制，完成v0.4.1/.15与最终v0.4.2/.16发布。",
+      "status": "done",
+      "result": "最终99202bb/tag v0.4.2已推送，API verified仅main变化；报告和故障目录入库，新增独立policy测试加入默认npm。"
+    },
+    {
+      "at": "2026-09-25T15:40:59Z",
+      "description": "处理子代理服务中断并完成最终整合。",
+      "status": "done",
+      "result": "Codex服务403/断流导致延迟；独立审视恢复完成，root接管实现者未完成的旧fixture断言更新，全npm通过。非游戏认证故障。"
+    },
+    {
+      "at": "2026-09-25T15:40:59Z",
+      "description": "补采卸货事件时Console连接超时。",
+      "status": "failed",
+      "result": "读回probe仍73936566，不作新证据；.16真实版本/产出由73937780遥测确认。临时probe清理已accepted，回读另记。"
     }
   ],
   "checks": [
@@ -97,11 +194,54 @@
       "name": "部署及实际固定节点转入",
       "result": "passed",
       "detail": "73931512快照：100能量从Hauler实际转入控制器容器；原无座工人已离开17,24，另一Hauler在该口提交250转入意图，后者尚待事件确认。"
+    },
+    {
+      "name": "独立故障沙盒与常规CI",
+      "result": "passed",
+      "detail": "全npm test通过；GitHub Offline checks36114816026 success。正确行为oracle在.12红、修复.13绿，不只验证错误能复现。"
+    },
+    {
+      "name": "纯新版本短窗与CPU",
+      "result": "passed",
+      "detail": "73931761–780升级14.8/t，CPU10.5546/max15.2324；73931781–800升级14/t，CPU10.0674/max13.8946 bucket10000；短窗不作可持续结论。"
+    },
+    {
+      "name": "长期与完整运输验收",
+      "result": "pending",
+      "detail": ".13保守纯1500窗口不早于73933260；两个合格窗口≥90%、备用口真实受阻交付、身体生命周期仍未完成。"
+    },
+    {
+      "name": "动态日志读取与最终档案",
+      "result": "passed",
+      "detail": "本轮运行中已验证生产API按ID读取GitHub记录且stale=false；新日志不部署网站。最终提交前再次validate全部4轮。"
+    },
+    {
+      "name": "最终.16完整回归与真实运行",
+      "result": "passed",
+      "detail": "全npm test含游戏/布局/API/operations/两个独立审视oracle通过；实际73937780为.16，升级建设均有ledger事件。"
+    },
+    {
+      "name": "全部卸货物理容量与原生处理器",
+      "result": "passed",
+      "detail": "100货/75预约仍卸100；真空位40卸40；同时两车面对150空位，官方engine实际100+50，intent不冒充实际到货。"
+    },
+    {
+      "name": "可持续总用能率",
+      "result": "pending",
+      "detail": "300tick102.72%库存-163；1500tick107.36%库存-3313且残差475，不合格。纯.16主窗口保守不早于73938080。"
+    },
+    {
+      "name": "诊断清理回读",
+      "result": "pending",
+      "detail": "clear-diagnostics请求accepted，但确认回读连接超时；下轮只读检查probe键并按需清理，不假称已确认删除。"
     }
   ],
   "next": [
-    "完成有限修复、相关回归与代码审阅；root串行API部署。",
-    "新版本确认固定入口畅通、实际转入与升级耗能，再交接长窗口验收。"
+    "先核验root及Issue owner/父任务，未停止不竞争源码/API。",
+    "按故障目录复验；新增异常另开独立问题审视，旧机制不能直接套结论。",
+    "继续真实交付和完整运输周期；固定分矿/合并小车收益尚未实证。",
+    "RCL4已到、storage0；按#6门槛继续。长期能效保持verifying，库存消耗不计可持续达标。",
+    "其他重叠巡检的未完成/未发布日志由其owner核验恢复，保留其本地文件。"
   ],
   "references": [
     {
@@ -111,6 +251,30 @@
     {
       "label": "固定物流 #1",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/1"
+    },
+    {
+      "label": "独立审视报告",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/operations/diagnostics/energy-overflow-review-2026-09-25.md"
+    },
+    {
+      "label": "故障检查目录",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/operations/fault-catalog.md"
+    },
+    {
+      "label": "修复代码与诊断测试",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/897ea2517b4944de0b02eefcadfaca4e7f15a6fc"
+    },
+    {
+      "label": "离线CI",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/actions/runs/36114816026"
+    },
+    {
+      "label": "运输周期 #5",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/5"
+    },
+    {
+      "label": "最终执行限制修复",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/99202bb"
     }
   ]
 }
