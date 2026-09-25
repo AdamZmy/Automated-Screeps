@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T15:37:58.724Z",
+  "updatedAt": "2026-09-25T15:39:32.646Z",
   "day": "2026-09-25",
   "runs": [
     {
       "id": "2026-09-25T14-19-13Z-run-71daa83c7b24",
       "kind": "scheduled",
       "startedAt": "2026-09-25T14:19:13.323Z",
-      "updatedAt": "2026-09-25T14:20:29.787Z",
-      "completedAt": null,
-      "status": "running",
-      "title": "周期巡检：核验活动协调者",
-      "summary": "即时状态确认原协调者 active、最新回合 inProgress；本轮仅记录跳过，不接管文件或部署。",
+      "updatedAt": "2026-09-25T15:39:32.646Z",
+      "completedAt": "2026-09-25T15:39:32.600Z",
+      "status": "skipped",
+      "title": "巡检跳过：原协调者仍活动",
+      "summary": "原协调者及Issue #1/#4负责父任务即时状态为active/inProgress；本轮结束，未接管、未采样、未部署。",
       "tick": null,
       "issueNumbers": [
         1,
