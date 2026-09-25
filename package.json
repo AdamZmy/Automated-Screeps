@@ -6,11 +6,12 @@
     "node": "22.x"
   },
   "scripts": {
-    "test": "npm run test:game && npm run test:layout && npm run test:api && npm run test:operations",
+    "test": "npm run test:game && npm run test:layout && npm run test:api && npm run test:operations && npm run test:diagnostics",
     "test:game": "node new-colony/verify-economy.cjs && node new-colony/verify-planner.cjs && node new-colony/verify-expansion.cjs && node new-colony/verify-monitor.cjs && node new-colony/verify-ledger.cjs",
     "test:api": "python3 new-colony/verify-api.py",
     "test:layout": "node new-colony/verify-reviewed-plan.cjs && node new-colony/verify-layout-execution.cjs && node new-colony/tools/verify-layout-build.cjs && node new-colony/tools/verify-layout-audit.cjs && node new-colony/research/layout-implementation/verify.cjs",
-    "test:operations": "python3 tools/verify-github-ops.py && python3 tools/verify-inspection-log.py"
+    "test:operations": "python3 tools/verify-github-ops.py && python3 tools/verify-inspection-log.py",
+    "test:diagnostics": "node new-colony/tools/verify-hauling-hypotheses.cjs"
   },
   "devDependencies": {
     "@screeps/common": "2.16.0-beta",

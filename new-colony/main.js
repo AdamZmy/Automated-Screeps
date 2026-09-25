@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24: energy throughput first; room plans live in Memory.frontier.
-const VERSION = '2026-09-25.12';
+const VERSION = '2026-09-25.13';
 const E = RESOURCE_ENERGY;
 const vals = o => Object.keys(o).map(k => o[k]);
 // Plans and station seats are plain local coordinates, which the engine's
@@ -19,7 +19,7 @@ function near(c,arr) {
     if(adjacent){movementCount('adjacentChoices');return adjacent;}
     movementCount('targetSearches');return c.pos.findClosestByPath(arr);
 }
-function go(c,t,r=1) {
+function go(c,t,r=1,options={}) {
     if (!t) return;
     const p=t.pos || t;
     // Waiting for fatigue or working in place is not failed movement.
@@ -35,7 +35,7 @@ function go(c,t,r=1) {
     // Replan around occupants after two actual failed steps, with a short retry
     // cadence if congestion persists. Keep normal successful routes cached.
     if(c.memory.stuck>=2&&c.memory.stuck%3===2){delete c.memory._move;movementCount('pathResets');}
-    return c.moveTo(p,{range:r,reusePath:15,maxRooms:p.roomName===c.room.name?1:16,ignoreCreeps:c.memory.stuck<2});
+    return c.moveTo(p,{range:r,reusePath:15,maxRooms:p.roomName===c.room.name?1:16,ignoreCreeps:c.memory.stuck<2,...options});
 }
 function take(c,t) { const r=t.resourceType?c.pickup(t):c.withdraw(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
 function give(c,t) { const r=c.transfer(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
@@ -649,18 +649,54 @@ function haulTarget(c,includeStorage=true) {
     }
     delete c.memory.haulDelivery;return null;
 }
-function clearStationTraffic(c) {
-    const station=controllerStation(c.room);if(!station)return;
-    const plan=economyMemory(c.room).plan;
-    const reserved=[station.port,...station.seats,...(plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD&&range(s,station.node)<=2)];
+function deliveryPorts(room,target) {
+    const station=controllerStation(room),plan=economyMemory(room).plan;
+    const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
+    const seats=station?station.seats:[],ports=[];
+    for(let y=target.pos.y-1;y<=target.pos.y+1;y++)for(let x=target.pos.x-1;x<=target.pos.x+1;x++){
+        const p={x,y};if(walkable(room,p)&&!future.has(x+50*y)&&!seats.some(s=>range(s,p)===0))ports.push(p);
+    }
+    return {ports,preferred:station&&station.node.id===target.id?station.port:null,seats};
+}
+function deliveryPort(c,target,task,layout) {
+    const peers=c.room.find(FIND_MY_CREEPS).concat(c.room.find(FIND_HOSTILE_CREEPS)).filter(o=>o.name!==c.name);
+    const promised=vals(Game.creeps).filter(o=>o.name!==c.name).map(o=>({creep:o,task:o.memory.haulDelivery}))
+        .filter(o=>o.task&&o.task.room===c.room.name&&o.task.phase==='deliver'&&o.task.sent===undefined&&o.task.port&&validDelivery(o.creep,o.task)).map(o=>o.task.port);
+    const avoid=task.portAvoid||{};
+    for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
+    const free=p=>!avoid[p.x+50*p.y]&&!peers.some(o=>range(o,p)===0)&&!promised.some(q=>range(q,p)===0);
+    if(task.port&&layout.ports.some(p=>range(p,task.port)===0)&&free(task.port))return task.port;
+    delete task.port;
+    const candidates=layout.ports.filter(free).sort((a,b)=>Number(!!layout.preferred&&range(b,layout.preferred)===0)-Number(!!layout.preferred&&range(a,layout.preferred)===0)||range(c,a)-range(c,b));
+    for(const p of candidates){
+        // Exact range zero matters: reaching a neighboring tile does not prove
+        // that this unloading tile itself is reachable. Bound each path search.
+        const path=c.pos.findPathTo(new RoomPosition(p.x,p.y,c.room.name),{range:0,ignoreCreeps:false,maxRooms:1,maxOps:1000,
+            costCallback(name,matrix){if(name===c.room.name)for(const seat of layout.seats)matrix.set(seat.x,seat.y,255);}});
+        const end=path[path.length-1];
+        if(range(c,p)===0||end&&end.x===p.x&&end.y===p.y){task.port={x:p.x,y:p.y};task.progress=Game.time;delete c.memory._move;return task.port;}
+        (task.portAvoid||(task.portAvoid={}))[p.x+50*p.y]=Game.time+15;
+    }
+    return null;
+}
+function clearStationTraffic(c,target=null) {
+    const station=controllerStation(c.room);if(!station&&!target)return;
+    const node=target||station.node,plan=economyMemory(c.room).plan,layout=deliveryPorts(c.room,node);
+    const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
+    const endpoints=[...layout.ports,...(station?[station.port,...station.seats]:[])];
+    const roads=(plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD&&range(s,node)<=2);
+    const reserved=[...endpoints,...roads];
     if(!reserved.some(p=>range(c,p)===0))return;
+    const peers=c.room.find(FIND_MY_CREEPS).concat(c.room.find(FIND_HOSTILE_CREEPS)).filter(o=>o.name!==c.name);
     const options=[];
     for(let y=c.pos.y-1;y<=c.pos.y+1;y++)for(let x=c.pos.x-1;x<=c.pos.x+1;x++){
-        const p={x,y};if(walkable(c.room,p)&&!reserved.some(s=>range(s,p)===0)&&
-            !c.room.find(FIND_MY_CREEPS).some(o=>o.name!==c.name&&range(o,p)===0))options.push(p);
+        const p={x,y};if(walkable(c.room,p)&&!future.has(x+50*y)&&!endpoints.some(s=>range(s,p)===0)&&
+            !peers.some(o=>range(o,p)===0||o.memory&&o.memory.haulDelivery&&validDelivery(o,o.memory.haulDelivery)&&o.memory.haulDelivery.port&&range(o.memory.haulDelivery.port,p)===0))options.push(p);
     }
-    const p=options.sort((a,b)=>range(station.node,b)-range(station.node,a))[0];
-    if(p)go(c,new RoomPosition(p.x,p.y,c.room.name),0);
+    // Prefer parking off roads; a free outward road is still better than
+    // holding the only transfer endpoint when all nearby parking is occupied.
+    const p=options.sort((a,b)=>Number(roads.some(r=>range(r,a)===0))-Number(roads.some(r=>range(r,b)===0))||range(node,b)-range(node,a))[0];
+    if(p)go(c,new RoomPosition(p.x,p.y,c.room.name),0,{ignoreCreeps:false});
 }
 function collectHaul(c) {
     const position=c.pos.x+','+c.pos.y;
@@ -697,27 +733,36 @@ function collectHaul(c) {
 }
 function deliverHaul(c,target) {
     const id=target.id||target.name,position=c.pos.x+','+c.pos.y;
-    let task=c.memory.haulDelivery;
+    const task=c.memory.haulDelivery;
     if(!task||task.id!==id||task.room!==c.room.name)return false;
     task.phase='deliver';
     if(task.position!==position||c.fatigue||range(c,target)<=1){task.position=position;task.progress=Game.time;}
-    let blocked=range(c,target)>1&&!c.fatigue&&Game.time-task.progress>=4;
-    if(!blocked){
-        const amount=Math.min(task.amount,energy(c),target.store.getFreeCapacity(E));
-        const result=c.transfer(target,E,amount);
-        if(result===OK){
-            // Keep this intent reserved until the next tick's actual Store is
-            // visible. Releasing now would dispatch another truck into the gap.
-            task.amount=amount;task.sent=Game.time;task.progress=Game.time;clearStationTraffic(c);return true;
-        }
-        if(result===ERR_NOT_IN_RANGE){
-            const station=controllerStation(c.room),port=station&&station.node.id===id&&station.port;
-            if(go(c,port?new RoomPosition(port.x,port.y,c.room.name):target,port?0:1)!==ERR_NO_PATH)return true;
-        }
-        else if(result===ERR_TIRED)return true;
-        blocked=true;
+    // Any adjacent tile can transfer immediately, including a courier that was
+    // already in range before ports were assigned. Amount leases remain intact.
+    const amount=Math.min(task.amount,energy(c),target.store.getFreeCapacity(E));
+    const result=c.transfer(target,E,amount);
+    if(result===OK){
+        task.amount=amount;task.sent=Game.time;task.progress=Game.time;
+        delete task.port;delete task.portAvoid;clearStationTraffic(c,target);return true;
     }
-    if(blocked){c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;delete c.memory.haulDelivery;}
+    if(result===ERR_TIRED||c.fatigue)return true;
+    if(result===ERR_NOT_IN_RANGE){
+        const layout=deliveryPorts(c.room,target);
+        if(Game.time-task.progress>=4&&task.port){
+            (task.portAvoid||(task.portAvoid={}))[task.port.x+50*task.port.y]=Game.time+15;
+            delete task.port;delete c.memory._move;
+        }
+        // A blocked preferred tile is not a blocked energy node. Exhaust only
+        // this node's at most nine legal endpoints before its bounded cooldown.
+        for(let tries=0;tries<layout.ports.length;tries++){
+            const port=deliveryPort(c,target,task,layout);if(!port)break;
+            const moved=go(c,new RoomPosition(port.x,port.y,c.room.name),0,{ignoreCreeps:false,
+                costCallback(name,matrix){if(name===c.room.name)for(const seat of layout.seats)matrix.set(seat.x,seat.y,255);}});
+            if(moved!==ERR_NO_PATH)return true;
+            (task.portAvoid||(task.portAvoid={}))[port.x+50*port.y]=Game.time+15;delete task.port;delete c.memory._move;
+        }
+    }
+    c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;delete c.memory.haulDelivery;
     return false;
 }
 function haul(c) {

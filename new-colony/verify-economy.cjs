@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty}=ctx.module.exports.test;
+vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts};',ctx);
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts}=ctx.module.exports.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -31,6 +31,22 @@ function fixture(){
    else {const p=first instanceof Position?first:first&&first.pos instanceof Position?first.pos:null;if(p)({x,y,roomName}=p);}
    if(roomName&&roomName!==this.roomName)return Infinity;
    return Math.max(Math.abs(this.x-x),Math.abs(this.y-y));
+  }
+  findPathTo(target,options={}){
+   const end=target.pos||target,blocked=new Set(),key=p=>p.x+50*p.y;
+   if(options.costCallback)options.costCallback(room.name,{set(x,y,cost){if(cost===255)blocked.add(x+50*y);}});
+   const queue=[{x:this.x,y:this.y,path:[]}],seen=new Set([key(this)]);
+   for(let i=0;i<queue.length&&i<(options.maxOps||2500);i++){
+    const at=queue[i];if(Math.max(Math.abs(at.x-end.x),Math.abs(at.y-end.y))<=(options.range||0))return at.path;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+     const p={x:at.x+dx,y:at.y+dy},k=key(p);if(seen.has(k))continue;seen.add(k);
+     if(p.x<1||p.x>48||p.y<1||p.y>48||blocked.has(k)||(room.getTerrain().get(p.x,p.y)&C.TERRAIN_MASK_WALL)||
+      room.objects.some(o=>o.pos.x===p.x&&o.pos.y===p.y&&(o.isSource||C.OBSTACLE_OBJECT_TYPES.includes(o.structureType)))||
+      room.controller&&room.controller.pos.x===p.x&&room.controller.pos.y===p.y||
+      options.ignoreCreeps===false&&Object.values(ctx.Game.creeps).some(c=>c.pos.x===p.x&&c.pos.y===p.y))continue;
+     queue.push({...p,path:at.path.concat(p)});
+    }
+   }return[];
   }
   findClosestByPath(a){return a.slice().sort((a,b)=>this.getRangeTo(a)-this.getRangeTo(b))[0]||null;}
   findClosestByRange(a,opt){return this.findClosestByPath(Array.isArray(a)?a:room.find(a,opt));}
@@ -306,7 +322,7 @@ function deliveryFixture(){
  assert.equal(f.c.memory.moveAttempt,ctx.Game.time,'movement telemetry must identify a current move attempt');
  ctx.Game.time=start+4;f.c.actions.length=0;haul(f.c);
  assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.id);
- assert.deepEqual(f.c.actions.at(-1),['move',23,27,1],'blocked controller access must fall through to another live delivery request');
+ const move=f.c.actions.at(-1);assert.equal(move[0],'move');assert.equal(move[3],0);assert(range({x:move[1],y:move[2]},f.builder)<=1,'blocked controller access falls through to an exact unloading tile at another live node');
  ctx.Game.time+=15;assert.equal(haulTarget(f.c),f.box);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'delivery exclusion must expire after 15 ticks');
  const previousMove=f.c.memory.moveAttempt;
  f.c.pos=f.pos(16,24);for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'successful transfer must never create a permanent blacklist');assert(f.c.actions.some(a=>a[0]==='transfer'),'successful delivery may clear the station approach while retaining access');}
@@ -952,3 +968,84 @@ function capacityFixture(work=[4,4,1,1,1]){
  const poor=workforceDemand(f.room,control,roster());assert(countPart(poor.builderBody,C.WORK)<=2,'low construction income sizes down future bodies');
 }
 console.log('PASS:800-energy stationary/mobile/builder bodies; lifespan and refill duty; seat-capacity demand, profitable replacement, pending suppression, real-plan port/approach clearing, retained incumbents, critical renewal, low-income and finishing-site protections');
+
+function unloadFixture(){
+ const f=capacityFixture([4,4,4,4]);
+ for(const c of f.haulers)delete ctx.Game.creeps[c.name];
+ f.box.store[C.RESOURCE_ENERGY]=27;
+ f.courier=(name,x=17,y=25)=>{
+  const c=f.creep(name,'hauler',x,y,100,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);c.memory.loaded=true;
+  c.transfer=function(t,res,amount){const result=range(this,t)<=1?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['transfer',t.id,amount,result]);return result;};
+  c.memory.haulDelivery={id:f.box.id,room:f.room.name,amount:100,priority:2,phase:'deliver',expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
+  return c;
+ };
+ return f;
+}
+{
+ const f=unloadFixture(),blocker=f.creep('port-blocker','upgrader',17,24,50,50),c=f.courier('detour');
+ assert.equal(deliverHaul(c,f.box),true);
+ const port=c.memory.haulDelivery.port;assert.deepEqual([port.x,port.y],[16,24],'real reviewed terrain retains an open safe alternate unload tile');
+ assert(c.pos.findPathTo(f.pos(port.x,port.y),{range:0,ignoreCreeps:false}).length>0,'alternate is reachable around all four occupied worker seats');
+ assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id],'one occupied preferred port cannot blacklist the node');
+ assert(!f.station.seats.some(p=>range(p,port)===0));
+ const plan=ctx.Memory.frontier.rooms[f.room.name].plan;
+ assert(!plan.structures.some(p=>C.OBSTACLE_OBJECT_TYPES.includes(p.type)&&range(p,port)===0),'future obstacle tiles are excluded even before construction');
+ c.pos=f.pos(port.x,port.y);ctx.Game.time++;c.actions.length=0;assert(deliverHaul(c,f.box));
+ assert.deepEqual(c.actions[0],['transfer',f.box.id,100,C.OK],'alternate adjacent position delivers the reserved100 energy');
+ assert.equal(c.memory.haulDelivery.amount,100,'accepted transfer retains its amount reservation until the next snapshot');
+ assert.equal(c.memory.haulDelivery.sent,ctx.Game.time);assert.equal(c.memory.haulDelivery.port,undefined,'successful transfer releases its endpoint claim immediately');
+ assert(c.actions.some(a=>a[0]==='move'),'courier leaves an alternate unload endpoint after transfer');
+ assert.equal(haulTarget(c),f.box,'same-tick transfer amount remains reserved');
+ ctx.Game.time++;c.store[C.RESOURCE_ENERGY]=0;f.box.store[C.RESOURCE_ENERGY]=2000;
+ assert.equal(haulTarget(c),null);assert.equal(c.memory.haulDelivery,undefined,'completed task releases all port and amount state');
+}
+{
+ const f=unloadFixture(),a=f.courier('first',17,25),b=f.courier('second',18,25);
+ deliverHaul(a,f.box);const first=a.memory.haulDelivery.port;assert.deepEqual([first.x,first.y],[17,24],'a free reachable preferred port remains preferred');
+ deliverHaul(b,f.box);const second=b.memory.haulDelivery.port;
+ assert(second&&range(first,second)>0,'two valid delivery tasks cannot reserve the same unloading tile');
+ assert.deepEqual([second.x,second.y],[16,24]);
+ const stable=JSON.stringify(first);ctx.Game.time++;deliverHaul(a,f.box);assert.equal(JSON.stringify(a.memory.haulDelivery.port),stable,'a valid trip reuses its endpoint');
+ // Keep position fixed: after four actual non-fatigued stalled ticks, release
+ // just this endpoint and take the other one once its owner has disappeared.
+ delete ctx.Game.creeps[b.name];ctx.Game.time+=4;deliverHaul(a,f.box);
+ assert.deepEqual([a.memory.haulDelivery.port.x,a.memory.haulDelivery.port.y],[16,24]);
+ assert(!a.memory.haulBlocked||!a.memory.haulBlocked[f.box.id],'stalled endpoint rotates within its live node');
+}
+for(const release of ['death','expiry','completion','other-room']){
+ const f=unloadFixture(),holder=f.courier('holder',17,25),c=f.courier('waiting',18,25);
+ deliverHaul(holder,f.box);const preferred={...holder.memory.haulDelivery.port};
+ if(release==='death')delete ctx.Game.creeps[holder.name];
+ if(release==='expiry')holder.memory.haulDelivery.expires=ctx.Game.time;
+ if(release==='completion')holder.memory.haulDelivery.sent=ctx.Game.time;
+ if(release==='other-room'){
+  holder.room={name:'W22N26'};holder.pos=f.pos(17,25,'W22N26');holder.memory.haulDelivery.room='W22N26';
+  // The fixture's room.find is deliberately strict about physical residency.
+  const find=f.room.find;f.room.find=function(type,opt){const result=find.call(this,type,opt);return type===C.FIND_MY_CREEPS?result.filter(o=>o.room.name===this.name):result;};
+ }
+ deliverHaul(c,f.box);assert.deepEqual([c.memory.haulDelivery.port.x,c.memory.haulDelivery.port.y],[preferred.x,preferred.y],release+' cannot retain a local endpoint reservation');
+}
+{
+ const f=unloadFixture(),c=f.courier('isolated');let searches=0;
+ c.pos.findPathTo=()=>{searches++;return[];};
+ assert.equal(deliverHaul(c,f.box),false,'fully unreachable exact endpoints cause bounded backoff');
+ assert(searches>0&&searches<=9,'one delivery attempt bounds exact path searches to neighboring candidates');
+ assert.equal(c.memory.haulDelivery,undefined);assert.equal(c.memory.haulBlocked[f.box.id],ctx.Game.time+15);
+ assert.notEqual(haulTarget(c),f.box,'unreachable node cannot be selected during its cooldown');
+ ctx.Game.time+=15;assert.equal(haulTarget(c),f.box,'the node is eligible again after bounded cooldown');
+}
+{
+ const f=unloadFixture(),c=f.courier('fatigued');deliverHaul(c,f.box);
+ const port=JSON.stringify(c.memory.haulDelivery.port),moveCount=c.actions.filter(a=>a[0]==='move').length;
+ c.fatigue=10;for(let i=0;i<8;i++){ctx.Game.time++;assert(deliverHaul(c,f.box));}
+ assert.equal(JSON.stringify(c.memory.haulDelivery.port),port);assert.equal(c.actions.filter(a=>a[0]==='move').length,moveCount,'fatigue neither burns endpoint retries nor issues phantom movement');
+ assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id]);c.fatigue=0;ctx.Game.time++;deliverHaul(c,f.box);
+ assert.equal(JSON.stringify(c.memory.haulDelivery.port),port,'recovering from fatigue receives a fresh progress window');
+}
+{
+ const f=unloadFixture(),c=f.courier('one-bad-path');const move=c.moveTo;
+ c.moveTo=function(p,opts){if(p.x===17&&p.y===24)return C.ERR_NO_PATH;return move.call(this,p,opts);};
+ assert(deliverHaul(c,f.box));assert.deepEqual([c.memory.haulDelivery.port.x,c.memory.haulDelivery.port.y],[16,24],'explicit no-path for preferred endpoint retries a same-node alternative immediately');
+ assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id]);
+}
+console.log('PASS: real-terrain alternate unloading, exact endpoint reachability, fixed seats/future obstacles, preferred-port fallback, unique room-scoped port leases, same-node stall recovery, successful transfer/exit, death/expiry/completion release and bounded unreachable/fatigue handling');

@@ -6,6 +6,20 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.4.0 — 2026-09-25
+
+- Require an independent fault reviewer after inspection findings: reuse known
+  checks, compare competing explanations, reproduce mechanisms in a sandbox,
+  and retain confirmed checks plus unresolved hypotheses for later runs.
+- Add a fault catalog and an independent real-terrain hauling regression oracle
+  to the default offline checks. Keep full diagnostic reasoning outside game Memory.
+- Game build `2026-09-25.13` uses reachable alternative unloading tiles when the
+  preferred tile is blocked, with room-scoped active tile reservations and bounded
+  recovery. Adjacent transfers, work seats and delivery quantity promises remain.
+- Update the existing inspection automation without changing its 20-minute
+  standalone schedule. Long-window energy and real hauling-cycle acceptance
+  remain open in #1, #4 and #5.
+
 ## 0.3.2 — 2026-09-25
 
 - Keep overflow controller workers off delivery ports and planned approach roads,
