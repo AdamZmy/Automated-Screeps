@@ -13,6 +13,14 @@
 - GitHub/Vercel登录已完成；相同旧设备授权阻碍已经解决，不再次要求登录。
 - 巡检日志 https://screeps-energy-observatory.vercel.app/logs 已部署，生产 `dpl_BResWyWLagg3GKWRPZ7UPXTZuP2X`；每轮按OPERATIONS用inspection_log工具记录/发布，动态读取GitHub，无需逐轮部署。
 
+## 本轮正在执行（先核验 owner，勿竞争）
+
+- 当前 root `01a0d7a3-fbe2-72e3-9871-1b834e8eb22d` 仍运行；独立审视机制已写 OPERATIONS、AGENTS 和唯一 automation，commit724162a。
+- `.12` 代码31f0203已部署；73931540确认新版本，20tick升级13.4/t，CPU10.4193/峰11.6776，地面2736；完整90%验收未完成。
+- `energy_fault_review`（父任务=current root）独占本轮诊断报告和 `tools/verify-hauling-hypotheses.cjs`，正在独立审视。
+- `energy_capacity`（父任务=current root）再次独占main.js/verify-economy.cjs，正修复已沙盒证实的单卸货口失败：主口堵塞但相邻格可达，仍对整节点冷却。
+- 本轮批次 `2026-09-25T08-18-14Z-run-358131860170` 继续 running；下一轮08:38任务已按占用规则跳过，未采样或改游戏。
+
 ## 最近核验证据（旧快照，下轮必须取新数据）
 
 - 游戏 build `2026-09-25.11`，代码commit `2c1c04a` 已推送；08:09Z通过API部署，仅main改变，六模块回读一致。仓库版本以VERSION为准。
