@@ -6,6 +6,21 @@
   ],
   "runs": [
     {
+      "id": "2026-09-25T13-29-21Z-run-0e00ac246a7c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T13:29:21.826Z",
+      "updatedAt": "2026-09-25T14:19:26.995Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：核验工作归属",
+      "summary": "已读取活动Issue；原协调者及子代理即时状态无法核验，保留文件归属，准备结束为skipped。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
+    {
       "id": "2026-09-25T12-21-07Z-run-93ce7e995d21",
       "kind": "scheduled",
       "startedAt": "2026-09-25T12:21:07.050Z",
