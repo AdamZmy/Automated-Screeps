@@ -1,8 +1,23 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T08:32:21.277Z",
+  "updatedAt": "2026-09-25T08:38:55.927Z",
   "day": "2026-09-25",
   "runs": [
+    {
+      "id": "2026-09-25T08-38-00Z-run-bc6dfa08724e",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T08:38:00.171Z",
+      "updatedAt": "2026-09-25T08:38:55.927Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：核验任务占用",
+      "summary": "本轮已核验活动Issue和协调者即时状态；上轮协调者仍在运行，保持原归属，准备记录跳过。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
     {
       "id": "2026-09-25T08-18-14Z-run-358131860170",
       "kind": "scheduled",
