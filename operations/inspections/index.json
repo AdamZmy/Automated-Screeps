@@ -1,10 +1,24 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T08:15:10.658Z",
+  "updatedAt": "2026-09-25T08:18:37.144Z",
   "days": [
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-25T08-18-14Z-run-358131860170",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T08:18:14.542Z",
+      "updatedAt": "2026-09-25T08:18:37.144Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "主房能效与矿区积压巡检",
+      "summary": "已核验上轮游戏、日志协调者及布局工作者均结束；本轮接管P0实时能效与容量检查。",
+      "tick": null,
+      "issueNumbers": [
+        4
+      ]
+    },
     {
       "id": "2026-09-25T08-13-37Z-run-24945f2e8712",
       "kind": "backfill",

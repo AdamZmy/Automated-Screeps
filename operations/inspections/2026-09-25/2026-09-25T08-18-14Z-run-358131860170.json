@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-25T08-18-14Z-run-358131860170",
+  "kind": "scheduled",
+  "startedAt": "2026-09-25T08:18:14.542Z",
+  "updatedAt": "2026-09-25T08:18:37.144Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "主房能效与矿区积压巡检",
+  "summary": "已核验上轮游戏、日志协调者及布局工作者均结束；本轮接管P0实时能效与容量检查。",
+  "game": null,
+  "findings": [],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "有效WORK、补给周期与能源积压",
+      "status": "in-progress",
+      "progress": "上轮owner已停止，本轮先复核新API tick。",
+      "next": "检查可持续总用能率、真实运输和有效WORK容量。",
+      "owner": "01a0d7a3-fbe2-72e3-9871-1b834e8eb22d"
+    }
+  ],
+  "actions": [],
+  "checks": [
+    {
+      "name": "跨轮文件归属核验",
+      "result": "passed",
+      "detail": "上轮游戏与日志协调者idle/completed，布局工作者latestTurn completed；工作区初始干净。"
+    }
+  ],
+  "next": [],
+  "references": [
+    {
+      "label": "能源P0 #4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    }
+  ]
+}
