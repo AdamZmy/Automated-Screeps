@@ -1,19 +1,31 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T18:19:31.372Z",
+  "updatedAt": "2026-09-25T19:15:53.214Z",
   "days": [
     "2026-09-25"
   ],
   "runs": [
     {
-      "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
+      "id": "2026-09-25T19-15-53Z-run-c26e6b4fddca",
       "kind": "scheduled",
-      "startedAt": "2026-09-25T18:19:31.338Z",
-      "updatedAt": "2026-09-25T18:19:31.372Z",
+      "startedAt": "2026-09-25T19:15:53.214Z",
+      "updatedAt": "2026-09-25T19:15:53.214Z",
       "completedAt": null,
       "status": "running",
-      "title": "周期巡检与日志一致性修复",
-      "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
+      "title": "周期巡检与协调者核验",
+      "summary": "",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-25T18-43-09Z-rcl4-62f6f1170fce",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T18:43:09.934Z",
+      "updatedAt": "2026-09-25T18:43:09.934Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "RCL4能源及仓储巡检",
+      "summary": "",
       "tick": null,
       "issueNumbers": []
     },
@@ -171,6 +183,20 @@
       ]
     },
     {
+      "id": "2026-09-25T12-39-00Z-run-111454a6f642",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T12:39:00.070Z",
+      "updatedAt": "2026-09-25T14:20:12.474Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：现有协调者仍在运行",
+      "summary": "即时任务状态确认现有协调者 active、最新轮次 inProgress；本轮仅记录占用并发布日志，保留原文件归属。",
+      "tick": null,
+      "issueNumbers": [
+        1
+      ]
+    },
+    {
       "id": "2026-09-25T12-21-45Z-run-180b053940d3",
       "kind": "scheduled",
       "startedAt": "2026-09-25T12:21:45.432Z",
@@ -298,7 +324,7 @@
       "id": "2026-09-25T08-18-14Z-run-358131860170",
       "kind": "scheduled",
       "startedAt": "2026-09-25T08:18:14.542Z",
-      "updatedAt": "2026-09-25T17:35:46.823Z",
+      "updatedAt": "2026-09-25T18:43:09.848Z",
       "completedAt": "2026-09-25T17:34:27Z",
       "status": "completed",
       "title": "能源执行限制全面清理并上线",
