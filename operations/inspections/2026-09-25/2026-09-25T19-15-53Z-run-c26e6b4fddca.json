@@ -3,16 +3,39 @@
   "id": "2026-09-25T19-15-53Z-run-c26e6b4fddca",
   "kind": "scheduled",
   "startedAt": "2026-09-25T19:15:53.214Z",
-  "updatedAt": "2026-09-25T19:15:53.214Z",
+  "updatedAt": "2026-09-25T22:03:12.052Z",
   "completedAt": null,
   "status": "running",
   "title": "周期巡检与协调者核验",
-  "summary": "",
+  "summary": "协调者仍 active，本轮仅登记跳过原因；游戏观测和主分支发布由现有协调者继续。",
   "game": null,
-  "findings": [],
+  "findings": [
+    {
+      "severity": "info",
+      "title": "现有协调者仍运行",
+      "detail": "即时 Codex 状态显示协调者 01a0d9b7-4b5d-7160-ba1b-f2ed83639448 active/inProgress；Issue 原负责人 01a0d7a3-fbe2-72e3-9871-1b834e8eb22d idle/completed。本轮 01a0d9e0-b076-7900-961f-b778e72578d5 不接管文件。",
+      "evidence": [
+        "未采集新游戏 tick；game=null。"
+      ],
+      "issue": null
+    }
+  ],
   "tasks": [],
   "actions": [],
-  "checks": [],
-  "next": [],
+  "checks": [
+    {
+      "name": "协调者即时状态",
+      "result": "passed",
+      "detail": "wait_threads timeoutMs=0 确认现有协调者 active；不读取长对话。"
+    },
+    {
+      "name": "游戏实时观测",
+      "result": "pending",
+      "detail": "按已有工作者运行时仅记录跳过原因的规则，本轮未调用游戏 API。"
+    }
+  ],
+  "next": [
+    "下一轮重新核验当前协调者和活动 Issue owner；active/unknown 时继续保留归属。"
+  ],
   "references": []
 }
