@@ -1,8 +1,23 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T15:40:06.756Z",
+  "updatedAt": "2026-09-25T15:40:34.895Z",
   "day": "2026-09-25",
   "runs": [
+    {
+      "id": "2026-09-25T15-38-41Z-run-781f21cb9a02",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T15:38:41.729Z",
+      "updatedAt": "2026-09-25T15:40:34.895Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：核验协调者状态",
+      "summary": "即时核验确认原协调者仍 active，本轮仅登记跳过原因和发布独立日志，保留原文件/API/部署归属。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4
+      ]
+    },
     {
       "id": "2026-09-25T15-38-18Z-run-a9ab80c9bdbb",
       "kind": "scheduled",
