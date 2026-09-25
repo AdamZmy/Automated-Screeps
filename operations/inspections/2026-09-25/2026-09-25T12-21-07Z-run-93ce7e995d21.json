@@ -3,11 +3,11 @@
   "id": "2026-09-25T12-21-07Z-run-93ce7e995d21",
   "kind": "scheduled",
   "startedAt": "2026-09-25T12:21:07.050Z",
-  "updatedAt": "2026-09-25T14:19:28.957Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "周期巡检：现有协调者运行，保留归属",
-  "summary": "即时状态确认原协调者 active / inProgress；本轮仅记录跳过原因，不接管代码、API 或部署。",
+  "updatedAt": "2026-09-25T14:20:49.064Z",
+  "completedAt": "2026-09-25T14:20:49.035Z",
+  "status": "skipped",
+  "title": "巡检跳过：原协调者仍在运行",
+  "summary": "原协调者及 Issue #1/#4 owner 仍 active / inProgress；本轮完成独立日志发布准备，未接管 API、代码或部署。",
   "game": null,
   "findings": [
     {
@@ -57,8 +57,14 @@
     {
       "at": "2026-09-25T14:19:28.878Z",
       "description": "创建本轮独立日志并准备仅含本轮记录的 Git 发布。",
-      "status": "in-progress",
-      "result": "本轮 game=null；保留其他未提交文件及旧日志修订，不重部署网站。"
+      "status": "done",
+      "result": "起始记录已显式提交并推送：3c9ef3c6d4701442a89eaeaeb53d719f894b4eaf。仅本轮 JSON/Markdown 与两级索引；发布档案来自已提交历史，本地其他修订保留。"
+    },
+    {
+      "at": "2026-09-25T14:20:49.035Z",
+      "description": "结束本轮并校验同一 ID 的跳过记录。",
+      "status": "done",
+      "result": "保留 CURRENT_STATE、原 Issue owner 与游戏文件归属；无新采样、无重复代理、无部署。结束记录随本次 Git 修订发布，实际推送结果记入调度记忆。"
     }
   ],
   "checks": [
@@ -74,8 +80,13 @@
     },
     {
       "name": "本轮日志开始发布",
-      "result": "pending",
-      "detail": "待串行显式提交并推送。"
+      "result": "passed",
+      "detail": "起始提交 3c9ef3c 已成功推送 origin/main；发布档案校验通过，10 轮/1 日。"
+    },
+    {
+      "name": "本地日志归档一致性",
+      "result": "passed",
+      "detail": "本轮起始 write/validate 已通过：16 轮/1 日。结束记录再次由 write/validate 校验，其他未发布修订不混入本轮提交。"
     }
   ],
   "next": [
@@ -91,6 +102,10 @@
     {
       "label": "固定交接 #1",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/1"
+    },
+    {
+      "label": "本轮起始提交",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/3c9ef3c6d4701442a89eaeaeb53d719f894b4eaf"
     }
   ]
 }
