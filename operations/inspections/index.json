@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-25T15:40:34.895Z",
+  "updatedAt": "2026-09-25T15:40:59.889Z",
   "days": [
     "2026-09-25"
   ],
@@ -24,11 +24,11 @@
       "id": "2026-09-25T15-38-18Z-run-a9ab80c9bdbb",
       "kind": "scheduled",
       "startedAt": "2026-09-25T15:38:18.480Z",
-      "updatedAt": "2026-09-25T15:39:32.623Z",
-      "completedAt": null,
-      "status": "running",
-      "title": "周期巡检：核验协调者归属",
-      "summary": "本轮协调者01a0d917-4fd9-7e93-804d-b02632ca1617已核验原协调者仍active；本轮仅记录归属与跳过原因，保留原工作者的API、文件及部署归属。",
+      "updatedAt": "2026-09-25T15:40:59.889Z",
+      "completedAt": "2026-09-25T15:40:59.860Z",
+      "status": "skipped",
+      "title": "原协调者仍运行，本轮已跳过",
+      "summary": "本轮协调者01a0d917-4fd9-7e93-804d-b02632ca1617确认原协调者及Issue #1/#4负责人仍active/inProgress。按归属规则结束本轮：未调用游戏API、派工、修改代码、部署或改写Issue/CURRENT_STATE；game=null。",
       "tick": null,
       "issueNumbers": [
         1,
