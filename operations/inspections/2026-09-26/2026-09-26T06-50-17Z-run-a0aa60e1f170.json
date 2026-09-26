@@ -3,20 +3,68 @@
   "id": "2026-09-26T06-50-17Z-run-a0aa60e1f170",
   "kind": "scheduled",
   "startedAt": "2026-09-26T06:50:17.708Z",
-  "updatedAt": "2026-09-26T06:58:10.007Z",
+  "updatedAt": "2026-09-26T07:07:04.159Z",
   "completedAt": null,
   "status": "running",
   "title": "周期巡检与交接核验",
-  "summary": "协调者01a0dc5e-78e0-7412-8f71-16b514713719已核验旧协调者停止；接管本轮API巡检，保留旧日志恢复文件。",
-  "game": null,
+  "summary": "新tick73952560确认.16持续升级、无掉落/运输停滞；1500tick库存-72，保持能效verifying。统一接收其他让行轮次的日志发布。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26"
+    ],
+    "version": "2026-09-25.16",
+    "tick": 73952560,
+    "fetchedAt": "2026-09-26T06:55:04Z"
+  },
   "findings": [],
-  "tasks": [],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "可持续用能率",
+      "status": "verifying",
+      "progress": "当前无矿区溢出或停工；主窗库存微降不可验收。",
+      "next": "继续两个合格1500tick窗口与必要成本验收。",
+      "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
+    },
+    {
+      "issue": 6,
+      "title": "RCL4仓储过渡",
+      "status": "ready",
+      "progress": "RCL4、20extension、无工地，storage能源0；结构存在性仍待实时诊断。",
+      "next": "核验Storage是否已建及真实储备。",
+      "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
+    },
+    {
+      "issue": 12,
+      "title": "巡检日志恢复",
+      "status": "in-progress",
+      "progress": "旧owner停止；共享30轮全档案通过，本轮起始33a3f03已推送；其他让行日志待串行导入。",
+      "next": "复用独立审视结果，发布真实起止修订。",
+      "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
+    }
+  ],
   "actions": [],
   "checks": [
     {
       "name": "交接归属",
       "result": "passed",
       "detail": "CURRENT_STATE/Issue12 owner notLoaded且latestTurn failed；游戏Issue owner idle/completed。"
+    },
+    {
+      "name": "六模块远端回读",
+      "result": "passed",
+      "detail": "frontier24全部local/remote SHA256一致，无额外模块。"
+    },
+    {
+      "name": "1500tick可持续能效",
+      "result": "pending",
+      "detail": "U98.06%，coverage1，库存-72，residual24，stock-drawdown排除资格。"
+    },
+    {
+      "name": "诊断快照新鲜性",
+      "result": "pending",
+      "detail": "inspect-world提交超时，回读73931528过旧；未作为本轮证据。"
     }
   ],
   "next": [

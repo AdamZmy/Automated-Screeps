@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-26T06-47-40Z-run-9b5ead60f9c1",
+  "kind": "scheduled",
+  "startedAt": "2026-09-26T06:47:40.263Z",
+  "updatedAt": "2026-09-26T07:01:24.856Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "周期巡检与任务归属核验",
+  "summary": "开始归属核验，先在隔离档案初始化真实批次；未读取游戏API。",
+  "game": null,
+  "findings": [],
+  "tasks": [],
+  "actions": [
+    {
+      "at": "2026-09-26T07:01:24.822Z",
+      "description": "核验上轮协调者、Issue owner和日志审视者",
+      "status": "done",
+      "result": "旧协调者failed、游戏owner和旧审视者idle/completed；随后写入前复核发现新owner，未执行任何共享写入。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "既有档案只读校验",
+      "result": "passed",
+      "detail": "核验时29条、1天；这不代表游戏健康，也不证明全部终态已经发布。"
+    }
+  ],
+  "next": [],
+  "references": []
+}

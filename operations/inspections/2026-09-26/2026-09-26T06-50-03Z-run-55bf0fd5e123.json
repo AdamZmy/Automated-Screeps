@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-26T06-50-03Z-run-55bf0fd5e123",
+  "kind": "scheduled",
+  "startedAt": "2026-09-26T06:50:03.809Z",
+  "updatedAt": "2026-09-26T06:50:03.845Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "协调者状态无法核验，等待安全交接",
+  "summary": "已读取操作规则和活动Issue；本轮缺少即时任务状态工具，协调者及Issue owner状态未知，尚未接管。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26"
+    ],
+    "version": null,
+    "tick": null,
+    "fetchedAt": null
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "即时任务状态接口不可用",
+      "detail": "当前工具目录没有wait_threads、list_threads或read_thread；无法即时核验现有协调者及旧Issue owner是否停止。保留既有文件归属。",
+      "evidence": [
+        "CURRENT_STATE与Issue #12仍记录协调者01a0d9b7-4b5d-7160-ba1b-f2ed83639448。",
+        "#1/#4/#5/#6的最新checkpoint记录旧owner 01a0d7a3-fbe2-72e3-9871-1b834e8eb22d；本轮未能核验其即时状态。",
+        "github_ops.py list本轮成功；Issue #12 in-progress，#1/#4 verifying，#5/#6/#9 ready，#7/#8/#10 planned。"
+      ],
+      "issue": 12
+    }
+  ],
+  "tasks": [],
+  "actions": [
+    {
+      "at": "2026-09-26T06:50:03.809Z",
+      "description": "建立隔离巡检批次，保留共享文件归属",
+      "status": "done",
+      "result": "本轮协调者01a0db9f-79f0-7c61-b862-43c40c27d86f；日志只在隔离暂存区创建，游戏观测字段为null。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "活动Issue读取",
+      "result": "passed",
+      "detail": "github_ops.py list成功返回活动Issue及最新checkpoint。"
+    },
+    {
+      "name": "旧协调者和工作者即时状态",
+      "result": "pending",
+      "detail": "工具不可用，状态unknown；旧记忆中的active/idle不能代替本轮即时核验。"
+    }
+  ],
+  "next": [
+    "恢复任务即时状态工具后核验当前协调者、Issue owner及其父任务。",
+    "确认统一发布者后，按同一批次ID导入开始和结束记录，串行提交推送；不要覆盖完整共享索引。"
+  ],
+  "references": [
+    {
+      "label": "现有日志归档Issue #12",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/12"
+    }
+  ]
+}
