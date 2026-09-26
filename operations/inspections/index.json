@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T08:37:09.451Z",
+  "updatedAt": "2026-09-26T08:41:42.441Z",
   "days": [
     "2026-09-26",
     "2026-09-25"
@@ -10,13 +10,16 @@
       "id": "2026-09-26T08-37-09Z-rcl4-7b565bfb03bd",
       "kind": "scheduled",
       "startedAt": "2026-09-26T08:37:09.413Z",
-      "updatedAt": "2026-09-26T08:37:09.451Z",
+      "updatedAt": "2026-09-26T08:41:42.441Z",
       "completedAt": null,
       "status": "running",
       "title": "小时巡检：RCL4 能效与物流验证",
-      "summary": "已即时核验上轮协调者 idle/completed、旧游戏 owner completed；本轮开始，待活动 Issue 归属与新 API tick。",
-      "tick": null,
-      "issueNumbers": []
+      "summary": "Fresh primary window U97.81%, complete coverage, stock+26; long window stock-2 still prevents sustainable acceptance. Last historical running journal has verified failed owner; independent recovery review underway.",
+      "tick": 73954160,
+      "issueNumbers": [
+        4,
+        12
+      ]
     },
     {
       "id": "2026-09-26T07-22-27Z-run-f7d856068c06",
