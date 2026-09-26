@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-26T06:58:10.007Z",
+  "day": "2026-09-26",
+  "runs": [
+    {
+      "id": "2026-09-26T06-50-17Z-run-a0aa60e1f170",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T06:50:17.708Z",
+      "updatedAt": "2026-09-26T06:58:10.007Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检与交接核验",
+      "summary": "协调者01a0dc5e-78e0-7412-8f71-16b514713719已核验旧协调者停止；接管本轮API巡检，保留旧日志恢复文件。",
+      "tick": null,
+      "issueNumbers": []
+    }
+  ]
+}

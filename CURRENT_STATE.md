@@ -1,7 +1,8 @@
 # Screeps World 当前交接
 
 - 唯一World源码new-colony，AdamZmy/shard1/frontier24；Arena不属于本任务。
-- root任务01a0d9b7-4b5d-7160-ba1b-f2ed83639448；上轮01a0d7a3-fbe2-72e3-9871-1b834e8eb22d已通过wait_threads确认idle/completed后接管；active/unknown不接管。
+- root任务01a0dc5e-78e0-7412-8f71-16b514713719；2026-09-26T06:50Z核验上轮01a0d9b7-4b5d-7160-ba1b-f2ed83639448 notLoaded/failed，游戏owner01a0d7a3-fbe2-72e3-9871-1b834e8eb22d idle/completed后接管。
+- 本轮独占API/源码/当前日志/Git；保留旧日志恢复者未提交的4个文件，待独立核验后处理。
 - 独立20分钟自动巡检保持；先读AGENTS/OPERATIONS/相关故障目录和Issue，不重放历史。
 - 用户最终原则：所有卸货按实际持能/空位，预约不截断动作；已有能源的升级/建设工人就绪即工作，预算仅作人数/身体/供给规划。
 - 新限制需明确依据；已知故障先复验，未解释异常交独立审视，多假设沙盒确认后入库。
