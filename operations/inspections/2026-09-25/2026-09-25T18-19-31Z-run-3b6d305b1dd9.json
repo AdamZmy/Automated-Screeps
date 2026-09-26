@@ -3,11 +3,11 @@
   "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
   "kind": "scheduled",
   "startedAt": "2026-09-25T18:19:31.338Z",
-  "updatedAt": "2026-09-25T18:19:31.372Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T07:17:25.499Z",
+  "completedAt": "2026-09-25T23:33:12Z",
+  "status": "failed",
   "title": "周期巡检与日志一致性修复",
-  "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
+  "summary": "本轮原协调者任务因Codex服务认证错误结束；2026-09-26恢复时通过即时任务状态核验其latestTurn failed及真实completedAt，保留原批次身份。没有本轮新游戏tick证据。",
   "game": null,
   "findings": [],
   "tasks": [],
@@ -19,7 +19,15 @@
       "result": "本轮01a0d9b7-4b5d-7160-ba1b-f2ed83639448；旧root01a0d7a3-fbe2-72e3-9871-1b834e8eb22d为idle/completed，所有活动checkpoint owner均为该root。"
     }
   ],
-  "checks": [],
-  "next": [],
+  "checks": [
+    {
+      "name": "真实任务结束状态",
+      "result": "passed",
+      "detail": "任务01a0d9b7-4b5d-7160-ba1b-f2ed83639448为notLoaded/latestTurn failed；结束Unix1790379192。Codex服务错误不等于Screeps凭据失效。"
+    }
+  ],
+  "next": [
+    "当前恢复结果见Issue12及后续独立巡检。"
+  ],
   "references": []
 }

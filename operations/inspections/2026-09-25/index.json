@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T07:10:33.101Z",
+  "updatedAt": "2026-09-26T07:17:25.499Z",
   "day": "2026-09-25",
   "runs": [
     {
@@ -49,6 +49,22 @@
       ]
     },
     {
+      "id": "2026-09-25T20-48-03Z-run-99b41795cee1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:48:03.800Z",
+      "updatedAt": "2026-09-25T20:48:03.847Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者运行中，本轮巡检跳过",
+      "summary": "本轮任务01a0da28-ca4b-7b40-a0ea-4a7a5eefb076。上轮协调者仍active；主归档时间校验失败。本记录隔离保存待同步，不接管游戏或文件。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        12
+      ]
+    },
+    {
       "id": "2026-09-25T20-31-26Z-run-17bff5933395",
       "kind": "scheduled",
       "startedAt": "2026-09-25T20:31:26.140Z",
@@ -62,6 +78,34 @@
         1,
         4,
         6
+      ]
+    },
+    {
+      "id": "2026-09-25T20-31-00Z-run-bd6e7293a7c1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:31:00.664Z",
+      "updatedAt": "2026-09-25T20:31:00.664Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者仍运行，巡检跳过并待同步",
+      "summary": "",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-25T20-17-50Z-run-0489bb8ad3e1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:17:50.965Z",
+      "updatedAt": "2026-09-25T22:03:38.475Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者仍运行，本轮跳过接管与共享档案写入",
+      "summary": "即时快照确认旧协调者仍active；本轮仅留跳过记录。共享档案时间校验失败，记录隔离保存待同步，未提交或推送。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        12
       ]
     },
     {
@@ -94,11 +138,11 @@
       "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
       "kind": "scheduled",
       "startedAt": "2026-09-25T18:19:31.338Z",
-      "updatedAt": "2026-09-25T18:19:31.372Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:17:25.499Z",
+      "completedAt": "2026-09-25T23:33:12Z",
+      "status": "failed",
       "title": "周期巡检与日志一致性修复",
-      "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
+      "summary": "本轮原协调者任务因Codex服务认证错误结束；2026-09-26恢复时通过即时任务状态核验其latestTurn failed及真实completedAt，保留原批次身份。没有本轮新游戏tick证据。",
       "tick": null,
       "issueNumbers": []
     },

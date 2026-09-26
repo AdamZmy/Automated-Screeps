@@ -1,11 +1,23 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T07:10:33.101Z",
+  "updatedAt": "2026-09-26T07:23:38.033Z",
   "days": [
     "2026-09-26",
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-26T07-22-27Z-run-f7d856068c06",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T07:22:27.586Z",
+      "updatedAt": "2026-09-26T07:23:38.033Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检与协调者核验",
+      "summary": "核验到现任协调者仍active/inProgress，本轮让行；仅建立隔离日志，不接管共享文件/API/Git。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-26T07-01-12Z-run-bd5b8a3175b7",
       "kind": "scheduled",
@@ -191,6 +203,28 @@
       ]
     },
     {
+      "id": "2026-09-26T06-48-13Z-run-e5f991de9b44",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T06:48:13.863Z",
+      "updatedAt": "2026-09-26T06:58:35.029Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调状态核验巡检",
+      "summary": "Active Issue checkpoints read. Coordinator and Issue owners cannot be verified because task-status tools are unavailable. Ownership preserved; no takeover.",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12
+      ]
+    },
+    {
       "id": "2026-09-26T06-48-05Z-run-d212bbc16bb2",
       "kind": "scheduled",
       "startedAt": "2026-09-26T06:48:05.830Z",
@@ -199,6 +233,22 @@
       "status": "skipped",
       "title": "巡检跳过：协调者状态无法核验",
       "summary": "任务状态工具不可用，依照状态未知不接管的规则结束本轮；游戏状态未知。起止日志仅本地Git留存，尚未推送或发布。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        12
+      ]
+    },
+    {
+      "id": "2026-09-26T06-47-40Z-run-8c4258a6bc97",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T06:47:40.373Z",
+      "updatedAt": "2026-09-26T06:54:10.848Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调状态核验",
+      "summary": "已读取交接及GitHub活动检查点；即时任务状态工具未提供，归属核验待完成。本轮隔离记录，尚未接管游戏或共享发布。",
       "tick": null,
       "issueNumbers": [
         1,
@@ -282,6 +332,22 @@
       ]
     },
     {
+      "id": "2026-09-25T20-48-03Z-run-99b41795cee1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:48:03.800Z",
+      "updatedAt": "2026-09-25T20:48:03.847Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者运行中，本轮巡检跳过",
+      "summary": "本轮任务01a0da28-ca4b-7b40-a0ea-4a7a5eefb076。上轮协调者仍active；主归档时间校验失败。本记录隔离保存待同步，不接管游戏或文件。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        12
+      ]
+    },
+    {
       "id": "2026-09-25T20-31-26Z-run-17bff5933395",
       "kind": "scheduled",
       "startedAt": "2026-09-25T20:31:26.140Z",
@@ -295,6 +361,34 @@
         1,
         4,
         6
+      ]
+    },
+    {
+      "id": "2026-09-25T20-31-00Z-run-bd6e7293a7c1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:31:00.664Z",
+      "updatedAt": "2026-09-25T20:31:00.664Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者仍运行，巡检跳过并待同步",
+      "summary": "",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-25T20-17-50Z-run-0489bb8ad3e1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-25T20:17:50.965Z",
+      "updatedAt": "2026-09-25T22:03:38.475Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者仍运行，本轮跳过接管与共享档案写入",
+      "summary": "即时快照确认旧协调者仍active；本轮仅留跳过记录。共享档案时间校验失败，记录隔离保存待同步，未提交或推送。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        12
       ]
     },
     {
@@ -327,11 +421,11 @@
       "id": "2026-09-25T18-19-31Z-run-3b6d305b1dd9",
       "kind": "scheduled",
       "startedAt": "2026-09-25T18:19:31.338Z",
-      "updatedAt": "2026-09-25T18:19:31.372Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:17:25.499Z",
+      "completedAt": "2026-09-25T23:33:12Z",
+      "status": "failed",
       "title": "周期巡检与日志一致性修复",
-      "summary": "上一协调者经即时快照确认idle/completed，开始本轮接管；本地旧日志索引不一致，保留原件并从已提交档案创建本轮，独立审视进行中。",
+      "summary": "本轮原协调者任务因Codex服务认证错误结束；2026-09-26恢复时通过即时任务状态核验其latestTurn failed及真实completedAt，保留原批次身份。没有本轮新游戏tick证据。",
       "tick": null,
       "issueNumbers": []
     },
