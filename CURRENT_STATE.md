@@ -1,38 +1,37 @@
 # Screeps World 当前交接
 
-- 唯一World源码new-colony，AdamZmy/shard1/frontier24；Arena不属于本任务。
-- root任务01a0dc5e-78e0-7412-8f71-16b514713719；2026-09-26T06:50Z核验上轮01a0d9b7-4b5d-7160-ba1b-f2ed83639448 notLoaded/failed，游戏owner01a0d7a3-fbe2-72e3-9871-1b834e8eb22d idle/completed后接管。
-- 本轮独占API/源码/当前日志/Git；保留旧日志恢复者未提交的4个文件，待独立核验后处理。
-- 独立20分钟自动巡检保持；先读AGENTS/OPERATIONS/相关故障目录和Issue，不重放历史。
-- 用户最终原则：所有卸货按实际持能/空位，预约不截断动作；已有能源的升级/建设工人就绪即工作，预算仅作人数/身体/供给规划。
-- 新限制需明确依据；已知故障先复验，未解释异常交独立审视，多假设沙盒确认后入库。
+- World唯一仓库与源码保持new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
+- 本轮root：01a0dc5e-78e0-7412-8f71-16b514713719；批次2026-09-26T06-50-17Z-run-a0aa60e1f170。
+- 用户2026-09-26改为每1小时新开独立任务；唯一automation screeps-world已工具更新并回读ACTIVE/hourly。不得恢复heartbeat或新增重复调度。
+- 接管前已核验旧root01a0d9b7 notLoaded/latestTurn failed、游戏owner01a0d7a3 idle/completed、旧journal_review01a0d9c9 idle/completed。
+- 本轮独占API/共享Git/部署；并发巡检均让行。结束后释放文件；下轮仍须核验本任务实际停止，不能只按本文判断。
 
-## 最新核验
+## 实际游戏与部署
 
-- v0.4.2 / build2026-09-25.16，代码99202bb已推送并打tag；API备份及六模块回读verified，仅main变化。
-- .16删除Container人工水位、全部目标卸货额度截断、最小配送批量/20与25取货门槛、升级/建设动作credit与轮休、强制蓄满才工作。
-- 修复有storage的完工Builder永远haul；删除1000身体预算/Hauler8CARRY/worker10WORK/房总36CARRY固定cap，保留真实需求、房容量与50parts。
-- Link允许小批实际有用转入，保留原生cooldown与正净到货；布局/扩张的现有战略门槛未盲删，逐项理由见限制审计报告。
-- .14/.15此前修正空车未来货量抢占、远车过早占口与小数预约；新回归保留这些机制，但不恢复旧水位/动作阀门。
-- 2026-09-25T15:38:29Z / tick73937780：RCL4，进度7470/405000，energy800/800，storage0，8个extension工地，地面能源0，无alerts。
-- 73937761–780实际升级350、有效建设105、采集400、库存-55、残差0；即升级17.5/t+建设5.25/t，允许消耗已有库存。
-- 同20tick CPU平均8.7854/峰9.643、bucket10000；这是短窗，非长期吞吐保证。
-- 300tick U102.72%/库存-163/残差0；1500tick U107.36%/库存-3313/残差475，均不可当可持续效率验收；6000tick U97.55%亦库存透支。
-- 全npm test通过，包含两套独立引擎/真实地形oracle及新增policy审计；发布后CI另查，不假称已确认本次CI。
-- 末次补采Console超时，flowProbe回读仍73936566，未当新证据；clear-diagnostics已accepted，确认回读连接超时，下轮检查残留probe，当前不声称清理已确认。
+- 游戏仍v0.4.2 / build2026-09-25.16 / code99202bb；本轮六模块code-check全匹配，无游戏源码修改或游戏部署。
+- status新tick73952560→73952900；最后2026-09-26T07:16:33Z，RCL4进度172049/405000、energy1300/1300、11creeps。
+- 两采样间340tick进度+6120，即18/t；两矿在位5WORK，各有矿工；drop0、hauling stalled0、alerts空。
+- 73952900 CPU20tick均7.4783，bucket10000；1500 U98.06%覆盖1、库存-71、residual23，无进口；6000 U97.95%库存-99。
+- 两主窗均stock-drawdown，不能宣称可持续≥90%达标；孵化3.5667/t、维修0.2667/t，与当前续代规模相符，完整周期成本仍待验收。
+- storage字段是能源量：新Game快照73952749确认Storage已建于审查坐标24,29、能源0，无工地。不是建筑缺失，不重复建设。
+- 20extension与21经济道路已建；新布局快照73952842：54匹配已建/151规划/0工地，审查布局版本未变。
+- 网站地图0e9c6fb已推送；生产dpl_8XDer13JsGK6pTeijgo1p4Vu7frB READY，稳定原URL，公开JSON与本地字节一致。
+- 网页导出7/7、API28/28、layout/UI现有回归通过；只刷新建造快照，无UI/游戏策略改变。
+- inspect-world旧73931528及flowProbe回读超时未计新证据；Storage/layout有新tick。诊断清理回读inspectionCleanupTick73953224，旧probe/apiSnapshot已删除。
 
-## 下一步
+## Issue与下一检查点
 
-- #1/#4 verifying：连续真实交付/升级/建设及至少两个合格1500tick窗口；.16保守纯窗口不早于73938080。
-- #5 ready：运输跨矿/部分装载绕路的真实完整周期，固定分矿/合并小身体收益仍待证；没有部署该猜测。
-- #6 RCL4门槛已达到、storage未建，转ready按原Issue推进；#7/#8/#10仍受各自储备/布局/RCL等门槛约束。
-- #9 ready；升RCL4后的网页布局静态快照可在其既有范围更新，当前本轮未改网站资产。
-- 故障目录operations/fault-catalog.md；完整审计operations/diagnostics/policy-restriction-review-2026-09-25.md。
-- 本轮批次2026-09-25T08-18-14Z-run-358131860170；用户连续修正使本轮延长，记录实际过程而非新造历史。
+- #1/#4 verifying：真实完整交付周期及两个合格1500tick主窗；禁止恢复额度截断或持能工人轮休。
+- #5 ready：至少两个完整最长路线周期、逐矿服务间隔；固定分矿/更大体型收益未证，不默认改策略。
+- #6 verifying：Storage和RCL4地图已完成，储备仍0，验收无回流、库存趋势/续代/CPU；不因建筑已建就关闭。
+- #7/#8/#10 planned：储备/RCL等实际门槛未满足；#9 ready，近邻布局/路线研究未在本轮重复派工。
+- #12 verifying：50轮/2日共享档案恢复并校验；公开日志API ok/stale=false，起止显式提交均已推送。
+- 本轮发布20组委托批次起止，另6份旧终态；旧3b6依据真实任务failed/结束23:33:12Z修正。提交a689f4a,c9be031,2237152,1ae73fa,7a80fd7。
+- 仅running的旧9b4b2827888c没有终态证据，保留待核验，不伪造结束。其余已交付终态按真实时间恢复。
 
-## 文件归属与异常
+## 文件归属与审视
 
-- energy_fault_review与restriction_audit completed且释放文件；energy_capacity最终服务连接失败，root已接管完成测试与部署。父任务均为上述root。
-- 服务403/断流中断不属于Screeps认证失败；两独立审视已恢复并完成，root补正两项旧fixture同tick/转岗断言后全回归通过。
-- 多个后续自动巡检因root仍active跳过；仍存在其他批次未完成/未发布日志及已暂存改动，保留其文件，不把这些日志当游戏代码修改。
-- root结束后释放本轮源码/测试/文档；统一API/Git部署已完成。后续接管仍先检查任务实际状态。
+- 本轮journal_recovery已completed并释放，仅分析state工件；复用并发父任务01a0dc27的journal_recovery_review交付，未重复审视旧故障。
+- 日志并发O001经已有沙盒确认；20日志+3恢复回归通过，遗留4文件核验后已整合2237152。
+- 全量物流/升级动作原则保持：按真实持能/空位卸货，就绪WORK连续工作，预算只规划人数/身体/供给。
+- API网络超时为传输问题，无401/403游戏鉴权证据；Vercel CLI初次网络失败后使用既有CLI部署成功。

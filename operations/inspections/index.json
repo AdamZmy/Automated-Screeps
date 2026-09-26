@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T07:33:04.858Z",
+  "updatedAt": "2026-09-26T07:42:00.845Z",
   "days": [
     "2026-09-26",
     "2026-09-25"
@@ -73,14 +73,16 @@
       "id": "2026-09-26T06-50-17Z-run-a0aa60e1f170",
       "kind": "scheduled",
       "startedAt": "2026-09-26T06:50:17.708Z",
-      "updatedAt": "2026-09-26T07:07:04.159Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:42:00.845Z",
+      "completedAt": "2026-09-26T07:42:00.803Z",
+      "status": "completed",
       "title": "周期巡检与交接核验",
-      "summary": "新tick73952560确认.16持续升级、无掉落/运输停滞；1500tick库存-72，保持能效verifying。统一接收其他让行轮次的日志发布。",
-      "tick": 73952560,
+      "summary": "本轮完成：.16主房持续升级、无矿区掉落/运输停滞；Storage已建但库存0，主窗仍库存微降，#1/#4/#6保持verifying。RCL4地图已上线，历史日志恢复并发布；用户已将独立巡检改为每小时。",
+      "tick": 73952900,
       "issueNumbers": [
+        1,
         4,
+        5,
         6,
         12
       ]

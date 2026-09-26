@@ -20,9 +20,9 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 `ownerKind=agent` 指当前协调树中的子代理；`thread` 指可查询的 Codex 任务；`root` 指协调者。
 这只是工作记录，脚本本身不会启动代理或在后台运行。
 
-## 每 20 分钟的协调流程
+## 每小时的协调流程
 
-唯一调度为 `screeps-world` 独立定时任务：每 20 分钟启动一个新对话，从保存的提示词恢复，不续接或复制原长对话。
+唯一调度为 `screeps-world` 独立定时任务：每 1 小时启动一个新对话，从保存的提示词恢复，不续接或复制原长对话。
 源码始终在 `/Users/zmy/screepsworld`；调度的 Project Rules 工作区只是上下文目录，其 Arena 默认入口不适用于本任务。
 每轮先读 World skill、`new-colony/AGENTS.md`、本文件和 `CURRENT_STATE.md`，再读活动 Issue 最新检查点并取新 API tick。
 `CURRENT_STATE.md` 只保留最近核验版本/tick、当前风险、下一检查点和本轮负责者，保持在 80 行以内，更新替换旧状态。

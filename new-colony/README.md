@@ -86,7 +86,7 @@ python3 screeps_api.py deploy --apply
 
 经济检查覆盖恢复体型、矿位与容器、部分负载、仓库循环、实际升级节流、单矿位换体、持久补能目标及矿位预约；布局检查覆盖真实房间地形、已有建筑、堵路、失败重试和逐级施工；扩张检查覆盖储备/CPU/岗位门槛及自给验收。模拟不能替代线上吞吐、CPU 与续代观察。
 
-Codex 本任务已设置每 20 分钟复查的 heartbeat，名称“Screeps World 基地巡检”、ID `screeps-world`。游戏代码和服务器侧监控逐 tick/每 20 tick 运行；Codex 的复查依赖本机API客户端、网络与有效Token。仅重要进展、故障或需用户处理时通知。最近人工/代理读取结果记录在 `LIVE_STATUS.md`。
+Codex 已设置每 1 小时新开独立对话复查的定时任务（用户2026-09-26调整），名称“Screeps World 基地巡检”、ID `screeps-world`。游戏代码和服务器侧监控逐 tick/每 20 tick 运行；Codex 的复查依赖本机API客户端、网络与有效Token。仅重要进展、故障或需用户处理时通知。最近人工/代理读取结果记录在 `LIVE_STATUS.md`。
 
 仅整合者通过API发布六模块。deploy默认预览；--apply校验AdamZmy/frontier24、备份远端代码、保留其他模块、上传并回读比对，不切分支；无变化不POST。写入结果不明时先code-check。发布后仍要通过Memory确认版本、tick推进及实际策略效果。旧分支与历次部署备份在backups/。不自动调用市场、不购买订阅，也不操作其他游戏项目。
 
@@ -94,7 +94,7 @@ Codex 本任务已设置每 20 分钟复查的 heartbeat，名称“Screeps Worl
 
 当前发布已扩为五模块，加入ledger.js，需运行 `node verify-ledger.cjs`。详见 [ENERGY_METRICS.md](ENERGY_METRICS.md)。运输由固定配额改为线路往返需求加持续积压反馈；矿工按孵化和行程提前续代；施工按能量预算执行，剩余供给用于升级；储能模式12000/18000滞后避免反复切换。G/eta来自实际事件，缺测与统计限制明确标记。
 
-面板：https://screeps-energy-observatory.vercel.app ，源码 `/Users/zmy/screepsworld/dashboard`。页面可见时60秒检查、服务端缓存120秒。最新上线配置和实测状态以LIVE_STATUS.md为准。原20分钟巡检已加入持续低效诊断、自主局部修复和效果复核。
+面板：https://screeps-energy-observatory.vercel.app ，源码 `/Users/zmy/screepsworld/dashboard`。页面可见时60秒检查、服务端缓存120秒。最新上线配置和实测状态以LIVE_STATUS.md为准。每小时独立巡检已加入持续低效诊断、自主局部修复和效果复核。
 
 分级建筑地图：https://screeps-energy-observatory.vercel.app/#layout 。提供真实主房地形、205项复核规划的RCL1–8累计/新增视图、坐标定位、Link角色与可选预留条件。建造状态为有时间戳的API快照，当前RCL随遥测更新；更新导出步骤在dashboard/README.md。地图在网页绘制，未增加游戏运行逻辑或常驻Memory。
 

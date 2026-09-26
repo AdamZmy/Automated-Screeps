@@ -1,3 +1,10 @@
+## 2026-09-26：RCL4仓储与地图核验、巡检改为每小时
+
+- 新API tick73952560→73952900，build2026-09-25.16；340tick升级+6120，矿区掉落0、运输停滞0、CPU均7.4783/bucket10000。1500总用能98.06%，库存-71、残差23，仍不满足可持续验收。未改游戏代码或部署游戏。
+- Storage真实已建24,29（tick73952749），库存0；RCL4地图快照73952842为54匹配已建/151规划/0工地。0e9c6fb已推送；生产dpl_8XDer13JsGK6pTeijgo1p4Vu7frB READY，公开资产字节一致，导出/API/UI相关回归通过。
+- 独立审视复用并恢复巡检档案至50轮/2日，所有导入起始/终态分别提交推送；公开日志API新读ok/stale=false。未知旧终态未伪造。
+- 用户要求频率降低为每1小时；已更新唯一独立automation并回读确认ACTIVE，继续每轮新任务、仅重要变化通知。
+
 # 巡检日志页上线（2026-09-25，Issue #12）
 
 - 生产 https://screeps-energy-observatory.vercel.app/logs ，部署 `dpl_BResWyWLagg3GKWRPZ7UPXTZuP2X` READY。独立页面显示日期/状态筛选、批次详情、Issue进度、问题/证据、动作和验证；原面板已加巡检导航。
