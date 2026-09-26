@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T07:17:25.499Z",
+  "updatedAt": "2026-09-26T07:33:04.745Z",
   "day": "2026-09-25",
   "runs": [
     {
@@ -52,11 +52,11 @@
       "id": "2026-09-25T20-48-03Z-run-99b41795cee1",
       "kind": "scheduled",
       "startedAt": "2026-09-25T20:48:03.800Z",
-      "updatedAt": "2026-09-25T20:48:03.847Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:33:04.745Z",
+      "completedAt": "2026-09-25T21:46:33.881Z",
+      "status": "skipped",
       "title": "协调者运行中，本轮巡检跳过",
-      "summary": "本轮任务01a0da28-ca4b-7b40-a0ea-4a7a5eefb076。上轮协调者仍active；主归档时间校验失败。本记录隔离保存待同步，不接管游戏或文件。",
+      "summary": "上轮协调者仍active，本轮跳过基地接管。起初共享归档校验失败，随后其他运行任务已修复并通过26轮归档校验。本轮隔离日志已本地提交，待唯一协调者合并推送；没有新游戏观测。",
       "tick": null,
       "issueNumbers": [
         1,
@@ -84,21 +84,26 @@
       "id": "2026-09-25T20-31-00Z-run-bd6e7293a7c1",
       "kind": "scheduled",
       "startedAt": "2026-09-25T20:31:00.664Z",
-      "updatedAt": "2026-09-25T20:31:00.664Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:33:04.709Z",
+      "completedAt": "2026-09-25T22:03:32.813Z",
+      "status": "skipped",
       "title": "协调者仍运行，巡检跳过并待同步",
-      "summary": "",
+      "summary": "本轮协调者01a0da10-737b-7d42-87c6-db8c4a8e5c6d未接管。即时核验时上一协调者仍active/inProgress；未调用游戏API、未修改代码、未部署。共享日志存在两项时间校验错误，本轮采用独立本地档案保存起止记录，等待串行恢复与GitHub同步。",
       "tick": null,
-      "issueNumbers": []
+      "issueNumbers": [
+        1,
+        4,
+        11,
+        12
+      ]
     },
     {
       "id": "2026-09-25T20-17-50Z-run-0489bb8ad3e1",
       "kind": "scheduled",
       "startedAt": "2026-09-25T20:17:50.965Z",
-      "updatedAt": "2026-09-25T22:03:38.475Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-26T07:33:04.650Z",
+      "completedAt": "2026-09-25T22:03:38.486Z",
+      "status": "skipped",
       "title": "协调者仍运行，本轮跳过接管与共享档案写入",
       "summary": "即时快照确认旧协调者仍active；本轮仅留跳过记录。共享档案时间校验失败，记录隔离保存待同步，未提交或推送。",
       "tick": null,

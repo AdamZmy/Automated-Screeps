@@ -3,9 +3,9 @@
   "id": "2026-09-25T20-17-50Z-run-0489bb8ad3e1",
   "kind": "scheduled",
   "startedAt": "2026-09-25T20:17:50.965Z",
-  "updatedAt": "2026-09-25T22:03:38.475Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T07:33:04.650Z",
+  "completedAt": "2026-09-25T22:03:38.486Z",
+  "status": "skipped",
   "title": "协调者仍运行，本轮跳过接管与共享档案写入",
   "summary": "即时快照确认旧协调者仍active；本轮仅留跳过记录。共享档案时间校验失败，记录隔离保存待同步，未提交或推送。",
   "game": null,
@@ -55,6 +55,12 @@
       "description": "保存本轮开始记录",
       "status": "done",
       "result": "独立日志由inspection_log.py init创建；原始状态与开始修订保存在本地待同步目录。无游戏API调用、无源码修改、无Issue状态修改、无部署。"
+    },
+    {
+      "at": "2026-09-25T22:03:38.486Z",
+      "description": "结束本轮并保存待同步交接",
+      "status": "done",
+      "result": "只记录跳过原因，不接管当前工作者文件。开始和结束修订均保存本地，公开Git发布仍待共享档案恢复。"
     }
   ],
   "checks": [
