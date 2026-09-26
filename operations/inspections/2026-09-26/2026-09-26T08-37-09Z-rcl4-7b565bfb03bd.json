@@ -3,72 +3,197 @@
   "id": "2026-09-26T08-37-09Z-rcl4-7b565bfb03bd",
   "kind": "scheduled",
   "startedAt": "2026-09-26T08:37:09.413Z",
-  "updatedAt": "2026-09-26T08:41:42.441Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "小时巡检：RCL4 能效与物流验证",
-  "summary": "Fresh primary window U97.81%, complete coverage, stock+26; long window stock-2 still prevents sustainable acceptance. Last historical running journal has verified failed owner; independent recovery review underway.",
+  "updatedAt": "2026-09-26T08:51:10.787Z",
+  "completedAt": "2026-09-26T08:51:10.751Z",
+  "status": "completed",
+  "title": "RCL4 stable; utilization verifying; journal recovery complete",
+  "summary": "Game continues18/t upgrading with no drops/stalls; latest1500 U97.85% has stock-4, so sustainable acceptance stays open. Final historical journal restored and Issue12 closed;52 batches validate. No game or website deployment.",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26"
     ],
     "version": "2026-09-25.16",
-    "tick": 73954160,
-    "fetchedAt": "2026-09-26T08:37:51Z"
+    "tick": 73954260,
+    "fetchedAt": "2026-09-26T08:43:05Z"
   },
   "findings": [
     {
       "severity": "info",
-      "title": "Primary utilization window qualifies",
-      "detail": "No source drops or hauling stall; reserve and full-cycle acceptance remain open.",
+      "title": "Utilization remains under verification",
+      "detail": "Coverage is complete and expenditure exceeds90%, but drawdown eligibility fluctuates; do not claim sustainable success from qualifying isolated windows.",
       "evidence": [
-        "Tick73954160: 1500 U97.81%, coverage1, stock+26, residual-10; 6000 U97.88%, stock-2.",
-        "CPU mean7.6843, bucket10000; Storage energy0."
+        "73954160 primary U97.81%,stock+26;73954260 primary U97.85%,stock-4,residual-10. Latest6000 U97.90%,stock-92. No imports.",
+        "Original ledger function applied to four non-overlapping1500 windows ending73954200: latest-to-oldest U97.81/98.06/98.22/97.42%;stock+26/-72/-100/+144.2/4 eligible.",
+        "Controller191325 to193125 over100ticks=18/t;drop0/stalled0/alerts empty;CPUmean7.7943,bucket10000."
       ],
       "issue": 4
     },
     {
-      "severity": "warning",
-      "title": "Historical journal owner failed before final publication",
-      "detail": "Original9b4b2827888c has a running record only; independent reviewer applying existing O001 recovery procedure.",
+      "severity": "info",
+      "title": "Actual fixed-node resupply observed; full cycles still unmeasured",
+      "detail": "All sampled hauler delivery targets are buildings. Sparse snapshots cannot prove full unloading, source service intervals or complete longest-route round trips.",
       "evidence": [
-        "Task01a0da99 latestTurn failed, completedAt1790379189; Codex service failure, no game authentication conclusion."
+        "Flow73954192 and73954242;event73954241 transfers126 energy from controller container to upgrader. Two9WORK upgraders occupy fixed seats.",
+        "Storage built24,29 energy0; expansion storage12000 gate remains unmet."
+      ],
+      "issue": 5
+    },
+    {
+      "severity": "info",
+      "title": "Final missing historical ending recovered",
+      "detail": "Known O001 recovery completed with separate independent reviewer and serial publication. Original game observation remains null; failed service execution is not game failure.",
+      "evidence": [
+        "Owner01a0da99 latestTurn failed; authentic completedAt2026-09-25T23:33:09Z. Original9b4 id/startedAt preserved.",
+        "Original start c6e3961 and failed ending e79d33f separately pushed; public API ok=true,stale=false,failed with true ending.52records/2days validate."
       ],
       "issue": 12
     }
   ],
   "tasks": [
     {
-      "issue": 4,
-      "title": "Sustainable utilization acceptance",
+      "issue": 1,
+      "title": "Fixed logistics",
       "status": "verifying",
-      "progress": "Fresh qualifying primary window; auditing non-overlapping historical windows.",
-      "next": "Verify recurring costs and actual logistics.",
+      "progress": "Fresh container resupply event; no game changes.",
+      "next": "Measure actual complete hauling deliveries.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 4,
+      "title": "Sustainable utilization",
+      "status": "verifying",
+      "progress": "Primary coverage1; stock fluctuates across zero.",
+      "next": "Require sustained qualifying windows and justified lifetime costs.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 5,
+      "title": "Transport-cycle evidence",
+      "status": "ready",
+      "progress": "Fresh50tick-separated snapshots do not resolve full cycles.",
+      "next": "Bounded per-tick cycle measurement before strategy changes.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 6,
+      "title": "RCL4 storage",
+      "status": "verifying",
+      "progress": "Storage built,energy0; no map milestone change.",
+      "next": "Verify reserve growth and no recirculation.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 7,
+      "title": "First expansion",
+      "status": "planned",
+      "progress": "Storage0 below12000.",
+      "next": "Wait for real reserve and safety gates.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 8,
+      "title": "Link network",
+      "status": "planned",
+      "progress": "RCL4 below deployment gate.",
+      "next": "Reassess atRCL5.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 9,
+      "title": "Neighbor layout review",
+      "status": "ready",
+      "progress": "Not duplicated during current game verification and journal recovery.",
+      "next": "Bounded candidate/route review when scheduled.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 10,
+      "title": "Mature facilities",
+      "status": "planned",
+      "progress": "RCL gate not met.",
+      "next": "Reassess at actual RCL7-8.",
       "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
     },
     {
       "issue": 12,
-      "title": "Final historical journal recovery",
-      "status": "verifying",
-      "progress": "Independent journal_final_review owns local sandbox analysis only; parent01a0dcda-c46c-74c1-9a5e-6b933c0d6856.",
-      "next": "Restore original start and true failed ending in separate serial commits.",
-      "owner": "journal_final_review / parent01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+      "title": "Inspection journal recovery",
+      "status": "done",
+      "progress": "52 records validate; final historical start/end published and read back; Issue closed.",
+      "next": "Use normal independent run logging; retain O001 safeguards.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
     }
   ],
-  "actions": [],
-  "checks": [
+  "actions": [
     {
-      "name": "协调者状态",
-      "result": "passed",
-      "detail": "01a0dc5e idle/completed；01a0d7a3 notLoaded/latestTurn completed；旧01a0d9b7 failed。未恢复原对话。"
+      "at": "2026-09-26T08:51:10.751Z",
+      "description": "Verified previous task owners stopped and registered this coordinator; API-only game observations and six-module readback.",
+      "status": "done",
+      "result": "No competing worker, game source edit or deployment."
     },
     {
-      "name": "Fresh game tick",
-      "result": "passed",
-      "detail": "73954160 exceeds previous verified73952900; new flow snapshot73954192 confirms fixed-container destinations and two active9WORK upgraders."
+      "at": "2026-09-26T08:51:10.751Z",
+      "description": "Recovered final authentic historical start and failed ending after independent local sandbox review.",
+      "status": "done",
+      "result": "Separate start/end commits pushed; public failed record read back; Issue12 done."
+    },
+    {
+      "at": "2026-09-26T08:51:10.751Z",
+      "description": "Updated Issues1,4,5,6,12 and bounded current handoff; cleaned temporary game probe.",
+      "status": "done",
+      "result": "All checkpoint commands succeeded; cleanup readback73954285. Reviewer completed and released files."
     }
   ],
-  "next": [],
-  "references": []
+  "checks": [
+    {
+      "name": "Current API tick and behavior",
+      "result": "passed",
+      "detail": "Fresh73954160 to73954260;18/t upgrading; flow73954192/73954242 and cleanup73954285 confirmed."
+    },
+    {
+      "name": "Remote code",
+      "result": "passed",
+      "detail": "All six modules match build.16; no game changes, so unchanged game regressions not repeated."
+    },
+    {
+      "name": "Sustainable utilization acceptance",
+      "result": "pending",
+      "detail": "Latest primary stock-4; full recurring-cost and actual hauling cycle acceptance still open."
+    },
+    {
+      "name": "Independent O001 sandbox and regressions",
+      "result": "passed",
+      "detail": "journal_final_review, parent current coordinator:20 journal+3 recovery tests; real archive-copy import preserves identities and unrelated files."
+    },
+    {
+      "name": "Archive and public historical record",
+      "result": "passed",
+      "detail": "52records/2days validate; authentic start and failed ending separately pushed and public readback matched."
+    },
+    {
+      "name": "Local helper recovery",
+      "result": "passed",
+      "detail": "A draft rejected before publication and an import argument failed before writing; corrected input and full archive validation succeeded. No invalid archive revision was committed."
+    }
+  ],
+  "next": [
+    "Verify current coordinator stopped before next takeover.",
+    "Keep Issues1/4/6 verifying; measure full hauling cycles and lifetime costs without reintroducing arbitrary worker throttles.",
+    "Keep expansion and advanced facilities planned until real reserve/RCL gates pass.",
+    "Reuse O001 checks; no historical running batches remain after this run finishes."
+  ],
+  "references": [
+    {
+      "label": "Issue4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "Issue12",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/12"
+    },
+    {
+      "label": "Live journal",
+      "url": "https://screeps-energy-observatory.vercel.app/logs?id=2026-09-26T08-37-09Z-rcl4-7b565bfb03bd"
+    }
+  ]
 }

@@ -1,38 +1,40 @@
 # Screeps World 当前交接
 
-- World唯一仓库与源码保持new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
+- World唯一仓库与源码new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
 - 本轮root：01a0dcda-c46c-74c1-9a5e-6b933c0d6856；批次2026-09-26T08-37-09Z-rcl4-7b565bfb03bd。
-- 2026-09-26T08:36Z接管：上轮01a0dc5e已即时核验idle/completed；以下游戏证据仍为上轮，待本轮更新。
-- 用户2026-09-26改为每1小时新开独立任务；唯一automation screeps-world已工具更新并回读ACTIVE/hourly。不得恢复heartbeat或新增重复调度。
-- 接管前已核验旧root01a0d9b7 notLoaded/latestTurn failed、游戏owner01a0d7a3 idle/completed、旧journal_review01a0d9c9 idle/completed。
-- 本轮独占API/共享Git/部署；并发巡检均让行。结束后释放文件；下轮仍须核验本任务实际停止，不能只按本文判断。
+- 唯一automation screeps-world每1小时新开独立任务；不续接旧聊天，不恢复heartbeat或新增调度。
+- 接管即时核验：上轮01a0dc5e idle/completed；旧游戏owner01a0d7a3 notLoaded/latestTurn completed；旧01a0d9b7 failed。
+- 本轮root独占API/Git/整合；结束后释放全部文件。下一轮仍必须即时核验本任务停止后接管。
 
-## 实际游戏与部署
+## 最新实际游戏证据
 
-- 游戏仍v0.4.2 / build2026-09-25.16 / code99202bb；本轮六模块code-check全匹配，无游戏源码修改或游戏部署。
-- status新tick73952560→73952900；最后2026-09-26T07:16:33Z，RCL4进度172049/405000、energy1300/1300、11creeps。
-- 两采样间340tick进度+6120，即18/t；两矿在位5WORK，各有矿工；drop0、hauling stalled0、alerts空。
-- 73952900 CPU20tick均7.4783，bucket10000；1500 U98.06%覆盖1、库存-71、residual23，无进口；6000 U97.95%库存-99。
-- 两主窗均stock-drawdown，不能宣称可持续≥90%达标；孵化3.5667/t、维修0.2667/t，与当前续代规模相符，完整周期成本仍待验收。
-- storage字段是能源量：新Game快照73952749确认Storage已建于审查坐标24,29、能源0，无工地。不是建筑缺失，不重复建设。
-- 20extension与21经济道路已建；新布局快照73952842：54匹配已建/151规划/0工地，审查布局版本未变。
-- 网站地图0e9c6fb已推送；生产dpl_8XDer13JsGK6pTeijgo1p4Vu7frB READY，稳定原URL，公开JSON与本地字节一致。
-- 网页导出7/7、API28/28、layout/UI现有回归通过；只刷新建造快照，无UI/游戏策略改变。
-- inspect-world旧73931528及flowProbe回读超时未计新证据；Storage/layout有新tick。诊断清理回读inspectionCleanupTick73953224，旧probe/apiSnapshot已删除。
+- 游戏v0.4.2 / build2026-09-25.16 / code99202bb；六模块code-check全匹配。本轮未改游戏源码、未部署游戏或网站。
+- status73954160→73954260；最后2026-09-26T08:43:05Z。RCL4进度191325→193125/405000，100tick升级1800=18/t。
+- 最新11creeps，energy1300/1300；两个矿在位各5WORK，drop0/stalled0/alerts空，20条extension、21经济道路、0工地。
+- 73954260 CPU20tick mean7.7943/bucket10000；内存采样约236KB。驻守矿工的stuck字段不当作交通故障。
+- 首样1500 U97.81%/coverage1/stock+26/residual-10合格；末样1500 U97.85%/stock-4/residual-10，仍stock-drawdown。
+- 末样300 U97.17%/stock+110合格；6000 U97.90%/stock-92/residual7；全窗无进口、覆盖完整。
+- 原ledger函数审计历史73948200–73954200四个非重叠1500窗：最新至最旧stock+26/-72/-100/+144，U97.81/98.06/98.22/97.42%；2/4合格，不能宣称持续达标。
+- 主窗孵化3.5667/t、维修0.26/t；成本计量完整，但完整续代周期必要性与物流实际往返验收仍未完成。
+- flow73954192/73954242：运输者目标为控制器容器，两名9WORK工人固定席工作；event73954241确认容器向升级工转移126能源。
+- 稀疏快照不证明完整Hauler交付/往返周期；22/40tick仍是路线规划估计。保留#5，不改软分矿或合并身体策略。
+- Storage73954192确认为24,29已建、能源0；不是建筑缺失，不重复建设。储备未满足扩张12000门槛。
+- 本轮flowProbe已清理，回读inspectionCleanupTick73954285；脱敏详情仅留state本地，Memory保留有界遥测。
+- 网站地图仍上轮0e9c6fb / dpl_8XDer13JsGK6pTeijgo1p4Vu7frB；无新布局/RCL里程碑，不重部署。
 
 ## Issue与下一检查点
 
-- #1/#4 verifying：真实完整交付周期及两个合格1500tick主窗；禁止恢复额度截断或持能工人轮休。
-- #5 ready：至少两个完整最长路线周期、逐矿服务间隔；固定分矿/更大体型收益未证，不默认改策略。
-- #6 verifying：Storage和RCL4地图已完成，储备仍0，验收无回流、库存趋势/续代/CPU；不因建筑已建就关闭。
-- #7/#8/#10 planned：储备/RCL等实际门槛未满足；#9 ready，近邻布局/路线研究未在本轮重复派工。
-- #12 verifying：50轮/2日共享档案恢复并校验；公开日志API ok/stale=false，起止显式提交均已推送。
-- 本轮发布20组委托批次起止，另6份旧终态；旧3b6依据真实任务failed/结束23:33:12Z修正。提交a689f4a,c9be031,2237152,1ae73fa,7a80fd7。
-- 仅running的旧9b4b2827888c没有终态证据，保留待核验，不伪造结束。其余已交付终态按真实时间恢复。
+- #1/#4 verifying：持续主窗合格、完整实际交付周期及必要成本；禁止用动作限流、额度截断或额外耗能刷90%。
+- #5 ready：两次50tick间隔快照和固定取能事件已补证；下一步需有界逐tick周期观测，当前不足以选择优化方案。
+- #6 verifying：Storage已建但储备0，继续检查库存、续代和无回流；#7/#8/#10 planned，实际储备/RCL门槛未满足。
+- #9 ready：近邻布局与跨房路线审查仍待有限任务；本轮优先游戏验收采样和最后日志恢复，未重复开展布局研究。
+- #12已关闭且GitHub回读closed/status:done；52轮/2日归档全部已有真实终态，本轮completed只表示巡检结束。
+- 旧9b4 owner01a0da99即时状态failed，真实结束2026-09-25T23:33:09Z；保留原id/startedAt，game:null。起始c6e3961、failed终态e79d33f分别已推送。
+- 公开日志API回读ok=true/stale=false、failed及真实completedAt吻合；以后沿用正常init/write/串行提交，不重复恢复旧记录。
 
-## 文件归属与审视
+## 独立审视与文件归属
 
-- 本轮journal_recovery已completed并释放，仅分析state工件；复用并发父任务01a0dc27的journal_recovery_review交付，未重复审视旧故障。
-- 日志并发O001经已有沙盒确认；20日志+3恢复回归通过，遗留4文件核验后已整合2237152。
-- 全量物流/升级动作原则保持：按真实持能/空位卸货，就绪WORK连续工作，预算只规划人数/身体/供给。
-- API网络超时为传输问题，无401/403游戏鉴权证据；Vercel CLI初次网络失败后使用既有CLI部署成功。
+- journal_final_review（父任务本root）已完成并释放全部文件；只做本地沙盒、无API/凭据/Git操作。
+- 复用已知O001：真实档案副本起止导入验证、20日志+3恢复回归通过；排除将跳过意图当终态、替换原startedAt或伪造恢复结束时间。
+- 报告operations/diagnostics/2026-09-26-final-journal-recovery.md；没有新增未确认故障机制或修改游戏策略。
+- 本轮开始9332a88、进展fd13532均已推送；本轮终态提交见Git最新记录，所有Git操作串行且显式路径。
