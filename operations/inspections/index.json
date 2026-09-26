@@ -1,11 +1,23 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T07:42:00.845Z",
+  "updatedAt": "2026-09-26T08:37:09.451Z",
   "days": [
     "2026-09-26",
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-26T08-37-09Z-rcl4-7b565bfb03bd",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T08:37:09.413Z",
+      "updatedAt": "2026-09-26T08:37:09.451Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "小时巡检：RCL4 能效与物流验证",
+      "summary": "已即时核验上轮协调者 idle/completed、旧游戏 owner completed；本轮开始，待活动 Issue 归属与新 API tick。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-26T07-22-27Z-run-f7d856068c06",
       "kind": "scheduled",
@@ -761,21 +773,6 @@
       "issueNumbers": [
         1,
         4
-      ]
-    },
-    {
-      "id": "2026-09-25T08-11-09Z-run-1bff16856d14",
-      "kind": "setup",
-      "startedAt": "2026-09-25T08:11:09.044Z",
-      "updatedAt": "2026-09-25T08:15:10.658Z",
-      "completedAt": "2026-09-25T08:15:10.619Z",
-      "status": "completed",
-      "title": "巡检日志归档与独立日志页面上线",
-      "summary": "巡检日志系统已上线。每轮保存独立JSON与Markdown，网站可按日期和状态查看发现、待办、进度、动作与证据。已验证GitHub到生产页面的完整链路；本次没有新游戏采样，能源修复另有明确历史补录。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
       ]
     }
   ]

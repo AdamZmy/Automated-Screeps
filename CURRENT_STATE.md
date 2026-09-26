@@ -1,7 +1,8 @@
 # Screeps World 当前交接
 
 - World唯一仓库与源码保持new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
-- 本轮root：01a0dc5e-78e0-7412-8f71-16b514713719；批次2026-09-26T06-50-17Z-run-a0aa60e1f170。
+- 本轮root：01a0dcda-c46c-74c1-9a5e-6b933c0d6856；批次2026-09-26T08-37-09Z-rcl4-7b565bfb03bd。
+- 2026-09-26T08:36Z接管：上轮01a0dc5e已即时核验idle/completed；以下游戏证据仍为上轮，待本轮更新。
 - 用户2026-09-26改为每1小时新开独立任务；唯一automation screeps-world已工具更新并回读ACTIVE/hourly。不得恢复heartbeat或新增重复调度。
 - 接管前已核验旧root01a0d9b7 notLoaded/latestTurn failed、游戏owner01a0d7a3 idle/completed、旧journal_review01a0d9c9 idle/completed。
 - 本轮独占API/共享Git/部署；并发巡检均让行。结束后释放文件；下轮仍须核验本任务实际停止，不能只按本文判断。
