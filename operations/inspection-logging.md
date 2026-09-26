@@ -38,3 +38,12 @@ python3 -B tools/verify-inspection-log.py
 ```
 
 日志验证通过后，由日常版本发布流程检查并提交 JSON、Markdown 和两个索引。写入器不执行 Git 提交、推送或监控站部署。
+
+## 并发与发布前的最终核验
+
+- Issue/任务查询可能耗时；获得旧owner停止证据后、首次写共享文件前，重新读取CURRENT_STATE并核验其当前owner。发现新owner即让行，不沿用查询开始时的旧归属。
+- 同一时间只有一个Git发布者。其他轮只在state中的隔离archive运行init/write，并移交真实起始、结束JSON；发布者按原id/startedAt导入，不重新init，不伪造历史。
+- 每次write先重新加载当前记录。编辑副本须位于archive外；不要将直接编辑的JSON在write失败后提交。多个非法记录相互阻塞时先完整备份，在隔离目录验证所有canonical JSON后，用写入器的生成函数重建派生文件，再write及全档案validate。
+- 发布必须串行且失败即停止：用subprocess.run(..., check=True)依次执行validate、显式路径git add、检查暂存差异、commit、push。禁止把校验失败和Git发布放进仍会继续的命令序列。
+- 校验完成后再次核对HEAD和待提交文件未被其他任务修改；不使用旧快照覆盖共享索引。两级索引与Markdown均由同一批完整记录派生。
+- 终态completedAt取真实结束证据；后续修订时间写updatedAt。无法确认旧run结束时刻则保留未完成，不按恢复时间冒充执行结束。

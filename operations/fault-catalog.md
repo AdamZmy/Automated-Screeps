@@ -93,3 +93,16 @@
 - W003：1000身体预算、Hauler8CARRY、worker10WORK、房间总CARRY36任意上限已确认会阻止大容量/长路线需求；改房容量、真实需求与50部件物理上限。不能误称RCL3/800容量已受这些上限压制。
 - L005：按预约额截断卸货、min50配送批量及20/25取货门槛均会挡住合法有用动作；所有卸货按实际持能/实际空位，正库存可取、正缺口可派。Link保留原生cooldown及净到货必须正值（不做纯损耗转移）。
 - 未删除：真实地形/工位与距离限制、防止回搬循环、已证明必要的失败恢复、关键续代与职责优先、CPU/扩张和规划工程门槛。依据与未验证改进项逐条见审计表，不能把保留项称为游戏硬限制。
+
+## O001 — 并发巡检以旧索引或未校验JSON发布日志
+
+- 机制已确认：不同协调者按旧owner停止证据同时接管；旧索引覆盖新摘要，或直接编辑JSON后write/validate失败但命令仍继续commit/push。与游戏能源故障无因果证据。
+- 触发：两个以上独立巡检共享档案与Git；长期API/任务查询后不重新读当前owner；编辑后沿用旧updatedAt。
+- 最小观测：比较JSON、生成Markdown、日/根索引与HEAD；记录owner即时状态。day summary disagrees、missing from day index、completedAt/action超updatedAt均应阻止发布。
+- 确认证据：2cd580a对应真实08:18记录updatedAt17:35:46.823Z，工作索引17:34:27.967Z，暂存索引更旧；隔离复现init/validate拒绝。629c6d8含12:39/18:43非法时间和遗漏18:19索引；独立审视复现。
+- 排除：全档案validate通过仅证明一致性；不证明原执行成功、游戏实时健康或长期无并发风险。
+- 安全处置：先明确唯一发布者并保存原JSON/MD/两索引/暂存索引；核验旧任务真实状态，只修有证据的元数据；隔离恢复所有真实记录，write+validate后显式路径串行commit/push。失败立即停止发布。
+- 回归：python3 -B tools/verify-inspection-log.py；本次独立沙盒见operations/diagnostics/inspection-concurrency-2026-09-25.md。恢复90c3436的25条全validate通过，2e711bf导入26条通过；最终验收见Issue #12检查点。
+- 关联：Issue #12。没有游戏代码/Memory/部署改动；根治执行边界依赖每轮遵守唯一写入者与失败即停止发布，不声称新增了跨任务事务锁。
+
+独立回归：`python3 -B tools/verify-inspection-recovery.py`，3项临时目录实验覆盖过期摘要、漏索引、多非法时间互相阻塞及保留证据恢复。
