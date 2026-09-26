@@ -3,31 +3,85 @@
   "id": "2026-09-25T18-43-09Z-rcl4-62f6f1170fce",
   "kind": "scheduled",
   "startedAt": "2026-09-25T18:43:09.934Z",
-  "updatedAt": "2026-09-25T21:22:31.599Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T07:10:32.942Z",
+  "completedAt": "2026-09-25T19:44:36.860Z",
+  "status": "skipped",
   "title": "RCL4能源及仓储巡检",
-  "summary": "已确认前协调者idle/completed，当前协调者接管；修复遗留日志索引后开始API巡检。",
+  "summary": "发现当前协调者01a0d9b7-4b5d-7160-ba1b-f2ed83639448仍active，停止接管与Git写入；无游戏API、新tick、代码变更或部署。日志并发索引冲突交该协调者统一恢复。",
   "game": null,
-  "findings": [],
-  "tasks": [],
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "协调并发导致日志索引冲突",
+      "detail": "初次核验旧owner idle后，另一轮已记录新owner；本轮随后重新核验新owner active/inProgress并停止工作。起始提交629c6d8已推送，但批量shell未因前置校验失败停止，发布档案存在未通过校验的记录/索引。已移交当前协调者统一修复，不能声称归档健康。",
+      "evidence": [
+        "旧owner01a0d7a3-fbe2-72e3-9871-1b834e8eb22d经wait_threads核验idle/completed。",
+        "新owner01a0d9b7-4b5d-7160-ba1b-f2ed83639448经wait_threads核验active/inProgress。",
+        "inspection_log write/validate报错record missing from day index、completedAt must fall between startedAt and updatedAt；随后git push629c6d8成功。",
+        "本轮没有游戏观察或操作，game=null。"
+      ],
+      "issue": 12
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 12,
+      "title": "统一恢复并发巡检归档",
+      "status": "verifying",
+      "progress": "已提供冲突证据、原索引备份和本轮终态草稿；当前协调者负责统一Git发布，本轮停止所有Git写入。",
+      "next": "核对当前归档，运行write/validate；明确路径提交并推送本轮终态及索引修复。",
+      "owner": "01a0d9b7-4b5d-7160-ba1b-f2ed83639448"
+    }
+  ],
   "actions": [
     {
-      "at": "2026-09-25T19:16:23.072Z",
-      "description": "核验协调者、Issue负责人和日志遗留任务",
+      "at": "2026-09-25T18:43:09.934Z",
+      "description": "核验旧协调者与恢复日志初始化",
       "status": "done",
-      "result": "上轮主任务01a0d7a3-fbe2-72e3-9871-1b834e8eb22d已idle/completed；Issue #1/#4/#5/#6同owner。遗留日志任务systemError/failed，已补记终态；未修改游戏代码。"
+      "result": "旧root idle/completed；本轮init生成独立ID。"
+    },
+    {
+      "at": "2026-09-25T19:44:36.860Z",
+      "description": "发布起始日志",
+      "status": "failed",
+      "result": "629c6d8已推送，但前置日志校验失败，起始发布含归档不一致，不能当作健康发布。"
+    },
+    {
+      "at": "2026-09-25T19:44:36.860Z",
+      "description": "核验新协调者并交接修复",
+      "status": "done",
+      "result": "新owner active/inProgress；通过任务消息移交恢复与结束记录，本轮停止Git/API/源码工作。"
     }
   ],
   "checks": [
     {
-      "name": "跨轮归属核验",
+      "name": "本轮实时游戏证据",
+      "result": "pending",
+      "detail": "因当前协调者active跳过；无新tick/版本/能效结论。"
+    },
+    {
+      "name": "日志完整性",
+      "result": "failed",
+      "detail": "并发修改造成索引/记录不一致；已转交当前协调者统一修复与验证。"
+    },
+    {
+      "name": "当前协调者归属",
       "result": "passed",
-      "detail": "当前root01a0d9c8-ffe6-7973-94c5-b29c45a67d36，接管API/整合与本轮日志；旧子代理均由已完成父任务管理，交接记载completed/failed并释放。"
+      "detail": "wait_threads确认01a0d9b7-4b5d-7160-ba1b-f2ed83639448 active/inProgress，保留其归属。"
     }
   ],
   "next": [
-    "采集新tick，检查真实能流、主1500tick可持续性、必要成本、残差、CPU与仓储门槛。"
+    "由当前协调者统一修复索引/终态并校验后串行发布；本轮不再执行Git写入。",
+    "下轮先核验CURRENT_STATE新owner和活动Issue owner后再采新tick；不恢复已结束父任务的旧归属。"
   ],
-  "references": []
+  "references": [
+    {
+      "label": "巡检日志Issue",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/12"
+    },
+    {
+      "label": "本轮记录",
+      "url": "https://screeps-energy-observatory.vercel.app/logs?id=2026-09-25T18-43-09Z-rcl4-62f6f1170fce"
+    }
+  ]
 }

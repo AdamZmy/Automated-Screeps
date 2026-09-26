@@ -3,11 +3,11 @@
   "id": "2026-09-26T06-48-39Z-run-6acf835a929e",
   "kind": "scheduled",
   "startedAt": "2026-09-26T06:48:39.312Z",
-  "updatedAt": "2026-09-26T06:59:25.871Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "周期巡检：核验协调者与发布归属",
-  "summary": "本轮核验前任已停止，但共享状态出现新协调者且即时状态active/inProgress；按单写者规则让行。游戏尚未采样，起止日志待当前协调者串行发布。",
+  "updatedAt": "2026-09-26T07:10:32.607Z",
+  "completedAt": "2026-09-26T06:59:25.918Z",
+  "status": "skipped",
+  "title": "周期巡检跳过：已有活动协调者",
+  "summary": "新协调者active/inProgress，本轮已让行。无新游戏tick、代码变更或部署；独立批次起止记录已验证，GitHub发布待串行移交。",
   "game": null,
   "findings": [
     {
@@ -27,7 +27,7 @@
       "issue": 12,
       "title": "本轮起止日志串行发布",
       "status": "blocked",
-      "progress": "隔离init已完成；正在保存同一ID真实起止版本，当前协调者独占共享档案与Git。",
+      "progress": "同一ID的running起始与skipped终态已保存并通过隔离write/validate；共享Git未操作。",
       "next": "由当前协调者导入真实起止JSON，校验后分别显式commit/push，保留原ID和startedAt。",
       "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
     },

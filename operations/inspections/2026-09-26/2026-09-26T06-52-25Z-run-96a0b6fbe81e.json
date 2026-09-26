@@ -3,11 +3,11 @@
   "id": "2026-09-26T06-52-25Z-run-96a0b6fbe81e",
   "kind": "scheduled",
   "startedAt": "2026-09-26T06:52:25.492Z",
-  "updatedAt": "2026-09-26T07:00:19.053Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "基地巡检与交接核验",
-  "summary": "本轮已创建独立日志；即时状态确认其他巡检任务正在运行，仅记录归属与跳过原因，不接管共享文件。",
+  "updatedAt": "2026-09-26T07:10:32.848Z",
+  "completedAt": "2026-09-26T07:01:18.200Z",
+  "status": "skipped",
+  "title": "协调者运行中，本轮巡检让行",
+  "summary": "当前协调者 active/inProgress，本轮让行。未调用游戏 API、修改共享源码或部署；开始和结束日志在隔离本地 Git 保存，公共发布移交唯一协调者，尚待同步。",
   "game": null,
   "findings": [
     {
@@ -26,7 +26,7 @@
       "issue": 12,
       "title": "本轮跳过日志串行发布",
       "status": "blocked",
-      "progress": "已在隔离档案 init；共享 Git 发布留给当前协调者，避免并发。",
+      "progress": "开始记录已校验并在隔离本地 Git 提交；终态 skipped 同 ID 保存。已向当前协调者发送串行发布移交，公开提交/推送尚未确认。",
       "next": "当前协调者导入同一 run 的开始与结束 JSON，分别验证、提交和推送。",
       "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
     },
@@ -51,6 +51,12 @@
       "description": "核对即时任务状态、GitHub 检查点与最新 CURRENT_STATE",
       "status": "done",
       "result": "GitHub 首次 TLS 握手超时，第二次 list 成功；当前协调者 active，因此本轮让行。"
+    },
+    {
+      "at": "2026-09-26T07:01:18.200Z",
+      "description": "结束本轮并移交日志发布",
+      "status": "done",
+      "result": "已通知 CURRENT_STATE owner 01a0dc5e-78e0-7412-8f71-16b514713719。开始本地提交 58ebd6c1c90c4e85847cebce9f18a0a6dc953723；终态按同一 ID 保存。公共发布仍待 owner 串行导入，未声称推送。"
     }
   ],
   "checks": [
@@ -73,6 +79,11 @@
       "name": "GitHub 发布",
       "result": "pending",
       "detail": "共享档案/Git 由当前协调者独占，尚未提交或推送本轮公共日志。"
+    },
+    {
+      "name": "本轮隔离档案",
+      "result": "passed",
+      "detail": "开始记录 write/validate 通过（1 run / 1 day）；终态随后由相同写入器及全档案 validate 检查，失败则不提交。"
     }
   ],
   "next": [

@@ -3,11 +3,11 @@
   "id": "2026-09-25T20-31-26Z-run-17bff5933395",
   "kind": "scheduled",
   "startedAt": "2026-09-25T20:31:26.140Z",
-  "updatedAt": "2026-09-25T22:03:12.093Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T07:10:33.005Z",
+  "completedAt": "2026-09-25T21:22:27Z",
+  "status": "skipped",
   "title": "协调者运行中，本轮跳过接管",
-  "summary": "任务 01a0da40-e75a-7df3-9a7b-35da988d36fc 核验现协调者仍 active；本轮只记录跳过原因，不接管游戏或代码。共享日志发布由当前协调者串行处理。",
+  "summary": "当前协调者仍active，本轮已结束并跳过游戏检查；没有API采样、新tick、代码修改或部署。起始/结束日志交当前协调者串行发布，发布证据待回填。",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -74,6 +74,12 @@
       "description": "请求当前协调者串行发布本轮起始及结束记录。",
       "status": "in-progress",
       "result": "当前协调者已确认是唯一日志发布者，接收本轮起始与结束JSON后统一串行提交推送。尚无本轮提交证据。"
+    },
+    {
+      "at": "2026-09-25T21:22:27Z",
+      "description": "完成本轮独立暂存日志并交唯一发布者。",
+      "status": "done",
+      "result": "本轮按skipped结束。起始与结束JSON均保留；写入器校验成功，未修改共享档案或索引。首个候选因位于受管档案根而被拒绝，移至档案外后成功，未绕过验证。"
     }
   ],
   "checks": [
@@ -91,6 +97,11 @@
       "name": "日志GitHub发布",
       "result": "pending",
       "detail": "等待唯一发布者串行提交和推送起始/结束记录。"
+    },
+    {
+      "name": "独立暂存档案校验",
+      "result": "passed",
+      "detail": "inspection_log.py write及validate通过；仅验证本轮独立档案，不代表共享档案已修复。"
     }
   ],
   "next": [

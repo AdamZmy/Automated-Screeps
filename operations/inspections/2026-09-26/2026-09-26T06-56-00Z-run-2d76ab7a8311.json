@@ -3,11 +3,11 @@
   "id": "2026-09-26T06-56-00Z-run-2d76ab7a8311",
   "kind": "scheduled",
   "startedAt": "2026-09-26T06:56:00.738Z",
-  "updatedAt": "2026-09-26T07:02:14.276Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T07:10:32.879Z",
+  "completedAt": "2026-09-26T07:02:14.322Z",
+  "status": "skipped",
   "title": "巡检跳过：新协调者已接管",
-  "summary": "本轮01a0dbe7-8368-77a0-89c3-90246305c861在共享写入前复核发现新协调者01a0dc5e-78e0-7412-8f71-16b514713719 active/inProgress；停止接管，仅在隔离档案记录。",
+  "summary": "本轮已跳过：当前协调者active，未采集游戏tick、改共享代码/状态或部署。起始/结束日志独立保存且通过校验，待唯一发布者串行提交推送。",
   "game": null,
   "findings": [
     {

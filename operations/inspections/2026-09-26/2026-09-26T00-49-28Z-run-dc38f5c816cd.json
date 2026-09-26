@@ -3,21 +3,22 @@
   "id": "2026-09-26T00-49-28Z-run-dc38f5c816cd",
   "kind": "scheduled",
   "startedAt": "2026-09-26T00:49:28.968Z",
-  "updatedAt": "2026-09-26T07:00:52.934Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "周期巡检：协调者状态核验",
-  "summary": "本轮协调者01a0db28-d963-7ec3-8790-3f58b279e3ab发现更早巡检仍运行，保留其共享文件与发布权；本轮只记录跳过原因。",
+  "updatedAt": "2026-09-26T07:10:32.502Z",
+  "completedAt": "2026-09-26T07:02:17.146Z",
+  "status": "skipped",
+  "title": "巡检跳过：当前协调者仍运行",
+  "summary": "重读CURRENT_STATE并即时核验当前root01a0dc5e-78e0-7412-8f71-16b514713719仍运行，本轮让行；无新tick，起止记录隔离提交，公共发布待同步。",
   "game": null,
   "findings": [
     {
       "severity": "info",
-      "title": "更早巡检仍运行，本轮让行",
-      "detail": "交接文件旧协调者已停止，但即时状态发现更早巡检仍active/inProgress。未接管共享文件、游戏API、Issue或部署。",
+      "title": "当前协调者仍运行，本轮让行",
+      "detail": "早期发现db08 active不等于其持有归属；其回报未接管。随后重读CURRENT_STATE并即时核验实际root为dc5e active/inProgress，本轮继续保持无共享写入。",
       "evidence": [
         "01a0d9b7-4b5d-7160-ba1b-f2ed83639448 notLoaded/latestTurn failed；01a0d7a3-fbe2-72e3-9871-1b834e8eb22d idle/completed。旧任务中止属于Codex服务错误，不是Screeps认证故障。",
         "01a0db08-c282-74a1-83c2-078fee4f0204 active/inProgress；本轮已明确向其让出共享操作权。",
-        "共享inspection_log.py validate通过：29轮、1日；HEAD06eaaee。未把本地提交视为已核验远端发布。"
+        "共享inspection_log.py validate通过：29轮、1日；HEAD06eaaee。未把本地提交视为已核验远端发布。",
+        "最新CURRENT_STATE root01a0dc5e-78e0-7412-8f71-16b514713719；wait_threads active/inProgress。db08明确未接管且已向dc5e让行。"
       ],
       "issue": 12
     }
@@ -29,7 +30,7 @@
       "status": "in-progress",
       "progress": "本轮仅准备隔离起止记录并移交更早运行任务；未修改公共档案。",
       "next": "由确认的唯一发布者串行合并同ID起止记录、验证、显式提交推送。",
-      "owner": "待01a0db08-c282-74a1-83c2-078fee4f0204协调确认"
+      "owner": "01a0dc5e-78e0-7412-8f71-16b514713719"
     },
     {
       "issue": 4,
@@ -46,13 +47,25 @@
       "description": "核验任务状态并明确让行",
       "status": "done",
       "result": "未调用游戏API、修改源码、部署或进行共享Git写入；向更早巡检移交本轮日志发布。"
+    },
+    {
+      "at": "2026-09-26T07:02:17.146Z",
+      "description": "在本轮隔离Git仓库提交真实起始记录",
+      "status": "done",
+      "result": "本地提交1ed8e2a1c7035a1306c31aa6edc4f0add82bb601；未推送公共仓库，未改共享Git。"
+    },
+    {
+      "at": "2026-09-26T07:04:47.464Z",
+      "description": "纠正日志移交对象并核验实际文件归属",
+      "status": "done",
+      "result": "CURRENT_STATE与wait_threads共同确认dc5e为当前活跃root；日志转交其串行发布，不以任务启动先后推断归属。"
     }
   ],
   "checks": [
     {
       "name": "协调者状态",
       "result": "passed",
-      "detail": "旧owner停止，但更早巡检active；本轮已让行。"
+      "detail": "最新CURRENT_STATE与wait_threads确认dc5e为active协调者；本轮未接管共享文件。"
     },
     {
       "name": "共享档案只读校验",
@@ -68,6 +81,11 @@
       "name": "公共日志发布",
       "result": "pending",
       "detail": "起止记录隔离保存，公共Git提交推送待唯一发布者处理。"
+    },
+    {
+      "name": "本轮隔离日志校验",
+      "result": "passed",
+      "detail": "初始记录write/validate通过：1轮、1日；同ID终态再次校验后本地提交。"
     }
   ],
   "next": [

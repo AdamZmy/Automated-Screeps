@@ -3,11 +3,11 @@
   "id": "2026-09-26T06-50-15Z-run-f2e355cf7732",
   "kind": "scheduled",
   "startedAt": "2026-09-26T06:50:15.340Z",
-  "updatedAt": "2026-09-26T06:58:42.701Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "周期巡检：核验协调者归属",
-  "summary": "本轮协调者归属核验；旧owner已停止，但新协调者接管且正在运行。游戏观察未执行。",
+  "updatedAt": "2026-09-26T07:10:32.817Z",
+  "completedAt": "2026-09-26T06:58:42.744Z",
+  "status": "skipped",
+  "title": "已有协调者运行，本轮巡检让行",
+  "summary": "当前协调者active/inProgress；本轮跳过游戏检查与部署，独立日志已验证，起始和结束修订待唯一Git发布者同步。",
   "game": null,
   "findings": [
     {
