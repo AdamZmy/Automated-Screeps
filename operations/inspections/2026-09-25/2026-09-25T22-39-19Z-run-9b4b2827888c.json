@@ -3,16 +3,45 @@
   "id": "2026-09-25T22-39-19Z-run-9b4b2827888c",
   "kind": "scheduled",
   "startedAt": "2026-09-25T22:39:19.414Z",
-  "updatedAt": "2026-09-25T22:39:19.414Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-26T08:46:16.374Z",
+  "completedAt": "2026-09-25T23:33:09Z",
+  "status": "failed",
   "title": "协调者仍运行，本轮跳过接管",
-  "summary": "",
+  "summary": "Recovered true ending after live task-status verification: the original coordinator failed during a concurrent inspection; no new game observation was recorded.",
   "game": null,
-  "findings": [],
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "Coordinator ended before final journal publication",
+      "detail": "Known O001 publication recovery. The original title records intent to skip, but task status proves failed execution. This is a Codex service failure, not a Screeps credential or game-health finding.",
+      "evidence": [
+        "Owner01a0da99-b758-77c3-b89f-7fa4c34f2f90: notLoaded/latestTurn failed; completedAt1790379189 = 2026-09-25T23:33:09Z.",
+        "Original id, kind and startedAt2026-09-25T22:39:19.414Z preserved. Original record contained game:null and no game evidence."
+      ],
+      "issue": 12
+    }
+  ],
   "tasks": [],
   "actions": [],
-  "checks": [],
-  "next": [],
-  "references": []
+  "checks": [
+    {
+      "name": "Independent O001 recovery review",
+      "result": "passed",
+      "detail": "Reviewer journal_final_review, parent01a0dcda-c46c-74c1-9a5e-6b933c0d6856: actual archive-copy sandbox preserved original identity and unrelated records; 20 journal and 3 recovery regressions passed."
+    },
+    {
+      "name": "Game observation",
+      "result": "pending",
+      "detail": "No game tick was recorded by the original run; recovery does not fabricate one."
+    }
+  ],
+  "next": [
+    "Historical recovery is complete after final commit/push and public readback; continue current scheduled inspections."
+  ],
+  "references": [
+    {
+      "label": "Issue12",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/12"
+    }
+  ]
 }
