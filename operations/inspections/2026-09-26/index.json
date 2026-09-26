@@ -1,8 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T08:51:10.787Z",
+  "updatedAt": "2026-09-26T09:38:51.496Z",
   "day": "2026-09-26",
   "runs": [
+    {
+      "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T09:38:51.389Z",
+      "updatedAt": "2026-09-26T09:38:51.496Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "RCL4 主窗与真实运输周期巡检",
+      "summary": "已核验上轮协调者及游戏代码owner停止；本轮接管API与串行Git。活动Issue查询进行中，尚未取得本轮游戏观测。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-26T08-37-09Z-rcl4-7b565bfb03bd",
       "kind": "scheduled",

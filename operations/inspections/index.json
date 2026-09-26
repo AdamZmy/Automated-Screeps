@@ -1,11 +1,23 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-26T08:51:10.787Z",
+  "updatedAt": "2026-09-26T09:38:51.496Z",
   "days": [
     "2026-09-26",
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
+      "kind": "scheduled",
+      "startedAt": "2026-09-26T09:38:51.389Z",
+      "updatedAt": "2026-09-26T09:38:51.496Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "RCL4 主窗与真实运输周期巡检",
+      "summary": "已核验上轮协调者及游戏代码owner停止；本轮接管API与串行Git。活动Issue查询进行中，尚未取得本轮游戏观测。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-26T08-37-09Z-rcl4-7b565bfb03bd",
       "kind": "scheduled",
@@ -766,22 +778,6 @@
       "issueNumbers": [
         1,
         4
-      ]
-    },
-    {
-      "id": "2026-09-25T08-18-14Z-run-358131860170",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T08:18:14.542Z",
-      "updatedAt": "2026-09-25T18:43:09.848Z",
-      "completedAt": "2026-09-25T17:34:27Z",
-      "status": "completed",
-      "title": "能源执行限制全面清理并上线",
-      "summary": ".16已部署：全部目标整批卸货、升级建设不再动作限流；独立审计/全回归通过。RCL4实际升级建设22.75/t，库存支出另记，长期验收继续。",
-      "tick": 73937780,
-      "issueNumbers": [
-        1,
-        4,
-        5
       ]
     }
   ]
