@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-25T22-39-19Z-run-9b4b2827888c",
+  "kind": "scheduled",
+  "startedAt": "2026-09-25T22:39:19.414Z",
+  "updatedAt": "2026-09-25T22:39:19.414Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "协调者仍运行，本轮跳过接管",
+  "summary": "",
+  "game": null,
+  "findings": [],
+  "tasks": [],
+  "actions": [],
+  "checks": [],
+  "next": [],
+  "references": []
+}
