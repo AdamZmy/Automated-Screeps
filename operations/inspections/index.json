@@ -1,11 +1,264 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-27T14:23:40.375Z",
+  "updatedAt": "2026-09-27T14:27:40.598Z",
   "days": [
+    "2026-09-27",
     "2026-09-26",
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-27T14-23-35Z-run-81b7cb226ce6",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:35.980Z",
+      "updatedAt": "2026-09-27T14:27:39.210Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者仍运行，本轮让行",
+      "summary": "已核验上轮协调者仍active/inProgress；只登记本轮日志，未接管游戏API、代码、Git发布或部署。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-23-15Z-hourly-inspection-owner-status-unavailab-c721d3761b1c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:15.874Z",
+      "updatedAt": "2026-09-27T14:27:40.180Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hourly inspection: owner status unavailable",
+      "summary": "Read-only handoff checks found unresolved coordinator ownership. Live Codex task-status tools are unavailable; no game observation or takeover is authorized until ownership is verified.",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-23-11Z-run-d73e31e56d21",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:11.936Z",
+      "updatedAt": "2026-09-27T14:27:39.788Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "巡检接管状态核验",
+      "summary": "已读取操作规范和活动Issue；正在核验前任协调者及文件归属。尚无本轮游戏观测。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-27T14-23-05Z-run-9df412396e1c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:05.849Z",
+      "updatedAt": "2026-09-27T14:27:40.493Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "已有协调者运行，本轮让行",
+      "summary": "即时任务状态确认既有协调者仍 active/inProgress；本轮只记录跳过，不接管 API、代码、Issue 或共享 Git。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-22-47Z-run-d5d29a093841",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:47.636Z",
+      "updatedAt": "2026-09-27T14:27:39.688Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮仍运行，本轮让行",
+      "summary": "即时状态确认上轮协调者仍active/inProgress；本轮让行，记录隔离日志并移交唯一发布者。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-22-33Z-run-0f0fc09bd151",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:33.373Z",
+      "updatedAt": "2026-09-27T14:27:40.598Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "本轮跳过：已有协调者运行",
+      "summary": "即时任务状态确认已有协调者和所属Issue工作仍在执行；本轮仅保留独立记录，未接管。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-22-26Z-run-b61b15a2d334",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:26.437Z",
+      "updatedAt": "2026-09-27T14:27:39.390Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者运行，本轮让行",
+      "summary": "即时任务状态确认上轮协调者仍 active/inProgress，本轮让行；仅记录独立日志，不接管游戏、代码或共享发布。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-22-11Z-run-df1e6492730d",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:11.115Z",
+      "updatedAt": "2026-09-27T14:27:40.389Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态待核验",
+      "summary": "已读取操作规则及活动Issue；即时任务查询能力未提供，协调者和Issue owner状态未核验。本轮仅隔离记录，不接管共享文件、API或部署。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-22-03Z-run-13b5b143c5c1",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:03.026Z",
+      "updatedAt": "2026-09-27T14:27:40.078Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态待核验",
+      "summary": "本轮协调者01a0e2da-3812-7902-8bf4-19bf14e45b81已读取短交接与活动Issue；因无法即时核验既有owner状态，保留原归属，准备记录跳过。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-51Z-run-8743d9ca56ac",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:51.724Z",
+      "updatedAt": "2026-09-27T14:27:39.299Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "任务状态不可核验，本轮暂缓接管",
+      "summary": "本轮已读取工作规则和活动Issue；因Codex跨任务即时状态工具不可用，保留旧owner，等待归属核验。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-47Z-run-56da28bb5440",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:47.974Z",
+      "updatedAt": "2026-09-27T14:27:39.884Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者仍运行，本轮让行",
+      "summary": "即时核验确认原协调者仍运行；本轮只留隔离日志，未接管API、代码或共享Git发布。",
+      "tick": null,
+      "issueNumbers": [
+        4,
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-46Z-run-235458b0aa9c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:46.551Z",
+      "updatedAt": "2026-09-27T14:27:39.582Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态待核验",
+      "summary": "本轮已读取规则与活动Issue；上一协调者及Issue owner即时状态无法核验，保留原归属，正在保存隔离日志。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-42Z-run-366b2a6be8d3",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:42.735Z",
+      "updatedAt": "2026-09-27T14:27:39.482Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态待核验，本轮跳过接管",
+      "summary": "开始登记：协调者及Issue owner即时状态工具不可用，归属待核验；仅在隔离档案记录本轮，不接管共享代码、Git发布或API。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-35Z-run-365a416029d2",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:35.560Z",
+      "updatedAt": "2026-09-27T14:27:39.120Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者仍运行，本轮让行",
+      "summary": "即时任务快照确认现有协调者仍active/inProgress，本轮仅准备独立让行记录，不接管共享文件或游戏API。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-34Z-run-194ea3cba231",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:34.085Z",
+      "updatedAt": "2026-09-27T14:27:40.285Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者运行中，本轮让行",
+      "summary": "即时核验确认现有协调者仍在运行；本轮保留其所有权，仅在隔离档案登记，不读取游戏或接管代码。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T14-21-28Z-run-37bb97fcb0cb",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:28.732Z",
+      "updatedAt": "2026-09-27T14:27:39.981Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：核验协调者归属",
+      "summary": "本轮已读取操作规范和活动Issue，当前协调者及旧Issue owner的即时任务状态尚无法核验；先保留隔离日志，不接管共享文件。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
       "kind": "scheduled",
@@ -538,251 +791,6 @@
         1,
         4,
         5
-      ]
-    },
-    {
-      "id": "2026-09-25T16-41-33Z-run-20c6d5f93d0a",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T16:41:33.105Z",
-      "updatedAt": "2026-09-25T17:34:17.718Z",
-      "completedAt": "2026-09-25T17:34:17.657Z",
-      "status": "skipped",
-      "title": "周期巡检：先前协调者仍运行",
-      "summary": "先前协调者即时状态仍为active/inProgress，本轮跳过游戏/API/代码/部署与Issue接管，仅完成独立日志归档。未获得新tick，不对游戏健康或能效作结论。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T15-38-41Z-run-781f21cb9a02",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T15:38:41.729Z",
-      "updatedAt": "2026-09-25T15:41:10.762Z",
-      "completedAt": "2026-09-25T15:41:10.730Z",
-      "status": "skipped",
-      "title": "原协调者仍运行，本轮跳过接管",
-      "summary": "本轮已核验原协调者及旧工作者父任务仍 active / inProgress，保留原归属并结束为 skipped。未采样游戏、改代码、部署、更新 Issue 生命周期或改写共享交接文档。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T15-38-18Z-run-a9ab80c9bdbb",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T15:38:18.480Z",
-      "updatedAt": "2026-09-25T15:40:59.889Z",
-      "completedAt": "2026-09-25T15:40:59.860Z",
-      "status": "skipped",
-      "title": "原协调者仍运行，本轮已跳过",
-      "summary": "本轮协调者01a0d917-4fd9-7e93-804d-b02632ca1617确认原协调者及Issue #1/#4负责人仍active/inProgress。按归属规则结束本轮：未调用游戏API、派工、修改代码、部署或改写Issue/CURRENT_STATE；game=null。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T14-19-13Z-run-71daa83c7b24",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T14:19:13.323Z",
-      "updatedAt": "2026-09-25T15:40:06.756Z",
-      "completedAt": "2026-09-25T15:39:32.600Z",
-      "status": "skipped",
-      "title": "巡检跳过：原协调者仍活动",
-      "summary": "原协调者及Issue #1/#4负责父任务即时状态为active/inProgress；本轮结束，未接管、未采样、未部署。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T14-18-55Z-run-bc7b43905e76",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T14:18:55.853Z",
-      "updatedAt": "2026-09-25T15:40:26.605Z",
-      "completedAt": "2026-09-25T15:40:26.577Z",
-      "status": "skipped",
-      "title": "协调者仍运行，本轮跳过接管",
-      "summary": "既有协调者和Issue #1/#4 owner仍active/inProgress；本轮仅发布跳过记录。未采样游戏，未修改游戏代码、Issue检查点或CURRENT_STATE，未部署；继续保留原文件归属。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T14-18-41Z-run-fe88d1144ec7",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T14:18:41.279Z",
-      "updatedAt": "2026-09-25T15:37:58.724Z",
-      "completedAt": "2026-09-25T15:37:58.681Z",
-      "status": "skipped",
-      "title": "周期巡检：既有协调者运行中",
-      "summary": "本轮已跳过：既有协调者及Issue #1/#4负责人仍active/inProgress。未采集新tick、未接管代码或部署；保留原Issue与短状态，结束日志单独提交发布。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T13-29-21Z-run-0e00ac246a7c",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T13:29:21.826Z",
-      "updatedAt": "2026-09-25T14:20:51.815Z",
-      "completedAt": "2026-09-25T14:20:51.783Z",
-      "status": "skipped",
-      "title": "巡检跳过：原任务状态无法核验",
-      "summary": "本轮已结束。活动Issue #1/#4的原协调者及其子代理父任务状态unknown，依交接规则不接管。未调用游戏API，无新tick；仅保存本轮日志，保留原文件和Issue归属。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T12-39-00Z-run-111454a6f642",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T12:39:00.070Z",
-      "updatedAt": "2026-09-25T21:22:31.568Z",
-      "completedAt": "2026-09-25T15:40:01Z",
-      "status": "failed",
-      "title": "周期巡检：现有协调者仍在运行",
-      "summary": "原任务发生传输故障并停止；本轮核验其 failed 状态后补记终态，仅恢复日志，不补造游戏观测。",
-      "tick": null,
-      "issueNumbers": [
-        1
-      ]
-    },
-    {
-      "id": "2026-09-25T12-21-45Z-run-180b053940d3",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T12:21:45.432Z",
-      "updatedAt": "2026-09-25T15:39:35.138Z",
-      "completedAt": "2026-09-25T15:39:35.106Z",
-      "status": "skipped",
-      "title": "巡检跳过：已有协调者运行",
-      "summary": "本轮仅核验交接：原协调者及Issue #1/#4 owner仍active/inProgress，保留全部文件与部署归属。未获取游戏新tick；本轮跳过游戏巡检。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T12-21-07Z-run-93ce7e995d21",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T12:21:07.050Z",
-      "updatedAt": "2026-09-25T14:20:49.064Z",
-      "completedAt": "2026-09-25T14:20:49.035Z",
-      "status": "skipped",
-      "title": "巡检跳过：原协调者仍在运行",
-      "summary": "原协调者及 Issue #1/#4 owner 仍 active / inProgress；本轮完成独立日志发布准备，未接管 API、代码或部署。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T11-37-53Z-run-beb0f80b5444",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T11:37:53.117Z",
-      "updatedAt": "2026-09-25T14:20:20.650Z",
-      "completedAt": "2026-09-25T14:20:20.622Z",
-      "status": "skipped",
-      "title": "本轮已跳过：原协调者状态未知",
-      "summary": "本轮协调者01a0d80c-c7af-7e73-a2b2-70a3ee7a6d0b完成交接检查。因缺少Codex任务即时状态查询工具，无法确认原协调者及子代理已停止；保留#1/#4现有owner，仅发布本轮跳过日志。未调用游戏API，没有新版本或tick证据。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T11-05-36Z-run-4485f535fad0",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T11:05:36.331Z",
-      "updatedAt": "2026-09-25T14:20:31.438Z",
-      "completedAt": "2026-09-25T14:20:31.410Z",
-      "status": "skipped",
-      "title": "周期巡检：已有协调者运行",
-      "summary": "原协调者即时状态仍active/inProgress，Issue #1/#4归属不变。本轮按并发规则跳过；无游戏API采样、新tick、源码修改或部署，仅发布本轮独立日志。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T09-50-25Z-run-a015d2c17123",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T09:50:25.264Z",
-      "updatedAt": "2026-09-25T14:19:22.652Z",
-      "completedAt": "2026-09-25T14:19:22.620Z",
-      "status": "skipped",
-      "title": "原协调任务运行中，本轮已跳过",
-      "summary": "已确认原协调者 active / inProgress，保留 Issue #1/#4 和原审视者归属。本轮未取新游戏 tick、修改源码或部署；开始记录已推送，结束记录按同一批次发布。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T09-18-14Z-run-780fc8daf622",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T09:18:14.721Z",
-      "updatedAt": "2026-09-25T09:20:15.981Z",
-      "completedAt": "2026-09-25T09:20:15.910Z",
-      "status": "skipped",
-      "title": "巡检跳过：原协调者仍运行",
-      "summary": "原协调者与原问题实现/审视仍在运行，本轮已结束并跳过接管；未新增游戏观测、修改游戏代码或部署。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
-      ]
-    },
-    {
-      "id": "2026-09-25T08-58-42Z-run-1d7928209bd4",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T08:58:42.543Z",
-      "updatedAt": "2026-09-25T09:01:02.535Z",
-      "completedAt": "2026-09-25T09:01:02.495Z",
-      "status": "skipped",
-      "title": "周期巡检跳过：前序协调者仍在运行",
-      "summary": "前序协调者active/inProgress，本轮仅发布独立跳过日志；未接管游戏代码、API、部署、Issue或CURRENT_STATE。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5
-      ]
-    },
-    {
-      "id": "2026-09-25T08-38-00Z-run-bc6dfa08724e",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T08:38:00.171Z",
-      "updatedAt": "2026-09-25T08:39:33.800Z",
-      "completedAt": "2026-09-25T08:39:33.756Z",
-      "status": "skipped",
-      "title": "周期巡检跳过：前序协调者仍在运行",
-      "summary": "确认前序协调者仍active/inProgress；本轮仅发布独立跳过日志。未采集游戏数据、修改代码、部署或改写现有Issue及交接归属。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4
       ]
     }
   ]
