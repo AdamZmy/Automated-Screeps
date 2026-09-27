@@ -3,14 +3,67 @@
   "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
   "kind": "scheduled",
   "startedAt": "2026-09-26T09:38:51.389Z",
-  "updatedAt": "2026-09-26T09:38:51.496Z",
+  "updatedAt": "2026-09-27T14:23:40.375Z",
   "completedAt": null,
   "status": "running",
   "title": "RCL4 主窗与真实运输周期巡检",
-  "summary": "已核验上轮协调者及游戏代码owner停止；本轮接管API与串行Git。活动Issue查询进行中，尚未取得本轮游戏观测。",
-  "game": null,
-  "findings": [],
-  "tasks": [],
+  "summary": "执行跨日恢复；已保存旧180tick完整运输样本。新tick73980140主房RCL5/Storage19337，游戏自主拓展W23N26至RCL2；主房账本scope/coverage缺测，新房报警正独立审视。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-25.16",
+    "tick": 73980140,
+    "fetchedAt": "2026-09-27T14:21:38Z"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "主房RCL5并自主启动双矿辅房",
+      "detail": "本轮没有部署；恢复执行后发现游戏自然进展。W23N26尚未自给，不能称扩张完成。",
+      "evidence": [
+        "73955120 RCL4/Storage0；73980140 RCL5/Storage19337，W23N26 RCL2"
+      ],
+      "issue": 7
+    },
+    {
+      "severity": "warning",
+      "title": "能效主窗口缺少完整范围覆盖",
+      "detail": "300/1500 utilizationCoverage0，总用能率不可用；不把缺测当作低效或健康。正在审视跨房先驱影响与账本范围。",
+      "evidence": [
+        "73980140 incomplete-scope/unresolved-accounting；primary1500 imports0,exports400"
+      ],
+      "issue": 4
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 5,
+      "title": "真实运输周期观测",
+      "status": "in-progress",
+      "progress": "旧180tick样本已执行并自动恢复原monitor；待本地计算完整周期。",
+      "next": "区分实际transfer事件与意图，明确历史RCL4路线。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 9,
+      "title": "邻房适配器与旧不可达判定",
+      "status": "in-progress",
+      "progress": "neighbor_review只读离线核查，父任务本root。",
+      "next": "报告可复现问题和新布局必需输入；不改冷计划。",
+      "owner": "neighbor_review; parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 4,
+      "title": "体型与能效范围独立审视",
+      "status": "in-progress",
+      "progress": "workforce_review审视剩余容量定型；expansion_review审视新房报警与账本scope，均本地沙盒。",
+      "next": "与新tick区分，不以旧储备0推断当前持续故障。",
+      "owner": "root; reviewers parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+    }
+  ],
   "actions": [],
   "checks": [
     {
