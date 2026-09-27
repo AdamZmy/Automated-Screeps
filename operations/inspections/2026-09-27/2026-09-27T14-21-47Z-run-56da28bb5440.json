@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-21-47Z-run-56da28bb5440",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:21:47.974Z",
-  "updatedAt": "2026-09-27T14:27:39.884Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:27:42.697Z",
+  "completedAt": "2026-09-27T14:23:15.357Z",
+  "status": "skipped",
   "title": "上轮协调者仍运行，本轮让行",
-  "summary": "即时核验确认原协调者仍运行；本轮只留隔离日志，未接管API、代码或共享Git发布。",
+  "summary": "原协调者即时状态仍active/inProgress，本轮已让行；无新游戏tick、修改或部署。起止日志均已隔离校验和本地提交，公共发布待唯一发布者接收。",
   "game": null,
   "findings": [
     {
@@ -54,6 +54,12 @@
       "description": "读取World规则、短状态、自动化记忆与活动Issue，核验当前协调者和Issue owner。",
       "status": "done",
       "result": "确认已有运行工作，隔离init本轮记录；未读取旧长对话。"
+    },
+    {
+      "at": "2026-09-27T14:23:15.357Z",
+      "description": "结束本轮隔离巡检并保留真实起始与skipped终态供串行发布。",
+      "status": "done",
+      "result": "起始本地提交8e206b135817d134234e3f56169b0fe59b3a0760；本轮没有共享Git、Issue或CURRENT_STATE写入，没有游戏API调用或部署。"
     }
   ],
   "checks": [
@@ -71,6 +77,11 @@
       "name": "公共日志发布",
       "result": "pending",
       "detail": "共享Git发布由活动协调者独占；本轮使用独立本地Git，公开起止提交与推送待串行接收。"
+    },
+    {
+      "name": "隔离起始日志校验",
+      "result": "passed",
+      "detail": "官方write/validate通过，独立档案1轮/1日；本轮终态随后同样校验。"
     }
   ],
   "next": [

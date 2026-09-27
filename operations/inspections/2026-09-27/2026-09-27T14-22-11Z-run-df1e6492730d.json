@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-22-11Z-run-df1e6492730d",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:22:11.115Z",
-  "updatedAt": "2026-09-27T14:27:40.389Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:27:42.982Z",
+  "completedAt": "2026-09-27T14:24:28.101Z",
+  "status": "blocked",
   "title": "周期巡检：协调者状态待核验",
-  "summary": "已读取操作规则及活动Issue；即时任务查询能力未提供，协调者和Issue owner状态未核验。本轮仅隔离记录，不接管共享文件、API或部署。",
+  "summary": "本轮结束但受阻：当前缺少Codex任务即时状态查询，无法核验既有协调者与Issue owner。未接管代码/API/Git发布，未取得游戏新tick。原始起止记录已保存在隔离归档，公开同步待归属核验。",
   "game": null,
   "findings": [
     {
@@ -70,6 +70,12 @@
       "description": "本轮协调者01a0e07e-a008-7331-98ee-9824f3857863在隔离归档创建独立scheduled批次。",
       "status": "done",
       "result": "init成功；游戏观测为null，未改共享档案、代码、Issue或CURRENT_STATE。"
+    },
+    {
+      "at": "2026-09-27T14:24:28.101Z",
+      "description": "结束本轮并保留原协调者和Issue owner。",
+      "status": "done",
+      "result": "未修改共享CURRENT_STATE、Issues、游戏源码、网站或调度；未调用游戏API。起始本地提交7a55658，真实起止JSON与同步说明保存在本轮隔离目录。"
     }
   ],
   "checks": [
@@ -92,6 +98,11 @@
       "name": "公开日志同步",
       "result": "pending",
       "detail": "共享Git发布者归属未知，起止记录仅隔离保存；不声称GitHub失败或日志已发布。"
+    },
+    {
+      "name": "隔离批次起始记录",
+      "result": "passed",
+      "detail": "官方init/write/validate通过1轮1日；起始记录显式本地Git提交7a55658，未推送。"
     }
   ],
   "next": [

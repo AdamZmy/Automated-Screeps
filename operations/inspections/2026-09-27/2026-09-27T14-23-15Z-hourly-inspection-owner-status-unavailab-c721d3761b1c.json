@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-23-15Z-hourly-inspection-owner-status-unavailab-c721d3761b1c",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:23:15.874Z",
-  "updatedAt": "2026-09-27T14:27:40.180Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:27:42.864Z",
+  "completedAt": "2026-09-27T14:24:20.350Z",
+  "status": "skipped",
   "title": "Hourly inspection: owner status unavailable",
-  "summary": "Read-only handoff checks found unresolved coordinator ownership. Live Codex task-status tools are unavailable; no game observation or takeover is authorized until ownership is verified.",
+  "summary": "Skipped takeover because live coordinator and child-parent status cannot be verified with the available tools. No game API or new tick. Isolated start/final journals are preserved for serialized public publication after verified ownership release.",
   "game": null,
   "findings": [
     {
@@ -46,6 +46,24 @@
       "description": "Initialize isolated inspection archive under this task.",
       "status": "done",
       "result": "Authentic running-start record created with official init; shared archive, CURRENT_STATE, Issues and game code are untouched."
+    },
+    {
+      "at": "2026-09-27T14:24:20.350Z",
+      "description": "Preserve all existing game, Issue, CURRENT_STATE and shared Git ownership.",
+      "status": "done",
+      "result": "No game observation, source change, agent dispatch, Issue change, shared Git write or deployment. Existing issue5 and issue9 owners remain unverified, not assumed stopped."
+    },
+    {
+      "at": "2026-09-27T14:24:20.350Z",
+      "description": "Save authentic initial journal in an independent local Git repository.",
+      "status": "done",
+      "result": "Local start committed as edda000faa883d0e3aa275da8b0447cd9878685a; no public push attempted because sole publisher ownership is unverified."
+    },
+    {
+      "at": "2026-09-27T14:24:20.350Z",
+      "description": "Finalize the same inspection ID as skipped.",
+      "status": "done",
+      "result": "End record saved for official write/validation and a separate local final commit. Public import and both phase pushes remain pending."
     }
   ],
   "checks": [
@@ -68,6 +86,16 @@
       "name": "Public journal publication",
       "result": "pending",
       "detail": "Preserve local start and end revisions; do not compete with an unverified shared Git publisher. No GitHub write failure is claimed."
+    },
+    {
+      "name": "Shared state preservation",
+      "result": "passed",
+      "detail": "Final read-only shared HEAD is 70f345a1a10ca1a4cf7f505345c823f57ee0c4ba; working tree contains changes by other work. CURRENT_STATE still names coordinator01a0dd13."
+    },
+    {
+      "name": "Isolated journal validation",
+      "result": "passed",
+      "detail": "Running-start init/write/validate passed for1 run/1 day; final official write and validation are required before final commit."
     }
   ],
   "next": [

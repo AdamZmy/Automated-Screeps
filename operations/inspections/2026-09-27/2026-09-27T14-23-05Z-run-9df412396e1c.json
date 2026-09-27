@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-23-05Z-run-9df412396e1c",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:23:05.849Z",
-  "updatedAt": "2026-09-27T14:27:40.493Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:27:43.044Z",
+  "completedAt": "2026-09-27T14:23:44.615Z",
+  "status": "skipped",
   "title": "已有协调者运行，本轮让行",
-  "summary": "即时任务状态确认既有协调者仍 active/inProgress；本轮只记录跳过，不接管 API、代码、Issue 或共享 Git。",
+  "summary": "既有协调者 active/inProgress，本轮完成并发让行。未调用游戏 API、修改策略或部署；日志起止已在隔离 Git 留痕，共享发布待当前协调者串行处理。",
   "game": null,
   "findings": [
     {
@@ -70,6 +70,12 @@
       "description": "按官方 init/write 建立独立批次并保留共享文件所有权",
       "status": "done",
       "result": "只写本轮隔离目录，无游戏 API、源码、部署、Issue 或 CURRENT_STATE 修改。"
+    },
+    {
+      "at": "2026-09-27T14:23:44.615Z",
+      "description": "结束本轮跳过记录",
+      "status": "done",
+      "result": "保留原 ID、真实开始与结束时间，game=null；不接管共享代码、Issue 或 CURRENT_STATE。起始隔离提交 39218a8c3cc31cc7b9ccd3b5b326a7fe73e372c4。"
     }
   ],
   "checks": [

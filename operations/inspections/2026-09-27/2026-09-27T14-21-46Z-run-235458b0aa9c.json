@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-21-46Z-run-235458b0aa9c",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:21:46.551Z",
-  "updatedAt": "2026-09-27T14:27:39.582Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:27:42.532Z",
+  "completedAt": "2026-09-27T14:24:05.244Z",
+  "status": "blocked",
   "title": "周期巡检：协调者状态待核验",
-  "summary": "本轮已读取规则与活动Issue；上一协调者及Issue owner即时状态无法核验，保留原归属，正在保存隔离日志。",
+  "summary": "本轮因旧协调者及Issue owner即时状态无法核验而受阻结束。保留所有原归属；未调用游戏API、无新tick、无游戏或网站部署。起始及终态已在隔离档案校验，提交仅本地，公共发布待同步。",
   "game": null,
   "findings": [
     {
@@ -46,6 +46,12 @@
       "description": "读取World规则、短状态、自动化记忆及活动Issue；创建本轮隔离日志。",
       "status": "done",
       "result": "当前任务01a0e25a-e78e-7691-9b91-ca449bdc89fb；无游戏API调用、无新tick、无代码或部署动作。"
+    },
+    {
+      "at": "2026-09-27T14:24:05.244Z",
+      "description": "结束本轮并保留同一ID的起始/终态发布工件。",
+      "status": "done",
+      "result": "起始本地提交07d93fb；终态经官方write/validate后独立提交。共享CURRENT_STATE、Issue、源码、索引与Git保持原状；因发布者未知未推送，也未声称GitHub失败或已发布。"
     }
   ],
   "checks": [
@@ -68,6 +74,16 @@
       "name": "公共日志发布",
       "result": "pending",
       "detail": "共享Git发布者归属未核验；隔离起始/终态将本地提交并保留待同步，不宣称公开发布。"
+    },
+    {
+      "name": "隔离起始日志校验",
+      "result": "passed",
+      "detail": "inspection_log.py write及validate通过，1轮/1日；起始提交07d93fb。"
+    },
+    {
+      "name": "共享仓库最终只读核对",
+      "result": "pending",
+      "detail": "本轮未写共享归档；结束核对时发现原协调者09-38-51Z批次JSON/Markdown及两级索引出现本轮以外的修改。不能声称共享工作区干净，也不能据此替代即时任务状态。保持不接管、不推送。"
     }
   ],
   "next": [
