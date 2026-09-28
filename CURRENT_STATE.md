@@ -1,40 +1,46 @@
 # Screeps World 当前交接
 
-- World唯一仓库与源码new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
-- 本轮root：01a0dd13-1434-7c73-b6c1-69d67742d963；批次2026-09-26T09-38-51Z-rcl4-1aa7cbe95156，巡检进行中。
-- 唯一automation screeps-world每1小时新开独立任务；不续接旧聊天，不恢复heartbeat或新增调度。
-- 接管即时核验：上轮01a0dcda idle/completed；旧游戏owner01a0d7a3 notLoaded/latestTurn completed；01a0dc5e idle/completed。
-- 本轮root独占API/Git/整合；结束后释放全部文件。下一轮仍必须即时核验本任务停止后接管。
+- 唯一World仓库new-colony；AdamZmy/shard1/frontier24，Arena不属于本任务。
+- 本轮root：01a0dd13-1434-7c73-b6c1-69d67742d963；批次2026-09-26T09-38-51Z-rcl4-1aa7cbe95156，正在发布终态。
+- 执行曾中断并跨日恢复；不把时间跨度当连续监控。用户已暂停唯一automation screeps-world；回顾任务01a0e59f-6dbf-7542-a88c-e879ef934275已设PAUSED，本轮不恢复调度。
+- 接管时已核验上轮01a0dcda completed、旧owner01a0d7a3 latestTurn completed、01a0dc5e completed。
+- 已按暂停请求停止新API采样/修复/部署/子任务，仅完成既有日志与Git收尾；最终回复后释放文件。回顾任务接管前仍须核验本任务停止。
 
-## 最新实际游戏证据
+## 最新实际证据与部署
 
-- 游戏v0.4.2 / build2026-09-25.16 / code99202bb；六模块code-check全匹配。本轮未改游戏源码、未部署游戏或网站。
-- status73954160→73954260；最后2026-09-26T08:43:05Z。RCL4进度191325→193125/405000，100tick升级1800=18/t。
-- 最新11creeps，energy1300/1300；两个矿在位各5WORK，drop0/stalled0/alerts空，20条extension、21经济道路、0工地。
-- 73954260 CPU20tick mean7.7943/bucket10000；内存采样约236KB。驻守矿工的stuck字段不当作交通故障。
-- 首样1500 U97.81%/coverage1/stock+26/residual-10合格；末样1500 U97.85%/stock-4/residual-10，仍stock-drawdown。
-- 末样300 U97.17%/stock+110合格；6000 U97.90%/stock-92/residual7；全窗无进口、覆盖完整。
-- 原ledger函数审计历史73948200–73954200四个非重叠1500窗：最新至最旧stock+26/-72/-100/+144，U97.81/98.06/98.22/97.42%；2/4合格，不能宣称持续达标。
-- 主窗孵化3.5667/t、维修0.26/t；成本计量完整，但完整续代周期必要性与物流实际往返验收仍未完成。
-- flow73954192/73954242：运输者目标为控制器容器，两名9WORK工人固定席工作；event73954241确认容器向升级工转移126能源。
-- 稀疏快照不证明完整Hauler交付/往返周期；22/40tick仍是路线规划估计。保留#5，不改软分矿或合并身体策略。
-- Storage73954192确认为24,29已建、能源0；不是建筑缺失，不重复建设。储备未满足扩张12000门槛。
-- 本轮flowProbe已清理，回读inspectionCleanupTick73954285；脱敏详情仅留state本地，Memory保留有界遥测。
-- 网站地图仍上轮0e9c6fb / dpl_8XDer13JsGK6pTeijgo1p4Vu7frB；无新布局/RCL里程碑，不重部署。
+- v0.4.3 / build2026-09-27.1 / code04b8ceb；2026-09-28T01:18Z API部署，四模块变更、六模块回读一致。
+- 新版修复剩余有效容量定型、先驱跨房账本范围、新房bootstrap报警和明确超时后已建Spawn恢复；增设CPU出生保护。
+- 保护只暂停非必要增量出生，保留关键缺岗/续代恢复；不限制已有单位就绪动作、不自杀单位，不能立即消除现有CPU负担。
+- 最后status73989580，fetchedAt2026-09-28T01:27:09Z；主房RCL5 progress211550/1215000，storage16662，30extensions，14creeps。
+- W23N26已自主发展为RCL2并有Spawn，progress3295/45000，capacity300，22creeps，其中13hauler/6miner。
+- expansion内部于73989500 complete，但CPU和积压未通过，#7仍verifying，不代表经济自给验收。
+- CPUmean31.0944→27.2693→23.729仍高于limit20；末窗29samples/40elapsedticks，bucket6，不能称恢复。
+- 末窗hauler9.768CPU/t、memory3.5311/t；Memory约689448B。两房spawnHold=cpu-recovery。
+- 主房控制器容器73989480为2443/5000，73989580为3493/5000；stationSeats0，末40tick升级2.625/t。旧容器消失原因尚未证实。
+- 主房drop0/stalled0；分基地drop2021且双矿积压。无证据支持将现状称为健康或能效达标。
+- 1500主窗两房coverage0.2707；主房U88.93%/stock+276，目标U62.25%/stock+2309，均不合格；当前scope修复不消除历史缺测。
+- 旧RCL4 trace73955174–73955353：27次真实交付3210能源，21完整周期；近矿12次中位26.5tick，远矿6次43tick，混合3次48tick。
+- 179升级间隔3178；6个短缺间隔由初始燃料解释。历史样本不适用当前RCL5/Link路径，不能直接据此选新运输策略。
+- 临时探针清理后回读inspectionCleanupTick73989543；详细诊断保存在本地state，不上传完整Memory。
 
 ## Issue与下一检查点
 
-- #1/#4 verifying：持续主窗合格、完整实际交付周期及必要成本；禁止用动作限流、额度截断或额外耗能刷90%。
-- #5 ready：两次50tick间隔快照和固定取能事件已补证；下一步需有界逐tick周期观测，当前不足以选择优化方案。
-- #6 verifying：Storage已建但储备0，继续检查库存、续代和无回流；#7/#8/#10 planned，实际储备/RCL门槛未满足。
-- #9 ready：近邻布局与跨房路线审查仍待有限任务；本轮优先游戏验收采样和最后日志恢复，未重复开展布局研究。
-- #12已关闭且GitHub回读closed/status:done；52轮/2日归档全部已有真实终态，本轮completed只表示巡检结束。
-- 旧9b4 owner01a0da99即时状态failed，真实结束2026-09-25T23:33:09Z；保留原id/startedAt，game:null。起始c6e3961、failed终态e79d33f分别已推送。
-- 公开日志API回读ok=true/stale=false、failed及真实completedAt吻合；以后沿用正常init/write/串行提交，不重复恢复旧记录。
+- #4 P0 verifying：优先CPU/bucket趋势、不中断的真实工作、矿区交付与积压；若仍超载，复用阶段归因和独立审视，不能只等出生保护。
+- #1/#5 verifying：先完成控制器容器/恢复固定席，再量当前Link路径实际交付周期和运输成本。
+- #6 verifying：储备已超过旧扩张门槛；验收续代成本、净库存与生产支出，不能继续按旧storage0判断。
+- #7 verifying：已有首个分基地；验证真实自给、CPU恢复、extension建设与完整续代周期后再关闭。
+- #8 verifying：RCL5已建Links16,40和25,28，待实测吞吐/损耗；controller Link等RCL6，外矿入口仍按需评估。
+- #9 ready：旧W22N26 archive在73955175地形下60/60extension可达，extension25有4服务邻格；旧误判根因未知。
+- 成熟适配器仍需固定Spawn/旧节点，冷房需单独种子接口和完整审计，未修改/激活冷计划。#10 planned；#12仍closed。
 
-## 独立审视与文件归属
+## 验证、文件归属与发布
 
-- journal_final_review（父任务本root）已完成并释放全部文件；只做本地沙盒、无API/凭据/Git操作。
-- 复用已知O001：真实档案副本起止导入验证、20日志+3恢复回归通过；排除将跳过意图当终态、替换原startedAt或伪造恢复结束时间。
-- 报告operations/diagnostics/2026-09-26-final-journal-recovery.md；没有新增未确认故障机制或修改游戏策略。
-- 本轮开始9332a88、进展fd13532均已推送；本轮终态提交见Git最新记录，所有Git操作串行且显式路径。
+- workforce_review/expansion_review已交付释放；neighbor_review流断前完成结果由root存报告；无活动子代理持有文件。
+- 独立体型沙盒覆盖已有9WORK→新增4WORK、微缺口1WORK、自然续代、待生抑制、满席替换与回本；monitor/ledger独立复核通过。
+- test:game、test:diagnostics、test:policy、verify-api23及有界probe回归通过；未把离线通过当线上经济验收。
+- 报告位于operations/diagnostics/2026-09-26-workforce-reserve-review.md、2026-09-27-expansion-review.md、2026-09-26-transport-cycles.md和2026-09-26-neighbor-layout-preflight.md。
+- 新RCL5地图快照73983666为205项：112built/88planned/5sites；导出7测试、dashboard28测试及layout/UI通过。
+- 网站发布阻塞：Vercel CLI返回Not authorized；停止同凭据重试。新地图仅本地/Git就绪，需恢复原项目部署授权。
+- 公开网站仍dpl_8XDer13JsGK6pTeijgo1p4Vu7frB的旧RCL4地图；不能称新快照已发布。
+- 25轮并发让行记录按真实原id/起止时间分别发布：起始dc1044f/28702c1，终态207fe16/39222c3；均推送。未虚构游戏样本。
+- 本轮起始70f345a、进展7f45544、代码04b8ceb已推送；本轮最终日志与交接提交见最新Git，使用官方writer全档案验证。

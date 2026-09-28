@@ -270,3 +270,12 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - Build.16/code99202bb remains deployed; six modules match. No game or dashboard deployment. New status73954160 to73954260 confirms100ticks of18/t upgrading, drop0/stalled0, CPUmean7.7943 and bucket10000.
 - First1500 window qualifies (U97.81%,stock+26), latest returns to stock-4 (U97.85%); four non-overlapping windows contain two drawdowns. Sustainable acceptance remains open, with storage0 and expansion planned. Fresh fixed-container transfer126 energy is measured; full hauling round trips are still unmeasured.
 - Independent journal_final_review passed original-identity import/final recovery in a copy of the real archive and20+3 regressions. Remaining9b4 historical owner failed at2026-09-25T23:33:09Z; authentic start c6e3961 and failed ending e79d33f separately pushed.52records/2days validate, public logs API returns the true final (ok=true,stale=false). No historical game observation invented.
+
+## 2026-09-28T01:27:09Z — RCL5与首个分基地；CPU恢复仍待验收
+
+- 跨日恢复后发现主房自主升RCL5并建立W23N26辅房。04b8ceb/v0.4.3/build2026-09-27.1已API备份、上传、六模块回读验证。独立审视确认剩余容量体型、先驱账本范围、bootstrap报警和精确超时恢复机制；固定回归全部通过。
+- CPU出生保护保留关键缺岗/续代，仅暂停非必要增量。真实新版73989480–73989580 CPUmean31.0944→23.729，仍>20，bucket6；29samples/40elapsedticks。不能宣称恢复。当前运输者约9.768CPU/t，后续按新鲜归因继续验证。
+- 末样主房RCL5 progress211550/storage16662/14creeps；控制器容器重建3493/5000、固定席暂缺，原因尚未证实。W23RCL2拥有Spawn、22creeps、地面2021。内部扩张complete73989500不满足经济验收，#7不关闭。
+- 两房1500窗coverage0.2707，主房U88.93%、目标62.25%，均不合格。观察断档与库存口径不能用高短窗值掩盖；下一轮优先CPU、容器完工、真实交付及积压。
+- 历史RCL4有界180tick样本获得27次交付3210能源、21个完整周期，近/远/混合中位26.5/43/48tick；不外推到当前Link路径。诊断清理回读73989543。
+- 新RCL5地图73983666及导出/UI/API回归已完成，但Vercel返回Not authorized，未发布新网站。保留原项目/域名，恢复授权后发布；日志仍通过GitHub动态发布。
