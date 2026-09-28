@@ -10,6 +10,8 @@ individually reviewable; tested releases receive immutable version tags.
 
 - Add five newly observed cold-room layouts to the lossless static archive so
   the runtime can replace their full Memory payloads with restorable summaries.
+- Add a one-room-at-a-time operational compactor for verified archives when the
+  normal low-bucket guard intentionally pauses automatic migration.
 
 ## 0.5.1 — 2026-09-28
 

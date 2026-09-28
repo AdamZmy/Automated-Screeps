@@ -154,6 +154,8 @@ python3 screeps_api.py deploy --apply
 
 生成器按内容版本增量合并既有plans.js；当前快照仅有摘要时保留旧payload和已签发archiveId。缺失归档引用会拒绝覆盖，不能删除plans.js后拿摘要重建。运行时直接对完整JSON作精确比对后才迁移，每tick至多一房；拥有或当前开拓房保留可执行详单。无法恢复归档时，仅对已经激活的房间重算一次，正常失败重试间隔500tick；未完成候选不自动变成可开拓房。
 
+低 bucket 时自动迁移会暂停。已确认新归档完整并需要解除 Memory 解析压力时，可用 `screeps_api.py console --file tools/compact-one-cold-plan.js` 每次迁移一房；脚本仍要求 `plans.js` 对完整 JSON 精确匹配，并跳过拥有房和正在开拓的房间。每次调用后先回读 `frontier.rooms`，不要并发提交多次。
+
 常规moveTo仍复用15tick路径；配送目标在同优先级内保持，紧急供能可抢占。连续受阻时显式清理旧路径，疲劳等待不算受阻。跨房路线与出口选择另有有限缓存，并检查最新威胁。
 
 `status.performance`与网页“计算开销”显示每20tick窗口的主循环CPU、阶段开销、Memory体积、配送目标切换和受阻重算。CPU包含首次Memory访问，但不包含进入main.loop前的初始化或返回后引擎工作；`totals.tick`保留进入本轮前的CPU贡献。它与能源300/1500/6000tick窗口不同。历史最多60条。发布和在线验证结果见LIVE_STATUS.md。
