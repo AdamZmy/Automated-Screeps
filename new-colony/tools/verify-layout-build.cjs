@@ -65,12 +65,13 @@ function simulateConstruction(plan, world, { existing = true, plannerFile = path
     assert(ticks < 300, 'Construction did not reach a fixed point');
     const built = new Set(buildings.map(s => `${s.structureType}:${s.pos.x}:${s.pos.y}`));
     const pending = input.structures.filter(p => p.rcl <= level && !built.has(id(p)));
-    const gated = p => p.type === C.STRUCTURE_RAMPART && !room.storage || p.type === C.STRUCTURE_ROAD && p.roadClass !== 'economy' && level < 4;
+    const gated = p => p.type === C.STRUCTURE_RAMPART || p.type === C.STRUCTURE_ROAD && p.roadClass !== 'economy' && level < 4;
     assert(pending.every(gated), `Unexpected unbuilt RCL${level}: ` + pending.filter(p => !gated(p)).map(id).join(', '));
     stages.push({ rcl: level, batches: ticks, built: buildings.length, intentionallyGated: pending.map(id) });
   }
   const built = new Set(buildings.map(s => `${s.structureType}:${s.pos.x}:${s.pos.y}`));
-  assert(input.structures.every(p => built.has(id(p))), 'Endgame plan was not fully constructed');
+  assert(input.structures.filter(p => p.type !== C.STRUCTURE_RAMPART).every(p => built.has(id(p))), 'Endgame non-Rampart plan was not fully constructed');
+  assert(!created.some(p => p.type === C.STRUCTURE_RAMPART), 'Automatic Rampart construction must stay disabled');
   assert(original.every(i => built.has(i)), 'An initial building disappeared during migration');
   return { passed: true, mode: existing ? 'migration-from-current-built-room' : 'fresh-spawn-RCL1-through-8', snapshotTick: world.tick,
     initialBuildings: initial.length, placements: input.structures.length, newConstructionSites: created.length, stages,

@@ -2,7 +2,7 @@
 
 - 唯一 World 源码目录：`/Users/zmy/screepsworld/new-colony`；账号 AdamZmy，官方 shard1，活动分支 `frontier24`。
 - 用户要求暂停的巡检 automation `screeps-world` 仍为 `PAUSED`；代码发布不得恢复调度。
-- 当前发布：v0.5.2 / game build `2026-09-27.4`；执行代码提交 `2ada4e6`，静态归档提交 `df3937d`。
+- 当前发布：v0.5.3 / game build `2026-09-27.5`；Rampart 停建代码提交 `8284e96`。
 - 2026-09-28T02:15Z 已通过 API 上传并逐模块回读；备份位于 `new-colony/backups/api-deploy-20260928T021529.075544Z/remote-code.json`。
 - 上传后 shard tick 暂停在 `73990280`，Memory 仍报告旧构建 `.3`；远端源码 hash 已确认 `.4`，下一游戏 tick 才会加载。
 
@@ -34,6 +34,7 @@
 
 ## 仍待处理
 
+- 用户于 2026-09-28 紧急要求取消全部 Rampart 施工。当前所有 Rampart construction site 已删除，planner 永久跳过 Rampart；tick `73990460` 回读两个房间均为 0 个 Rampart 工地。已有 Rampart 和计划坐标保留。
 - bucket 已从低个位数回到 `31`，最新窗口 CPU 全部低于 20；样本仍只有一个完整窗口，继续称为开始恢复而非长期稳定。
 - W23N26 仍有两处 source backlog 和约 5.5k 地面能源；Upgrader 少与能源堆积的策略问题尚未在本次 CPU 优化中改变。
 - 主房 Controller Container 曾消失及重建的历史原因仍未证实。

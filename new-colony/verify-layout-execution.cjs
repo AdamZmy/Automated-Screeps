@@ -44,8 +44,9 @@ for(let level=1;level<=8;level++){
         assert(sites.filter(s=>s.structureType===C.STRUCTURE_ROAD).length<=3,'Road batch cap');
         buildings.push(...sites.splice(0));ctx.Game.constructionSites={};if(requests===before)break;
     }
-    for(const item of plan.structures.filter(s=>s.rcl<=level))assert(buildings.some(s=>s.structureType===item.type&&K(s.pos)===K(item)),`RCL${level} omitted ${item.tag}`);
+    for(const item of plan.structures.filter(s=>s.rcl<=level&&s.type!==C.STRUCTURE_RAMPART))assert(buildings.some(s=>s.structureType===item.type&&K(s.pos)===K(item)),`RCL${level} omitted ${item.tag}`);
+    assert(!buildings.some(s=>s.structureType===C.STRUCTURE_RAMPART),'Automatic Rampart construction must stay disabled');
 }
-assert.equal(requests,plan.structures.length);
+assert.equal(requests,plan.structures.filter(s=>s.type!==C.STRUCTURE_RAMPART).length);
 for(const optional of design.optionalReservations||[])assert(!buildings.some(s=>s.structureType===optional.type&&K(s.pos)===K(optional)),'Optional reservation constructed');
-console.log(`PASS compact execution: ${plan.structures.length} placements, all RCL1–8 construction batches, 3 economic routes, no optional construction, no layout search`);
+console.log(`PASS compact execution: all non-Rampart placements, Rampart auto-build disabled, 3 economic routes, no optional construction, no layout search`);

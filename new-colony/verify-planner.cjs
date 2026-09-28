@@ -135,9 +135,10 @@ for(let level=1;level<=8;level++){
   assert(f.room.sites.filter(s=>s.structureType===STRUCTURE_ROAD).length<=3,'Road site budget exceeded');
   f.room.buildings.push(...f.room.sites.splice(0));Game.constructionSites={};if(before===calls)break;
  }
- for(const p of base.structures.filter(p=>p.rcl<=level))assert(f.room.buildings.some(s=>s.structureType===p.type&&K(s.pos)===K(p)),`RCL${level} never built ${p.tag}`);
+ for(const p of base.structures.filter(p=>p.rcl<=level&&p.type!==STRUCTURE_RAMPART))assert(f.room.buildings.some(s=>s.structureType===p.type&&K(s.pos)===K(p)),`RCL${level} never built ${p.tag}`);
+ assert(!f.room.buildings.some(s=>s.structureType===STRUCTURE_RAMPART),'Automatic Rampart construction must stay disabled');
 }
-console.log('RCL1–8 construction simulation: all '+base.structures.length+' planned structures realized with valid stage, overlap and site budgets');
+console.log('RCL1–8 construction simulation: all non-Rampart structures realized; Rampart coordinates retained but automatic construction disabled');
 // A deployed v3 plan migrates metadata in place without layout churn or a new search.
 f=fixture();const old=JSON.parse(JSON.stringify(base));delete old.roadVersion;delete old.roadRoutes;delete old.roadMissing;delete old.roadCore;
 for(const p of old.structures){delete p.roadClass;delete p.sourceIds;delete p.roadSwamp;delete p.roadOrder;if(p.type===STRUCTURE_ROAD){p.rcl=Math.max(3,p.rcl);p.priority=30;}}
