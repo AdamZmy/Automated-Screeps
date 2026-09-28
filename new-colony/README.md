@@ -44,7 +44,7 @@
 | 告警和遥测摘要 | `monitor.js` | `ledger.js`（仅涉及能量口径时） |
 | 能量事件与窗口指标 | `ledger.js` | `ENERGY_METRICS.md` |
 
-运行时依赖保持单向为主：`main → workforce/logistics/development/infrastructure → runtime`，`metrics`由入口和移动工具记录；`planner`、`expansion`、`monitor`由`main`调度，`monitor → ledger`。`development`仅在需要让工人临时运输时延迟调用`logistics`，避免模块初始化循环。
+运行时依赖保持单向为主：`main → workforce/logistics/development/infrastructure → runtime`，`metrics`由入口和移动工具记录；`planner`、`expansion`、`monitor`由`main`调度，`monitor → ledger`。完整房间计划只在计划缺失、尚未完成或每 10 tick 的施工周期调用；bucket 低于 500 时暂停纯展示用的房间文字。`development`仅在需要让工人临时运输时延迟调用`logistics`，避免模块初始化循环。
 
 ## 主房地理与升级
 

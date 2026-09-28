@@ -8,6 +8,10 @@ individually reviewable; tested releases receive immutable version tags.
 
 ## 0.5.1 — 2026-09-28
 
+- Game build `2026-09-27.4` keeps completed room planning on its 10-tick
+  construction cadence and pauses decorative room text while the CPU bucket is
+  below 500.
+
 - Game build `2026-09-27.3` shares per-tick room object snapshots across role,
   workforce, infrastructure and monitoring code instead of repeating the same
   `room.find` and global-creep scans for every creep.
