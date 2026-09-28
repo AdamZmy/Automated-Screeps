@@ -122,7 +122,7 @@ function overflowUpgrade(c,assignment) {
     }
     // Clear the port/access road before a refuel or upgrade can hold it again.
     const blocking=[station.port,...station.seats].some(p=>range(c,p)===0)||roads.has(c.pos.x+50*c.pos.y)&&range(c,station.node)<=2;
-    if(blocking){if(parking)go(c,new RoomPosition(parking.x,parking.y,c.room.name),0);else clearStationTraffic(c);return true;}
+    if(blocking){if(parking)go(c,new RoomPosition(parking.x,parking.y,c.room.name),0);else require('logistics').clearStationTraffic(c);return true;}
     if(!parking){require('logistics').haul(c);return true;}
     if(!energy(c)){
         c.memory.loaded=false;

@@ -148,3 +148,5 @@
 - W006：同优先级紧急请求已经按期限排序，但资金保护只比较数值priority，会在700能量的更早请求缺100时先花200给较晚请求。verify-workforce使用600库存、两个priority1000而期限不同的请求；资金保护现按实际队列先后保留。
 - X002：新任务terminal状态cancelled/aborting未加入旧经济active谓词，导致母房持续reserveRate3。两处谓词均排除终态，verify-workforce覆盖active→cancelled/aborting。
 - 上述三项新边界由独立审视复现并写回测试；初次线上验收与长期吞吐证据记录在Issue13，不能把离线通过当作性能提升。
+
+- L007：无合法额外升级停车位且工人正挡卸货口时，development.overflowUpgrade调用了未导入的clearStationTraffic，独立沙盒抛ReferenceError。改为延迟调用logistics所有者；verify-overflow用真实三个模块验证正常让路与疲劳等待。当前线上样本errors为空且已有合法席位，故不把此潜在路径当作本次升级下降原因。

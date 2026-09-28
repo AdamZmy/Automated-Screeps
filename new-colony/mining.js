@@ -62,10 +62,10 @@ function operations(room,roster=allCreeps().filter(c=>c.memory.home===room.name)
             containers:containers.map(c=>c.id),containerMissing:containers.length===0};
     });
 }
-function replacementNeeds(room,roster,next,queueTicks=0) {
+function replacementNeeds(room,roster,next,queueTicks=0,sharedOperations=null) {
     if(!next)return [];
     const requests=[],birth=next.length*CREEP_SPAWN_TIME;
-    for(const operation of operations(room,roster)){
+    for(const operation of sharedOperations||operations(room,roster)){
         const assigned=operation.assigned;
         const pending=new Set(assigned.filter(c=>c.memory.replaces).map(c=>c.memory.replaces));
         // Retained independent miners can continue after an individual expires.

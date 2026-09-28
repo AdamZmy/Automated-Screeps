@@ -1,6 +1,6 @@
 'use strict';
 // Frontier composition root. Each action has exactly one business owner.
-const VERSION='2026-09-28.1';
+const VERSION='2026-09-28.2';
 const runtime=require('runtime'),metrics=require('metrics');
 const colony=require('colony'),mining=require('mining'),development=require('development');
 const logistics=require('logistics'),workforce=require('workforce');

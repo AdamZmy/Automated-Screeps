@@ -4,12 +4,14 @@ const {constants:C,loadGameModule}=require('./test-support/runtime.cjs');
 // Quantities settle only at the next tick, with optional rejected intents.
 // This separates accepted commands from measured cargo and destination stores.
 function fixture(){
+ const probes={allCreeps:0,stores:0,objectLookups:0,demandReads:0,walkable:0};
  const room={name:'W21N26',objects:[],walls:new Set(),sites:[],station:null,memory:{plan:{structures:[]}},controller:{my:true,level:4},
   getTerrain(){return{get:(x,y)=>this.walls.has(x+50*y)?C.TERRAIN_MASK_WALL:0};},
-  lookForAt(type,x,y){return this.objects.filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
-  find(type){return type===C.FIND_STRUCTURES?this.objects.filter(o=>o.structureType):type===C.FIND_SOURCES?this.objects.filter(o=>o.isSource):
-   type===C.FIND_DROPPED_RESOURCES?this.objects.filter(o=>o.resourceType):type===C.FIND_TOMBSTONES?this.objects.filter(o=>o.tombstone):
-   type===C.FIND_RUINS?this.objects.filter(o=>o.ruin):type===C.FIND_MY_CREEPS?Object.values(ctx.Game.creeps):[];}};
+  lookForAt(type,x,y){return objects().filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
+  find(type){return type===C.FIND_STRUCTURES?objects().filter(o=>o.structureType):type===C.FIND_SOURCES?objects().filter(o=>o.isSource):
+   type===C.FIND_DROPPED_RESOURCES?objects().filter(o=>o.resourceType):type===C.FIND_TOMBSTONES?objects().filter(o=>o.tombstone):
+   type===C.FIND_RUINS?objects().filter(o=>o.ruin):type===C.FIND_MY_CREEPS?Object.values(ctx.Game.creeps):[];}};
+ const objects=()=>room.objects||room.snapshotObjects;
  const ctx={...C,console,Game:{time:1,creeps:{},rooms:{[room.name]:room}},Memory:{},global:{},gameModuleOverrides:{}};
  const distance=(a,b)=>{a=a.pos||a;b=b.pos||b;return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));};
  class Position{
@@ -24,7 +26,7 @@ function fixture(){
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
      const n={x:p.x+dx,y:p.y+dy},k=key(n);if(seen.has(k))continue;seen.add(k);
      if(n.x<1||n.x>48||n.y<1||n.y>48||room.walls.has(k)||blocked.has(k)||
-      room.objects.some(o=>distance(o,n)===0&&(o.isSource||C.OBSTACLE_OBJECT_TYPES.includes(o.structureType)))||
+      objects().some(o=>distance(o,n)===0&&(o.isSource||C.OBSTACLE_OBJECT_TYPES.includes(o.structureType)))||
       options.ignoreCreeps===false&&Object.values(ctx.Game.creeps).some(c=>distance(c,n)===0))continue;
      q.push({...n,path:p.path.concat(n)});
     }
@@ -33,13 +35,18 @@ function fixture(){
   findClosestByPath(list){return list.filter(o=>distance(this,o)<=1||this.findPathTo(o,{range:1}).length).sort((a,b)=>distance(this,a)-distance(this,b))[0]||null;}
  }
  ctx.RoomPosition=Position;room.controller.pos=new Position(45,45);
- ctx.Game.getObjectById=id=>room.objects.find(o=>o.id===id)||Object.values(ctx.Game.creeps).find(c=>c.id===id);
+ ctx.Game.getObjectById=id=>{probes.objectLookups++;return objects().find(o=>o.id===id)||Object.values(ctx.Game.creeps).find(c=>c.id===id);};
  ctx.gameModuleOverrides={metrics:{movementCount(){}},infrastructure:{linkNetwork:()=>({hub:room.hub})},
   movement:{go(c,target,r=1,options={}){if(c.fatigue)return C.ERR_TIRED;return c.moveTo(target.pos||target,{range:r,...options});}},
-  development:{controllerStation:()=>room.station,upgraderAssignment:()=>({primary:[],policy:{target:0}}),economyMemory:()=>room.memory,
-   routeTravel:()=>10,constructionJobs:()=>room.sites,walkable(r,p){return p.x>=1&&p.x<=48&&p.y>=1&&p.y<=48&&!room.walls.has(p.x+50*p.y)&&
-    !room.objects.some(o=>distance(o,p)===0&&(o.isSource||C.OBSTACLE_OBJECT_TYPES.includes(o.structureType)));}}};
- vm.createContext(ctx);let logistics=loadGameModule(ctx,'logistics'),runtime=loadGameModule(ctx,'runtime');
+  development:{controllerStation:()=>room.station,upgraderAssignment:()=>{probes.demandReads++;return{primary:[],policy:{target:0}};},economyMemory:()=>room.memory,
+   routeTravel:()=>10,constructionJobs:()=>room.sites,walkable(r,p){probes.walkable++;return p.x>=1&&p.x<=48&&p.y>=1&&p.y<=48&&!room.walls.has(p.x+50*p.y)&&
+    !objects().some(o=>distance(o,p)===0&&(o.isSource||C.OBSTACLE_OBJECT_TYPES.includes(o.structureType)));}}};
+ vm.createContext(ctx);let logistics,runtime;
+ function load(){
+  delete ctx.gameModuleOverrides.runtime;runtime=loadGameModule(ctx,'runtime');
+  ctx.gameModuleOverrides.runtime={...runtime,allCreeps(...args){probes.allCreeps++;return runtime.allCreeps(...args);},stores(...args){probes.stores++;return runtime.stores(...args);}};
+  logistics=loadGameModule(ctx,'logistics');
+ }load();
  function store(n,capacity){return{[C.RESOURCE_ENERGY]:n,getFreeCapacity(){return capacity-this[C.RESOURCE_ENERGY];}};}
  function node(type,id,x,y,n=0,capacity=2000){const o={id,my:true,structureType:type,pos:new Position(x,y),store:store(n,capacity)};room.objects.push(o);if(type===C.STRUCTURE_STORAGE)room.storage=o;return o;}
  function source(id,x,y){const o={id,isSource:true,pos:new Position(x,y),energy:3000};room.objects.push(o);return o;}
@@ -63,7 +70,7 @@ function fixture(){
  }
  function settle(reject=[]){
   for(const c of Object.values(ctx.Game.creeps)){
-   const i=c.intent;if(i&&!reject.includes(c.name)&&room.objects.includes(i.target)){
+   const i=c.intent;if(i&&!reject.includes(c.name)&&objects().includes(i.target)){
     const from=i.kind==='pickup'?i.target:c,to=i.kind==='pickup'?c:i.target,amount=Math.min(i.amount,value(from),to.store.getFreeCapacity());
     if(from.store)from.store[C.RESOURCE_ENERGY]-=amount;else from.amount-=amount;
     to.store[C.RESOURCE_ENERGY]+=amount;
@@ -79,8 +86,8 @@ function fixture(){
   c.memory.haul={state,task:{id:target.id,source:sourceId,room:room.name,amount,pickupAmount:Math.max(0,amount-value(c)),priority:4,
    expires:ctx.Game.time+200,progress:ctx.Game.time,position:c.pos.x+','+c.pos.y}};return c.memory.haul.task;
  }
- return{ctx,room,node,source,box,drop,station,creep,task,settle,value,Position,
-  get logistics(){return logistics;},get runtime(){return runtime;},reset(){delete ctx.__gameModuleCache;logistics=loadGameModule(ctx,'logistics');runtime=loadGameModule(ctx,'runtime');},
+ return{ctx,room,node,source,box,drop,station,creep,task,settle,value,Position,probes,freezeSnapshot(){room.snapshotObjects=room.objects;delete room.objects;},
+  get logistics(){return logistics;},get runtime(){return runtime;},reset(){delete ctx.__gameModuleCache;load();},
   tick(order=Object.values(ctx.Game.creeps)){logistics.prepare(room);for(const c of order)logistics.haul(c);settle();}};
 }
 {
@@ -212,5 +219,25 @@ function fixture(){
  f.task(c,dest,src.id,100);f.logistics.prepare(f.room);assert.equal(c.memory.haul.state,'pickup');
  dest.store[C.RESOURCE_ENERGY]=0;f.settle();f.logistics.prepare(f.room);
  assert.equal(c.memory.haul.state,'deliver','new starvation at the same destination ends optional topup');assert.equal(c.memory.haul.task.amount,30);
+}
+{
+ const f=fixture();f.station('full-controller',40,40,2000);f.box('backlog',5,5,2000);
+ const haulers=Array.from({length:18},(_,i)=>f.creep('idle-'+i,5+i%6,10+Math.floor(i/6),100));f.freezeSnapshot();
+ f.logistics.prepare(f.room);for(const c of haulers)f.logistics.haul(c);
+ assert(haulers.every(c=>c.memory.haul.state==='idle'));
+ assert.equal(f.probes.demandReads,1,'18 actors reuse the room demand snapshot built by prepare');
+ assert.equal(f.probes.stores,1,'idle execution does not repeatedly enumerate room stores');
+ assert.equal(f.probes.walkable,0,'remote idle carriers cannot occupy a station endpoint and need no endpoint geometry');
+ assert(f.probes.allCreeps<=3,'room actor discovery occurs once, not inside per-carrier/per-destination scans');
+}
+{
+ const f=fixture(),dest=f.station('shared-destination',30,30),src=f.box('source',5,5,2000);
+ const haulers=Array.from({length:18},(_,i)=>{const c=f.creep('loaded-'+i,10+i%6,15+Math.floor(i/6),100);f.task(c,dest,src.id,100,'deliver');return c;});f.freezeSnapshot();
+ f.logistics.prepare(f.room);for(const c of haulers)assert.equal(f.logistics.haulTarget(c),dest);
+ assert.equal(haulers.reduce((n,c)=>n+c.memory.haul.task.amount,0),1800);
+ assert.equal(f.probes.demandReads,1);assert(f.probes.allCreeps<=3,'indexed claims do not rescan all room actors for every claimant');
+ assert(f.probes.objectLookups<18*18,'indexed destination totals avoid quadratic peer validity lookups');
+ const initial=f.probes.walkable;for(const c of haulers)f.logistics.deliveryPorts(f.room,dest);
+ assert.equal(f.probes.walkable-initial,9,'one node shares its static nine-cell unloading geometry for the tick');
 }
 console.log('PASS: unified haul migration/reset, multi-tick actual reconciliation, tiny batches, full-route/storage sourcing, dual reservations, loaded-first reclamation, source/destination invalidation, emergency preemption, full unload, Link intent coordination, no self-route or storage bounce, bounded nearby topup');

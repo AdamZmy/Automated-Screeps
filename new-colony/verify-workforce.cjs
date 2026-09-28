@@ -144,4 +144,31 @@ for(const role of ['upgrader','builder']){
  for(const state of ['cancelled','aborting']){ctx.Game.time++;ctx.Memory.frontier.expansion.state=state;
   const result=colony.updateEconomy(f.room);assert.equal(result.baseMode,'growth',state+' releases mother growth policy');assert.equal(result.reserveRate,0,state+' releases mission reserve rate');}
 }
-console.log('PASS workforce: distinct-role CPU recovery, shared-energy multi-spawn/dedup, accepted versus observed birth reconciliation, cancellation, aging, dual-source renewals, critical-buffer repair, event-driven economy, centralized construction constraints, consumer timelines and remaining-work redirection');
+{
+ vm.runInContext("globalThis.__bodyFills=0;globalThis.__originalFill=Array.prototype.fill;Array.prototype.fill=function(...args){++globalThis.__bodyFills;return globalThis.__originalFill.apply(this,args);}",ctx);
+ try{
+  workforce.body('upgrader',800);workforce.body('builder',1800);
+  assert.equal(ctx.__bodyFills,6,'two body choices allocate only their six final part arrays, not unaffordable candidates');
+  const f=fixture();stable(f);const control=colony.updateEconomy(f.room),all=Object.values(ctx.Game.creeps);
+  workforce.workforceDemand(f.room,control,all);ctx.__bodyFills=0;
+  workforce.workforceDemand(f.room,control,all.slice());assert.equal(ctx.__bodyFills,0,'identical duty/body candidates are reused for same-tick demand projections');
+  const sp=f.spawns[0];sp.spawning={name:'existing-birth',remainingTime:30};
+  workforce.spawnRoom(f.room,[request(f,'external-busy')]);const first=ctx.Memory.frontier.rooms[f.room.name].workforce.planningTick;
+  function advance(){ctx.Game.time++;sp.spawning.remainingTime--;for(const c of Object.values(ctx.Game.creeps))if(!c.spawning)c.ticksToLive--;}
+  advance();ctx.__bodyFills=0;workforce.spawnRoom(f.room,[]);
+  const state=ctx.Memory.frontier.rooms[f.room.name].workforce;
+  assert.equal(state.planningTick,first);assert.equal(state.planReused,true);assert.equal(ctx.__bodyFills,0,'busy unchanged room performs no body search');
+  assert.equal(state.tick,ctx.Game.time,'busy fast path still updates request status');
+  assert(!state.queued.some(r=>r.owner==='mission:test'),'cancelled external demand disappears even on reused internal plan');
+  advance();delete ctx.Game.creeps.miner;workforce.spawnRoom(f.room,[]);
+  assert.equal(state.planReused,false);assert.equal(state.planningTick,ctx.Game.time,'missing source role invalidates busy cache immediately');
+  assert(state.queued.some(r=>r.essential&&r.role==='miner'),'busy room still publishes critical source recovery');
+  advance();sp.spawning=null;workforce.spawnRoom(f.room,[]);assert.equal(state.planReused,false);assert(f.births.length,'free spawn recomputes and services a protected request');
+ }finally{vm.runInContext('Array.prototype.fill=globalThis.__originalFill;delete globalThis.__originalFill;',ctx);}
+}
+{
+ const f=fixture();stable(f);let scans=0;const original=mining.operations;
+ mining.operations=(...args)=>{scans++;return original(...args);};
+ try{workforce.spawnRoom(f.room);assert.equal(scans,1,'source operations are built once and shared by renewal/capacity/payback paths');}finally{mining.operations=original;}
+}
+console.log('PASS workforce: distinct-role CPU recovery, shared-energy multi-spawn/dedup, accepted versus observed birth reconciliation, cancellation, aging, dual-source renewals, critical-buffer repair, event-driven economy, centralized construction constraints, consumer timelines, remaining-work redirection and bounded planning allocation/cache paths');

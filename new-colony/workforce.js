@@ -18,13 +18,36 @@ function workerDuty(room,parts,job,stationary=false,nodes=null) {
     // Otherwise allow an out-and-back journey, plus the refill action itself.
     return lifetime*active/(active+2*Math.ceil(distance*1.5)*step+1);
 }
+let contextTick=-1,demandContexts={};
+function demandContext(room) {
+    if(contextTick!==Game.time){contextTick=Game.time;demandContexts={};}
+    const jobs=constructionJobs(room),station=controllerStation(room),fixture=room.objects?room.objects.length:0;
+    const remaining=jobs.length?jobs.reduce((n,s)=>n+(Number.isFinite(s.progressTotal)?Math.max(0,s.progressTotal-s.progress):Infinity),0):0;
+    const jobKey=jobs[0]?jobs[0].id+':'+jobs[0].pos.x+':'+jobs[0].pos.y:'';
+    const old=demandContexts[room.name];
+    if(old&&old.room===room&&old.jobs===jobs&&old.station===station&&old.fixture===fixture&&old.remaining===remaining&&old.jobKey===jobKey)return old;
+    const nodes=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType));
+    return demandContexts[room.name]={room,jobs,job:jobs[0],station,fixture,nodes,spawn:spawns(room)[0],choices:{},
+        remaining,jobKey};
+}
+function* candidateChoices(room,context,role,limit,stationary) {
+    const key=role+':'+limit+':'+Number(stationary),task=role==='builder'?context.job:room.controller;
+    let options=context.choices[key];
+    if(!options){const largest=body(role,limit,{stationary});options=context.choices[key]={maxWork:largest?largest.filter(p=>p===WORK).length:0,choices:[]};}
+    for(let work=1;work<=options.maxWork;work++){
+        let choice=options.choices[work-1];
+        if(!choice){
+            const candidate=body(role,limit,{stationary,workLimit:work}),price=candidate.reduce((n,p)=>n+BODYPART_COST[p],0);
+            const duty=workerDuty(room,candidate,task,stationary,context.nodes);
+            choice=options.choices[work-1]={body:candidate,price,duty,capacity:candidate.filter(p=>p===WORK).length*duty*(role==='builder'?BUILD_POWER:1)};
+        }
+        yield choice;
+    }
+}
 function workforceDemand(room,control,all) {
-    const station=controllerStation(room),job=constructionJobs(room)[0],budget=room.energyCapacityAvailable;
+    const context=demandContext(room),{station,job,nodes,remaining}=context,budget=room.energyCapacityAvailable;
     const pool=Math.max(0,Math.min(control.usefulTarget,control.developmentBudget));
     const options={stationary:!!(station&&station.seats.length)};
-    const remaining=job?constructionJobs(room).reduce((n,s)=>n+(Number.isFinite(s.progressTotal)?Math.max(0,s.progressTotal-s.progress):Infinity),0):0;
-    const nodes=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType));
-    const parts=b=>b?b.filter(p=>p===WORK).length:0;
     const cost=b=>b?b.reduce((n,p)=>n+BODYPART_COST[p],0):0;
     const upgraders=all.filter(c=>c.memory.role==='upgrader').sort((a,b)=>b.getActiveBodyparts(WORK)-a.getActiveBodyparts(WORK)||a.name.localeCompare(b.name));
     const seated=options.stationary?upgraders.slice(0,station.seats.length):upgraders;
@@ -40,14 +63,10 @@ function workforceDemand(room,control,all) {
     // capacity. Full stations must recover the seat being replaced as well.
     const select=(role,limit,retained,task,stationary,target)=>{
         let best=null;
-        const maxWork=parts(body(role,limit,{stationary}));
-        for(let work=1;work<=maxWork;work++){
-            const candidate=body(role,limit,{stationary,workLimit:work}),price=cost(candidate);
-            const duty=workerDuty(room,candidate,task,stationary,nodes),rate=target(price);
-            const capacity=parts(candidate)*duty*(role==='builder'?BUILD_POWER:1);
-            const choice={body:candidate,duty,rate,capacity};
-            if(retained+capacity>=rate)return choice;
-            if(!best||capacity>best.capacity)best=choice;
+        for(const candidate of candidateChoices(room,context,role,limit,stationary)){
+            const rate=target(candidate.price),choice={...candidate,rate};
+            if(retained+candidate.capacity>=rate)return choice;
+            if(!best||candidate.capacity>best.capacity)best=choice;
         }
         return best||{body:null,duty:1,rate:target(0),capacity:0};
     };
@@ -82,11 +101,11 @@ function body(role,budget,options={}) {
     if(role==='upgrader'||role==='builder'){
         // Fixed workers pay movement only on their initial journey. Mobile
         // workers keep a two-tick plain step and enough fuel for useful batches.
-        for(let work=Math.min(50,Math.floor(options.workLimit===undefined?50:options.workLimit));work>=1;work--){
+        for(let work=Math.min(50,Math.floor(budget/BODYPART_COST[WORK]),Math.floor(options.workLimit===undefined?50:options.workLimit));work>=1;work--){
             const carry=Math.max(1,Math.ceil(work*(role==='builder'?1.2:options.stationary?.25:.4)));
             const move=Math.max(1,Math.ceil((work+carry)/(options.stationary?4:2)));
-            const b=Array(work).fill(WORK).concat(Array(carry).fill(CARRY),Array(move).fill(MOVE));
-            if(b.length<=50&&b.reduce((n,p)=>n+BODYPART_COST[p],0)<=budget)return b;
+            if(work+carry+move<=50&&work*BODYPART_COST[WORK]+carry*BODYPART_COST[CARRY]+move*BODYPART_COST[MOVE]<=budget)
+                return Array(work).fill(WORK).concat(Array(carry).fill(CARRY),Array(move).fill(MOVE));
         }
         return budget>=200?[WORK,CARRY,MOVE]:null;
     }
@@ -167,15 +186,15 @@ function roomRequests(room,roster,control,demand) {
     if(!haulers&&miners)add('hauler',body('hauler',immediate),1050,true,'restore-energy-transport');
     const nextMiner=body('miner',capacity),spawnList=spawns(room),availability=spawnList.map(s=>s.spawning&&s.spawning.remainingTime||0);
     const queue=(availability.length?Math.min(...availability):0)+Math.max(0,Math.ceil(sources(room).length/Math.max(1,spawnList.length))-1)*(nextMiner?nextMiner.length*CREEP_SPAWN_TIME:0);
-    const renewals=mining.replacementNeeds(room,roster,nextMiner,queue);
+    const operations=mining.operations(room,roster),renewals=mining.replacementNeeds(room,roster,nextMiner,queue,operations);
     for(const renewal of renewals){
-        const operation=mining.operations(room,roster).find(o=>o.sourceId===renewal.source);
+        const operation=operations.find(o=>o.sourceId===renewal.source);
         const parts=operation&&operation.activeWork===0?body('miner',immediate)||nextMiner:nextMiner;
         requests.push({id:renewal.owner+':'+renewal.slotKey,owner:renewal.owner,slotKey:renewal.slotKey,home:room.name,role:'miner',body:parts,
             memory:{source:renewal.source,replaces:renewal.replaces,operationId:operation.id},priority:1000,essential:true,
             neededAt:renewal.neededAt,latestStart:renewal.latestStart,travelTicks:renewal.travel,reason:'source-renewal-deadline'});
     }
-    for(const operation of mining.operations(room,roster)){
+    for(const operation of operations){
         const assigned=operation.assigned.filter(c=>c.spawning||(c.ticksToLive||0)>0),work=assigned.filter(c=>!c.memory.replaces).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
         if(work>=operation.requiredWork||assigned.length>=operation.seats.length)continue;
         if(renewals.some(r=>r.source===operation.sourceId))continue;
@@ -190,7 +209,7 @@ function roomRequests(room,roster,control,demand) {
     if(missingBuild)add('builder',demand.builderBody&&price(demand.builderBody)<=immediate?demand.builderBody:body('builder',immediate)||demand.builderBody,925,true,'restore-construction-or-maintenance');
     if(!requests.some(r=>r.role==='miner')){
         const replacement=minerReplacement(room,all,spawnList[0]);
-        if(replacement){const old=roster.find(c=>c.name===replacement.replaces),operation=mining.operations(room,roster).find(o=>o.sourceId===replacement.source);
+        if(replacement){const old=roster.find(c=>c.name===replacement.replaces),operation=operations.find(o=>o.sourceId===replacement.source);
             const slotKey=old&&old.memory.spawnSlot||'source:'+replacement.source+':seat:0';
             requests.push({id:operation.id+':'+slotKey,owner:operation.owner,slotKey,home:room.name,role:'miner',body:nextMiner,
                 memory:{...replacement,operationId:operation.id},priority:700,neededAt:Game.time,essential:false,reason:'profitable-miner-upgrade'});
@@ -207,8 +226,9 @@ function workerRenewals(room,roster,control) {
     const sourceTrips=control.routes||[],haulTravel=sourceTrips.length?Math.max(...sourceTrips.map(r=>r.roundTrip/2)):sp&&sp.pos?Math.max(1,range(sp,room.controller)):1;
     const current=roster.filter(c=>c.spawning||(c.ticksToLive||0)>0),replaced=new Set(current.map(c=>c.memory.replaces).filter(Boolean));
     const projected=current.slice();
-    const job=constructionJobs(room)[0],maxLead={};
+    const job=constructionJobs(room)[0],maxLead={},repairs=criticalRepairs(room),roles=new Set(current.map(c=>c.memory.role));
     for(const role of ['hauler','upgrader','builder']){
+        if(!roles.has(role))continue;
         const parts=body(role,room.energyCapacityAvailable,{stationary:role==='upgrader'&&!!controllerStation(room)});
         if(!parts){maxLead[role]=0;continue;}
         const moving=parts.filter(p=>p===MOVE).length,loaded=parts.length-moving;
@@ -220,11 +240,11 @@ function workerRenewals(room,roster,control) {
     for(const old of candidates){
         const role=old.memory.role;
         if(old.ticksToLive>Math.min(...timeline)+maxLead[role])continue;
-        if(role==='builder'&&!job&&!criticalRepairs(room).length)continue;
-        const without=projected.filter(c=>c!==old),demand=workforceDemand(room,control,without);
+        if(role==='builder'&&!job&&!repairs.length)continue;
+        const without=projected.filter(c=>c!==old),demand=role==='hauler'?null:workforceDemand(room,control,without);
         const carry=without.filter(c=>c.memory.role==='hauler').reduce((n,c)=>n+c.getActiveBodyparts(CARRY),0);
         let parts=role==='hauler'&&carry<control.carry?body(role,Math.min(room.energyCapacityAvailable,Math.max(2,control.carry-carry)*100)):
-            role==='upgrader'&&demand.upgrade?demand.upgradeBody:role==='builder'&&demand.build?demand.builderBody:role==='builder'&&criticalRepairs(room).length&&!without.some(c=>c.memory.role==='builder'&&(c.spawning||c.ticksToLive>maxLead.builder)&&c.getActiveBodyparts(WORK)>0)?body('builder',Math.min(room.energyCapacityAvailable,300)):null;
+            role==='upgrader'&&demand.upgrade?demand.upgradeBody:role==='builder'&&demand.build?demand.builderBody:role==='builder'&&repairs.length&&!without.some(c=>c.memory.role==='builder'&&(c.spawning||c.ticksToLive>maxLead.builder)&&c.getActiveBodyparts(WORK)>0)?body('builder',Math.min(room.energyCapacityAvailable,300)):null;
         if(!parts)continue;
         const task=role==='builder'?constructionJobs(room)[0]||room.controller:room.controller;
         const work=parts.filter(p=>p===WORK).length,carrying=parts.filter(p=>p===CARRY).length,moving=parts.filter(p=>p===MOVE).length;
@@ -244,20 +264,43 @@ function workerRenewals(room,roster,control) {
     }
     return requests;
 }
+let busyPlans={};
+function busyPlanKey(room,control,roster,active,recovering) {
+    // Absolute death and spawn-completion ticks stay constant during ordinary
+    // progress. Unexpected lifespan changes, body damage and role transfers
+    // invalidate the plan just like policy or infrastructure changes.
+    return [control.at,control.eventSignature,control.target,control.carry,control.buildEnergyTarget,control.usefulTarget,control.developmentBudget,
+        room.energyCapacityAvailable,Number(recovering),Number(room.controller.ticksToDowngrade<4000),
+        criticalRepairs(room).map(r=>r.node.id).join(','),
+        active.map(s=>(s.id||s.name)+':'+(s.spawning?s.spawning.name+':'+(Game.time+s.spawning.remainingTime):'free')).join(','),
+        roster.map(c=>[c.name,c.memory.role,c.memory.source||'',c.memory.replaces||'',c.getActiveBodyparts(WORK),c.getActiveBodyparts(CARRY),
+            c.spawning?'spawning':Game.time+(c.ticksToLive||0)].join(':')).join(',')].join('|');
+}
 function spawnRoom(room,externalRequests=[]) {
     const reconciled=reconcileBirths(room,allCreeps(true).filter(c=>c.memory.home===room.name)),roster=reconciled.roster,state=reconciled.state;
-    const all=roster.filter(c=>c.spawning||(c.ticksToLive||0)>0),control=updateEconomy(room),policy=upgradePolicy(room),demand=workforceDemand(room,control,all),m=economyMemory(room);
+    const all=roster.filter(c=>c.spawning||(c.ticksToLive||0)>0),control=updateEconomy(room),policy=upgradePolicy(room),m=economyMemory(room);
+    const reserved=roomSpawnState(room),active=spawns(room),recovering=colonyPolicy(room).cpuMode==='recovery';
+    const busy=!active.some((s,i)=>!s.spawning&&!reserved.used.has(s.id||s.name||String(i)));
+    const key=busy?busyPlanKey(room,control,roster,active,recovering):null,cached=busyPlans[room.name];
+    let demand,internal;
+    if(busy&&cached&&cached.key===key&&cached.at<=Game.time&&m.economy){
+        demand=cached.demand;internal=cached.internal;state.planReused=true;
+    }else{
+        demand=workforceDemand(room,control,all);
+        const renewals=workerRenewals(room,roster,control);
+        const ordinary=roomRequests(room,roster,control,demand).filter(r=>!renewals.some(n=>n.role===r.role)&&!roster.some(c=>c.spawning&&c.memory.role===r.role&&c.memory.replaces&&r.reason.endsWith('gap')));
+        internal=ordinary.concat(renewals);state.planningTick=Game.time;state.planReused=false;
+        if(busy)busyPlans[room.name]={at:Game.time,key,demand,internal};else delete busyPlans[room.name];
+    }
     const capacity=role=>all.filter(c=>c.memory.role===role).reduce((n,c)=>n+c.getActiveBodyparts(role==='hauler'?CARRY:WORK),0);
     m.economy={upgradeWorkTarget:demand.upgradeWork,upgradeWork:capacity('upgrader'),mode:policy.mode,reason:control.reason,carryTarget:control.carry,
         carry:capacity('hauler'),builderWork:capacity('builder')+capacity('bootstrap'),builderWorkTarget:demand.builderWork,upgradeEffectiveRate:demand.effectiveUp,
         upgradeEnergyTarget:demand.upgradeRate,stationSeats:demand.stationSeats,builderEffectiveRate:demand.effectiveBuild,harvestPotential:control.harvestPotential,
         usefulEnergyTarget:control.usefulTarget,buildEnergyTarget:control.buildEnergyTarget,reserveRate:control.reserveRate,upkeep:control.upkeep,
         feedbackTicks:control.feedbackTicks,incomeBasis:control.incomeBasis,decisionTick:control.at,routes:control.routes};
-    const recovering=colonyPolicy(room).cpuMode==='recovery';m.economy.spawnHold=recovering?'cpu-recovery':null;
+    m.economy.spawnHold=recovering?'cpu-recovery':null;
     const unique=new Map();
-    const renewals=workerRenewals(room,roster,control);
-    const ordinary=roomRequests(room,roster,control,demand).filter(r=>!renewals.some(n=>n.role===r.role)&&!roster.some(c=>c.spawning&&c.memory.role===r.role&&c.memory.replaces&&r.reason.endsWith('gap')));
-    for(const request of ordinary.concat(renewals,externalRequests||[])){
+    for(const request of internal.concat(externalRequests||[])){
         if(!request||request.home!==room.name||!request.owner||!request.slotKey||!request.role||!Array.isArray(request.body)||!request.body.length||request.body.length>50||request.body.some(p=>!BODYPART_COST[p])||request.expiresAt!==undefined&&request.expiresAt<Game.time)continue;
         const key=demandKey(request),previous=unique.get(key);
         if(!previous||(request.priority||0)>(previous.priority||0))unique.set(key,request);
@@ -268,7 +311,7 @@ function spawnRoom(room,externalRequests=[]) {
         const occupied=roster.some(c=>c.memory.role===request.role&&c.name!==request.memory?.replaces&&(c.spawning||(c.ticksToLive||0)>0)&&c.memory.spawnOwner===request.owner&&c.memory.spawnSlot===request.slotKey);
         if(occupied||state.pending[key]){delete state.waiting[key];continue;}
         const wait=state.waiting[key]||(state.waiting[key]={since:Game.time});
-        wait.reason=recovering&&!request.essential?'cpu-recovery':'queued';
+        wait.reason=recovering&&!request.essential?'cpu-recovery':busy?'all-spawns-busy':'queued';
         const travel=request.travelTicks||0,latest=request.latestStart===undefined?(request.neededAt===undefined?Game.time:request.neededAt)-request.body.length*CREEP_SPAWN_TIME-travel:request.latestStart;
         requests.push({...request,key,latestStart:latest,waitingSince:wait.since});
     }
@@ -277,7 +320,7 @@ function spawnRoom(room,externalRequests=[]) {
     // fresh optional work; it never promotes itself above a broken lifeline.
     const priority=r=>(r.priority||0)+Math.floor((Game.time-r.waitingSince)/CREEP_SPAWN_TIME);
     requests.sort((a,b)=>Number(!!b.essential)-Number(!!a.essential)||(a.essential&&b.essential?a.latestStart-b.latestStart:0)||priority(b)-priority(a)||a.latestStart-b.latestStart||a.waitingSince-b.waitingSince||a.key.localeCompare(b.key));
-    const reserved=roomSpawnState(room),active=spawns(room),accepted=[];
+    const accepted=[];
     for(let index=0;index<active.length;index++){
         const spawn=active[index],spawnKey=spawn.id||spawn.name||String(index);
         if(spawn.spawning||reserved.used.has(spawnKey))continue;

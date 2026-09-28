@@ -5,7 +5,7 @@ function baseUpgradePolicy(room) {
     if(level===1)return {target:2,mode:'bootstrap'};
     if(level<=3&&!room.storage){
         const capacity=level===2?550:800,workPerSource=level===2?4:5;
-        const miners=vals(Game.creeps).filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='miner');
+        const miners=allCreeps().filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='miner');
         const underMined=sources(room).some(s=>miners.filter(c=>c.memory.source===s.id&&range(c,s)<=1).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0)<workPerSource);
         if(room.energyCapacityAvailable<capacity||underMined)return {target:2,mode:'infrastructure'};
     }
@@ -28,18 +28,23 @@ function economyMemory(room) {
     Memory.frontier.rooms=Memory.frontier.rooms||{};
     return Memory.frontier.rooms[room.name]||(Memory.frontier.rooms[room.name]={});
 }
+let routeTick=-1,routeEstimates=new Map();
 function routeTravel(room,source) {
-    const m=economyMemory(room),plan=m.plan;
+    if(routeTick!==Game.time){routeTick=Game.time;routeEstimates=new Map();}
+    const m=economyMemory(room),plan=m.plan,collection=structures(room),key=room.name+':'+source.id;
+    const cached=routeEstimates.get(key);
+    if(cached&&cached.room===room&&cached.source===source&&cached.plan===plan&&cached.collection===collection)return cached.travel;
+    const save=travel=>{routeEstimates.set(key,{room,source,plan,collection,travel});return travel;};
     const route=plan&&(plan.roadRoutes||[]).find(r=>r.sourceId===source.id||r.id==='source:'+source.id);
     if(route&&route.complete&&route.tiles&&route.tiles.length){
-        const roads=new Set(room.find(FIND_STRUCTURES,{filter:s=>s.structureType===STRUCTURE_ROAD}).map(s=>s.pos.x+50*s.pos.y));
+        const roads=new Set(collection.filter(s=>s.structureType===STRUCTURE_ROAD).map(s=>s.pos.x+50*s.pos.y));
         const terrain=room.getTerrain();
         // Haulers use equal MOVE/CARRY: plains and roads cost one step, loaded
         // unpaved swamp costs five. Empty return is conservatively also charged.
-        return route.tiles.reduce((n,k)=>n+(!roads.has(k)&&(terrain.get(k%50,Math.floor(k/50))&TERRAIN_MASK_SWAMP)?5:1),0);
+        return save(route.tiles.reduce((n,k)=>n+(!roads.has(k)&&(terrain.get(k%50,Math.floor(k/50))&TERRAIN_MASK_SWAMP)?5:1),0));
     }
-    const spawn=room.find(FIND_MY_SPAWNS)[0];
-    return spawn&&spawn.pos?Math.ceil(range(spawn,source)*1.5):15;
+    const spawn=spawns(room)[0];
+    return save(spawn&&spawn.pos?Math.ceil(range(spawn,source)*1.5):15);
 }
 let economyTick=-1,economyCache={};
 function updateEconomy(room) {
@@ -50,7 +55,7 @@ function updateEconomy(room) {
     const base=baseUpgradePolicy(room);
     const status=policy(room),event=criticalSignature(room,status);
     if(old&&Game.time-old.at<100&&old.baseMode===base.mode&&old.eventSignature===event)return remember(old);
-    const all=vals(Game.creeps).filter(c=>c.memory.home===room.name),ss=sources(room),plan=m.plan;
+    const all=allCreeps().filter(c=>c.memory.home===room.name),ss=sources(room),plan=m.plan;
     const telemetry=Memory.frontier.telemetry&&Memory.frontier.telemetry.rooms&&Memory.frontier.telemetry.rooms[room.name];
     const recent=telemetry&&Game.time-telemetry.tick<=100?telemetry:null;
     const controllerRoute=plan&&(plan.roadRoutes||[]).find(r=>r.id==='controller'&&r.complete);

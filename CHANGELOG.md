@@ -8,7 +8,7 @@ individually reviewable; tested releases receive immutable version tags.
 
 ## 0.6.0 — 2026-09-28
 
-- Game build `2026-09-28.1` implements the reviewed Colony module boundaries:
+- Game build `2026-09-28.2` implements the reviewed Colony module boundaries:
   economy, mining, development, defense, links and movement own separate work;
   runtime shares tick contexts and accepted resource intents.
 - Replace overlapping Hauler flags with idle/pickup/deliver and one stable task,
@@ -21,6 +21,9 @@ individually reviewable; tested releases receive immutable version tags.
 - Run the real energy ledger independently, isolate faults and defer optional
   planning until after necessary actions. Preserve ledger windows, reviewed
   layouts, disabled Rampart construction and paused external inspection schedule.
+- Bound unchanged busy-spawn workforce planning and per-tick logistics indexes so
+  repeated body, route, destination and unloading-geometry scans are reused while
+  critical births and accepted resource reservations still reconcile every tick.
 
 ## 0.5.3 — 2026-09-28
 

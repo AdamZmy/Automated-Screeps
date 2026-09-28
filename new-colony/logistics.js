@@ -3,6 +3,71 @@ const {E,vals,range,energy,availableEnergy,availableCapacity,commitEnergy,near,g
 const {controllerStation,upgraderAssignment,economyMemory,routeTravel,constructionJobs,walkable}=require('development');
 const {linkNetwork}=require('infrastructure');
 const movementCount=name=>require('metrics').movementCount(name);
+// Disposable room indexes share the immutable engine snapshot for this tick.
+// Only accepted actions mutate the intent book; changes to owned task promises
+// update the indexes below immediately rather than rebuilding them per request.
+let boardTick=-1,boards=new Map();
+const ownsHauling=c=>c.memory.role==='hauler'||c.memory.haul&&c.memory.haul.executorTick===Game.time;
+function fixtureStamp(room) {
+    // Deterministic fixtures can replace objects/stores/tasks inside one tick;
+    // real Room objects have no `objects` collection and skip this test adapter.
+    if(!room.objects)return null;
+    const control=economyMemory(room).economyControl||{},parts=[room.controller&&room.controller.level,control.target,control.developmentBudget];
+    for(const o of room.objects)parts.push(o.id,o.structureType,o.pos&&o.pos.x,o.pos&&o.pos.y,energy(o));
+    for(const c of Object.values(Game.creeps))if(c.room&&c.room.name===room.name){
+        const h=c.memory.haul,t=h&&h.task,b=c.memory.workSupply;
+        parts.push(c.name,c.memory.role,energy(c),h&&h.state,h&&h.executorTick,t&&t.id,t&&t.source,t&&t.amount,t&&t.pickupAmount,t&&t.expires,
+            t&&t.intent&&t.intent.at,t&&t.intent&&t.intent.kind,t&&t.intent&&t.intent.amount,b&&b.id,b&&b.job);
+    }
+    for(const site of room.sites||[])parts.push(site.id,site.progress);
+    return parts.join('|');
+}
+function getBoard(room,extra=null,refresh=false) {
+    if(boardTick!==Game.time){boardTick=Game.time;boards=new Map();}
+    let board=boards.get(room.name);
+    const stamp=refresh&&(!board||!board.active)?fixtureStamp(room):undefined;
+    if(!board||board.room!==room||board.root!==Game.creeps||stamp!==undefined&&stamp!==board.stamp){
+        board={room,root:Game.creeps,stamp:stamp===undefined?fixtureStamp(room):stamp,active:0,prepared:!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps),members:[],names:new Set(),
+            entries:new Map(),destinations:new Map(),sourceMembers:new Map(),destinationTotals:new Map(),sourceTotals:new Map(),layouts:new Map()};
+        boards.set(room.name,board);
+        for(const c of allCreeps())if(Game.creeps[c.name]===c&&!c.spawning&&c.room&&c.room.name===room.name&&ownsHauling(c)){
+            board.members.push(c);board.names.add(c.name);indexCreep(c,board);
+        }
+    }
+    if(extra&&!board.names.has(extra.name)){board.members.push(extra);board.names.add(extra.name);indexCreep(extra,board);board.prepared=false;}
+    return board;
+}
+function finishBoard(board) {if(!board.active&&board.room.objects)board.stamp=fixtureStamp(board.room);}
+function indexCreep(c,board=boards.get(c.room.name)) {
+    if(!board||boardTick!==Game.time)return;
+    const old=board.entries.get(c.name);
+    if(old){
+        const d=board.destinationTotals.get(old.id);d.total-=old.total;d.funded-=old.funded;
+        board.destinations.get(old.id).delete(c);
+        if(old.source){board.sourceTotals.set(old.source,board.sourceTotals.get(old.source)-old.pickup);board.sourceMembers.get(old.source).delete(c);}
+        board.entries.delete(c.name);
+    }
+    const h=c.memory.haul,t=h&&h.task;
+    if(Game.creeps[c.name]!==c||c.spawning||c.room.name!==board.room.name||!ownsHauling(c)||!validDelivery(c,t))return;
+    const entry={id:t.id,total:pending(t,'deliver')?0:t.amount,funded:fundedDelivery(c,t),source:h.state==='pickup'&&!pending(t)?t.source:null,
+        pickup:Math.max(0,t.pickupAmount||t.amount-energy(c))};
+    board.entries.set(c.name,entry);
+    if(!board.destinations.has(t.id)){board.destinations.set(t.id,new Set());board.destinationTotals.set(t.id,{total:0,funded:0});}
+    board.destinations.get(t.id).add(c);const d=board.destinationTotals.get(t.id);d.total+=entry.total;d.funded+=entry.funded;
+    if(entry.source){
+        if(!board.sourceMembers.has(entry.source)){board.sourceMembers.set(entry.source,new Set());board.sourceTotals.set(entry.source,0);}
+        board.sourceMembers.get(entry.source).add(c);board.sourceTotals.set(entry.source,board.sourceTotals.get(entry.source)+entry.pickup);
+    }
+}
+function cachedNeeds(room,includeStorage=true) {
+    const board=getBoard(room);
+    if(!board.requests){board.requests=deliveryNeeds(room);board.requestsById=new Map(board.requests.map(n=>[n.node.id,n]));}
+    return includeStorage?board.requests:board.requests.filter(n=>n.node.structureType!==STRUCTURE_STORAGE);
+}
+function reservedDelivery(c,id,funded) {
+    const board=getBoard(c.room),sum=board.destinationTotals.get(id),own=board.entries.get(c.name),field=funded?'funded':'total';
+    return (sum?sum[field]:0)-(own&&own.id===id?own[field]:0);
+}
 function deliveryNeeds(room,includeStorage=true) {
     const stock=stores(room),ss=sources(room),ctrl=room.controller,needs=[];
     const add=(node,high,priority)=>{if(node&&node.store.getFreeCapacity(E)>0)needs.push({node,high:Math.min(high,energy(node)+node.store.getFreeCapacity(E)),priority});};
@@ -68,7 +133,7 @@ function haulMemory(c) {
     return h;
 }
 function pending(task,kind) {return !!(task&&task.intent&&task.intent.at===Game.time&&(!kind||task.intent.kind===kind));}
-function clearTask(c) {const h=haulMemory(c);h.task=null;h.state='idle';}
+function clearTask(c) {const h=haulMemory(c);h.task=null;h.state='idle';indexCreep(c);}
 function validDelivery(c,task) {
     const target=task&&Game.getObjectById(task.id);
     return !!(task&&task.room===c.room.name&&task.expires>Game.time&&Number.isInteger(task.amount)&&task.amount>0&&
@@ -82,31 +147,27 @@ function fundedDelivery(c,task) {
 function holdsDeliveryPort(c,task) {
     return !!(task&&c.memory.haul&&(c.memory.role==='hauler'||c.memory.haul.executorTick===Game.time)&&c.memory.haul.state==='deliver'&&!pending(task)&&task.port&&validDelivery(c,task)&&range(c,task.port)<=3);
 }
-function carriers(room,extra=null) {
-    const list=allCreeps().filter(c=>Game.creeps[c.name]===c&&!c.spawning&&c.room&&c.room.name===room.name&&
-        (c.memory.role==='hauler'||c.memory.haul&&c.memory.haul.executorTick===Game.time));
-    if(extra&&!list.includes(extra))list.push(extra);
-    return list;
-}
+function carriers(room,extra=null) {return getBoard(room,extra).members;}
 function deliveryGap(request) {
     // A Link or another courier may already have accepted a transfer this tick.
     const incoming=Math.max(0,request.node.store.getFreeCapacity(E)-availableCapacity(request.node));
     return Math.max(0,Math.floor(Math.min(availableCapacity(request.node),request.high-energy(request.node)-incoming)));
 }
 function peers(c,id) {
-    return carriers(c.room).filter(p=>p!==c&&p.memory.haul&&p.memory.haul.task&&p.memory.haul.task.id===id&&validDelivery(p,p.memory.haul.task));
+    const group=getBoard(c.room).destinations.get(id);
+    return group?Array.from(group).filter(p=>p!==c):[];
 }
 function reservedSource(c,id) {
-    return carriers(c.room).filter(p=>p!==c&&p.memory.haul&&p.memory.haul.state==='pickup'&&p.memory.haul.task&&
-        p.memory.haul.task.source===id&&validDelivery(p,p.memory.haul.task)&&!pending(p.memory.haul.task))
-        .reduce((n,p)=>n+Math.max(0,p.memory.haul.task.pickupAmount||p.memory.haul.task.amount-energy(p)),0);
+    const board=getBoard(c.room),own=board.entries.get(c.name);
+    return (board.sourceTotals.get(id)||0)-(own&&own.source===id?own.pickup:0);
 }
 function pickupNodes(room) {
-    const ss=sources(room),stock=stores(room),hub=linkNetwork(room).hub;
-    return drops(room).filter(d=>d.resourceType===E).concat(
+    const board=getBoard(room);if(board.pickups)return board.pickups;
+    const ss=sources(room),stock=stores(room),hub=linkNetwork(room).hub,seen=new Set();
+    return board.pickups=drops(room).filter(d=>d.resourceType===E).concat(
         stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&ss.some(src=>range(src,s)<=1)),
         tombstones(room),ruins(room),hub?[hub]:[],room.storage?[room.storage]:[])
-        .filter((node,i,arr)=>availableEnergy(node)>0&&arr.findIndex(other=>other.id===node.id)===i);
+        .filter(node=>{if(availableEnergy(node)<=0||seen.has(node.id))return false;seen.add(node.id);return true;});
 }
 function sourceAllowed(c,node,destination) {
     const avoid=c.memory.haulPickupAvoid;
@@ -123,7 +184,7 @@ function routePossible(c,source,destination) {
     const first=pathLeg(c,source);if(!first)return false;
     return !!pathLeg(first.end,destination);
 }
-function reconcile(c,requests) {
+function reconcileTask(c,requests) {
     const h=haulMemory(c),task=h.task,position=c.pos.x+','+c.pos.y;
     const blocked=c.memory.haulBlocked||{};
     for(const id in blocked)if(blocked[id]<=Game.time)delete blocked[id];
@@ -153,6 +214,7 @@ function reconcile(c,requests) {
         clearTask(c);
     }else h.state='pickup';
 }
+function reconcile(c,requests) {reconcileTask(c,requests);indexCreep(c);}
 function reclaimSoft(c,request,amount) {
     const others=peers(c,request.node.id).filter(p=>!pending(p.memory.haul.task,'deliver'));
     let excess=Math.max(0,amount+others.reduce((n,p)=>n+p.memory.haul.task.amount,0)-deliveryGap(request));
@@ -160,27 +222,26 @@ function reclaimSoft(c,request,amount) {
         const h=p.memory.haul,t=h.task,take=Math.min(excess,Math.max(0,t.amount-fundedDelivery(p,t)));
         if(!take)continue;t.amount-=take;excess-=take;
         t.pickupAmount=Math.min(t.pickupAmount||0,Math.max(0,t.amount-energy(p)));
-        if(t.amount<=0)clearTask(p);
+        if(t.amount<=0)clearTask(p);else indexCreep(p);
         if(excess<=0)break;
     }
 }
 function reclaimSource(c,source) {
     let left=availableEnergy(source);
-    for(const peer of carriers(c.room)){
+    for(const peer of Array.from(getBoard(c.room).sourceMembers.get(source.id)||[])){
         const h=peer.memory.haul,t=h&&h.task;
         if(peer===c||!t||h.state!=='pickup'||t.source!==source.id||pending(t)||!validDelivery(peer,t))continue;
         const keep=Math.min(left,Math.max(0,t.pickupAmount||t.amount-energy(peer)));left-=keep;
         t.pickupAmount=keep;t.amount=Math.min(t.amount,energy(peer)+keep);
-        if(t.amount<=0)clearTask(peer);else if(!keep)h.state='deliver';
+        if(t.amount<=0)clearTask(peer);else{if(!keep)h.state='deliver';indexCreep(peer);}
     }
 }
-function assign(c,requests) {
+function assignTask(c,requests) {
     const h=haulMemory(c),old=h.task;
     if(pending(old))return old&&Game.getObjectById(old.id);
     const cargo=availableEnergy(c),funded=cargo>0,blocked=c.memory.haulBlocked||{},capacity=availableCapacity(c);
     const choices=requests.filter(n=>!blocked[n.node.id]&&n.node.id!==h.origin)
-        .map(n=>({...n,gap:Math.max(0,deliveryGap(n)-peers(c,n.node.id).reduce((sum,p)=>sum+
-            (funded?fundedDelivery(p,p.memory.haul.task):pending(p.memory.haul.task,'deliver')?0:p.memory.haul.task.amount),0))}))
+        .map(n=>({...n,gap:Math.max(0,deliveryGap(n)-reservedDelivery(c,n.node.id,funded))}))
         .filter(n=>n.gap>0).sort((a,b)=>a.priority-b.priority||Number(b.node.id===old?.id)-Number(a.node.id===old?.id)||range(c,a.node)-range(c,b.node));
     const routedPriorities=new Set();
     for(const request of choices){
@@ -229,31 +290,28 @@ function assign(c,requests) {
     }
     clearTask(c);return null;
 }
-let preparedTick=-1,preparedRooms=new Map();
+function assign(c,requests) {const result=assignTask(c,requests);indexCreep(c);return result;}
 function prepare(room,extra=null) {
-    if(preparedTick!==Game.time){preparedTick=Game.time;preparedRooms=new Map();}
-    const old=preparedRooms.get(room.name),list=carriers(room,extra);
-    if(old&&old.room===room&&old.root===Game.creeps&&(!extra||old.names.has(extra.name)))return old;
-    const requests=deliveryNeeds(room),record={room,root:Game.creeps,names:new Set(list.map(c=>c.name))};
-    preparedRooms.set(room.name,record);
-    for(const c of list)reconcile(c,requests);
-    // Current cargo gets first claim, including cargo whose old loaded flag was
-    // false. Empty promises remain reclaimable until an action is accepted.
-    list.sort((a,b)=>Number(energy(b)>0)-Number(energy(a)>0)||Number(!!b.memory.haul.task)-Number(!!a.memory.haul.task)||a.name.localeCompare(b.name));
-    for(const c of list)assign(c,requests);
-    return record;
+    const board=getBoard(room,extra,true);if(board.prepared)return board;
+    board.active++;board.prepared=true;
+    try{
+        const requests=cachedNeeds(room),list=board.members.slice();
+        for(const c of list)reconcile(c,requests);
+        // Current cargo keeps first claim; empty future pickup remains soft.
+        list.sort((a,b)=>Number(energy(b)>0)-Number(energy(a)>0)||Number(!!b.memory.haul.task)-Number(!!a.memory.haul.task)||a.name.localeCompare(b.name));
+        for(const c of list)assign(c,requests);
+    }finally{board.active--;finishBoard(board);}
+    return board;
 }
 function release(c) {if(c.memory.haul){clearTask(c);delete c.memory.haul.executorTick;}}
-function haulTarget(c,includeStorage=true) {
+function chooseHaulTarget(c,includeStorage=true) {
     if(c.memory.role!=='hauler')haulMemory(c).executorTick=Game.time;
-    prepare(c.room,c);
-    const requests=deliveryNeeds(c.room,includeStorage);reconcile(c,requests);
+    const requests=cachedNeeds(c.room,includeStorage);reconcile(c,requests);
     const h=haulMemory(c),task=h.task;
     if(pending(task))return Game.getObjectById(task.id);
     if(task){
         const request=requests.find(n=>n.node.id===task.id),funded=availableEnergy(c)>0;
-        const uncovered=n=>deliveryGap(n)-peers(c,n.node.id).reduce((sum,p)=>sum+
-            (funded?fundedDelivery(p,p.memory.haul.task):pending(p.memory.haul.task,'deliver')?0:p.memory.haul.task.amount),0);
+        const uncovered=n=>deliveryGap(n)-reservedDelivery(c,n.node.id,funded);
         const urgent=requests.some(n=>n.priority<request.priority&&n.node.id!==h.origin&&
             !(c.memory.haulBlocked||{})[n.node.id]&&uncovered(n)>0);
         const source=h.state==='pickup'&&Game.getObjectById(task.source);
@@ -263,18 +321,28 @@ function haulTarget(c,includeStorage=true) {
     }
     return assign(c,requests);
 }
+function haulTarget(c,includeStorage=true) {
+    if(c.memory.role!=='hauler')haulMemory(c).executorTick=Game.time;
+    const board=prepare(c.room,c);board.active++;
+    try{return chooseHaulTarget(c,includeStorage);}finally{indexCreep(c,board);board.active--;finishBoard(board);}
+}
+function obstacleTiles(board) {
+    if(!board.future){const plan=economyMemory(board.room).plan;board.future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));}
+    return board.future;
+}
 function deliveryPorts(room,target) {
-    const station=controllerStation(room),plan=economyMemory(room).plan;
-    const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
+    const board=getBoard(room,null,true),cached=board.layouts.get(target.id);if(cached)return cached;
+    const station=controllerStation(room),future=obstacleTiles(board);
     const seats=station?station.seats:[],ports=[];
     for(let y=target.pos.y-1;y<=target.pos.y+1;y++)for(let x=target.pos.x-1;x<=target.pos.x+1;x++){
         const p={x,y};if(walkable(room,p)&&!future.has(x+50*y)&&!seats.some(s=>range(s,p)===0))ports.push(p);
     }
-    return {ports,preferred:station&&station.node.id===target.id?station.port:null,seats};
+    const layout={ports,preferred:station&&station.node.id===target.id?station.port:null,seats};board.layouts.set(target.id,layout);return layout;
 }
 function deliveryPort(c,target,task,layout) {
+    getBoard(c.room,c,true);
     const peers=roomCreeps(c.room).concat(hostiles(c.room)).filter(o=>(!o.my||Game.creeps[o.name]===o)&&o.name!==c.name);
-    const promised=allCreeps().filter(o=>Game.creeps[o.name]===o&&o.name!==c.name).map(o=>({creep:o,task:o.memory.haul&&o.memory.haul.task}))
+    const promised=carriers(c.room).filter(o=>Game.creeps[o.name]===o&&o.name!==c.name).map(o=>({creep:o,task:o.memory.haul&&o.memory.haul.task}))
         .filter(o=>o.task&&o.task.room===c.room.name&&holdsDeliveryPort(o.creep,o.task)).map(o=>o.task.port);
     const avoid=task.portAvoid||{};
     for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
@@ -300,8 +368,9 @@ function deliveryPort(c,target,task,layout) {
 }
 function clearStationTraffic(c,target=null) {
     const station=controllerStation(c.room);if(!station&&!target)return;
-    const node=target||station.node,plan=economyMemory(c.room).plan,layout=deliveryPorts(c.room,node);
-    const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
+    const node=target||station.node;
+    if(range(c,node)>3&&(!station||range(c,station.node)>3))return;
+    const board=getBoard(c.room),plan=economyMemory(c.room).plan,layout=deliveryPorts(c.room,node),future=obstacleTiles(board);
     const endpoints=[...layout.ports,...(station?[station.port,...station.seats]:[])];
     const roads=(plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD&&range(s,node)<=2);
     const reserved=[...endpoints,...roads];
@@ -317,7 +386,7 @@ function clearStationTraffic(c,target=null) {
     const p=options.sort((a,b)=>Number(roads.some(r=>range(r,a)===0))-Number(roads.some(r=>range(r,b)===0))||range(node,b)-range(node,a))[0];
     if(p)go(c,new RoomPosition(p.x,p.y,c.room.name),0,{ignoreCreeps:false});
 }
-function collectHaul(c) {
+function collectTask(c) {
     const h=haulMemory(c),task=h.task;
     if(!task||h.state!=='pickup'||pending(task))return !!(task&&pending(task));
     const target=Game.getObjectById(task.source);
@@ -332,7 +401,7 @@ function collectHaul(c) {
         task.intent={kind:'pickup',at:Game.time,amount:accepted,before:energy(c)};task.pickupAmount=0;task.progress=Game.time;h.origin=target.id;
         // Drop pickup has no quantity argument. Account for its full accepted
         // amount; next tick's physical cargo reconciles engine arbitration.
-        const request=deliveryNeeds(c.room).find(n=>n.node.id===task.id);
+        const request=cachedNeeds(c.room).find(n=>n.node.id===task.id);
         task.amount=Math.min(energy(c)+accepted,request?deliveryGap(request):task.amount);
         if(request)reclaimSoft(c,request,task.amount);
         reclaimSource(c,target);
@@ -344,7 +413,7 @@ function collectHaul(c) {
     if(energy(c)){h.state='deliver';task.pickupAmount=0;}else clearTask(c);
     return false;
 }
-function deliverHaul(c,target) {
+function deliverTask(c,target) {
     const id=target.id||target.name,position=c.pos.x+','+c.pos.y;
     const h=haulMemory(c),task=h.task;
     if(!task||task.id!==id||task.room!==c.room.name)return false;
@@ -361,7 +430,7 @@ function deliverHaul(c,target) {
     if(result===OK){
         commitEnergy(c,target,amount);
         task.amount=amount;task.intent={kind:'deliver',at:Game.time,amount,before:energy(c)};task.progress=Game.time;
-        const request=deliveryNeeds(c.room).find(n=>n.node.id===target.id);if(request)reclaimSoft(c,request,0);
+        const request=cachedNeeds(c.room).find(n=>n.node.id===target.id);if(request)reclaimSoft(c,request,0);
         delete task.port;delete task.portAvoid;delete task.portWaitSince;clearStationTraffic(c,target);return true;
     }
     if(result===ERR_TIRED||c.fatigue)return true;
@@ -384,6 +453,14 @@ function deliverHaul(c,target) {
     if(task.portWaitSince!==undefined&&Game.time-task.portWaitSince<8)return true;
     c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;clearTask(c);
     return false;
+}
+function collectHaul(c) {
+    const board=getBoard(c.room,c,true);board.active++;
+    try{return collectTask(c);}finally{indexCreep(c,board);board.active--;finishBoard(board);}
+}
+function deliverHaul(c,target) {
+    const board=getBoard(c.room,c,true);board.active++;
+    try{return deliverTask(c,target);}finally{indexCreep(c,board);board.active--;finishBoard(board);}
 }
 function haul(c) {
     let target=haulTarget(c),h=haulMemory(c);
