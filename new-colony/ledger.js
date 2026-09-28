@@ -21,7 +21,7 @@ function actor(o,kind){
         boosts:body.filter(p=>p.type===WORK&&p.boost&&BOOSTS[WORK][p.boost]&&BOOSTS[WORK][p.boost].build>1)
             .map(p=>(BOOSTS[WORK][p.boost].build-1)*BUILD_POWER).sort((a,b)=>b-a)};
 }
-function snapshot(room,creeps,frontier){
+function snapshot(room,creeps,frontier,observedNames){
     const reasons=[],structures=find(room,FIND_STRUCTURES,reasons),sources=find(room,FIND_SOURCES,reasons);
     const sites=find(room,FIND_MY_CONSTRUCTION_SITES,reasons),drops=find(room,FIND_DROPPED_RESOURCES,reasons);
     const tombstones=find(room,FIND_TOMBSTONES,reasons),ruins=find(room,FIND_RUINS,reasons);
@@ -47,7 +47,11 @@ function snapshot(room,creeps,frontier){
     if(!finite(potential))reasons.push('source-capacity-unavailable');
     const remote=creeps.filter(c=>c.memory&&c.memory.home===room.name&&c.pos.roomName!==room.name);
     // Scope is explicit: remote rooms are not silently treated as unproductive sources.
-    if(remote.some(c=>c.memory.role!=='scout'&&c.memory.role!=='claimer'))reasons.push('remote-economy-not-covered');
+    // Pioneers in another room observed in this same pass are already inside
+    // the physical ledgers. Keep their home for replacement ownership; border
+    // cargo remains an export/import, and unobserved transit stays excluded.
+    if(remote.some(c=>c.memory.role!=='scout'&&c.memory.role!=='claimer'&&
+        !(c.memory.role==='pioneer'&&c.memory.target===c.pos.roomName&&observedNames.has(c.pos.roomName))))reasons.push('remote-economy-not-covered');
     if(structures.some(s=>s.my&&[STRUCTURE_TERMINAL,STRUCTURE_LAB,STRUCTURE_POWER_SPAWN,STRUCTURE_FACTORY].includes(s.structureType)))reasons.push('advanced-energy-flows-not-covered');
     return {tick:Game.time,inventory,actors,sites:siteMap,sources:sourceIds,potential,scopeReasons:[...new Set(reasons)],remoteCreeps:remote.length};
 }
@@ -235,9 +239,9 @@ function observe(owned){
     // Exclude synthetic same-tick spawn intents, which have no object ID yet.
     const creeps=Object.values(Game.creeps).filter(c=>c.id&&c.my!==false),currentActors={};
     for(const c of creeps)currentActors[c.id]=actor(c,'creep');
-    const nextRooms={};
+    const nextRooms={},observedNames=new Set(owned.map(room=>room.name));
     for(const room of owned){
-        const now=snapshot(room,creeps,frontier),before=state.rooms[room.name];nextRooms[room.name]=now;
+        const now=snapshot(room,creeps,frontier,observedNames),before=state.rooms[room.name];nextRooms[room.name]=now;
         const sample=measure(room,before,now,state.actors,currentActors,eventLog(room));
         const entry=root.rooms[room.name]||(root.rooms[room.name]={history:[],windows:{},started:Game.time});
         entry.tick=Game.time;entry.eventTick=Game.time-1;entry.inventory=now.inventory;entry.latest=sample;

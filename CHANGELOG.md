@@ -6,6 +6,22 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.4.3 — 2026-09-27
+
+- Game build `2026-09-27.1` sizes new upgrader/builder bodies for the remaining
+  effective capacity, including candidate upkeep, travel/refill duty and replaced seats.
+  Existing fueled workers continue acting; no action quotas or forced recycling.
+- During measured CPU overload with less than 50 limit-ticks of bucket reserve,
+  pause discretionary births while preserving missing essential roles and miner renewal.
+  This prevents additional load; it does not instantly remove existing CPU cost.
+- Recover an obsolete bootstrap timeout only after the target is owned and its first
+  Spawn exists. Other expansion blocks and self-sufficiency checks remain intact.
+- Count pioneers in their assigned, concurrently observed owned target within the
+  physical ledger; preserve border imports/exports and exclusion of unobserved transit.
+- Distinguish supported, unattended and post-Spawn bootstrap alerts. Preserve home
+  rosters and add bounded physical-support summaries.
+- Add bounded temporary transport observation tools and refresh the RCL5 map snapshot.
+
 ## 0.4.2 — 2026-09-25
 
 - Game build `2026-09-25.16` fills the controller container according to its

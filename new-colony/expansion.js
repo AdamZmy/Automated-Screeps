@@ -142,7 +142,14 @@ function tick(owned){
     if(Game.time%50!==0)return;
     Memory.frontier.candidates={};for(const room of owned)Memory.frontier.candidates[room.name]=candidates(room.name).slice(0,6);
     const current=Memory.frontier.expansion;
-    if(current&&current.state==='blocked')return;
+    if(current&&current.state==='blocked'){
+        const target=Game.rooms[current.target];
+        // A completed first spawn supersedes only the bootstrap deadline. Keep
+        // threat, route and layout blocks intact and still require stabilization.
+        if(current.reason==='bootstrap timeout; review required'&&target&&target.controller&&target.controller.my&&target.find(FIND_MY_SPAWNS).length){
+            current.state='stabilizing';delete current.reason;
+        }else return;
+    }
     if(current&&current.state!=='complete'&&current.state!=='blocked'){
         const target=Game.rooms[current.target];
         if(target&&target.find(FIND_MY_SPAWNS).length){

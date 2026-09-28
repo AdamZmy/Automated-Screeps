@@ -200,3 +200,19 @@ function fixture(){
     rows[0].accountingTicks=300;w=f.ctx.module.exports._windowMetrics(rows,300,300);assert(w.eligible);
 }
 console.log('PASS: event conservation, useful/unplanned completed builds, actual spawn births, death attribution, inventory deduplication, official-engine salvage withdrawals, separate productive/scope/accounting coverage, bounded diagnostic reasons, total utilization with matched coverage and 90% signal, zero/missing/>100% and legacy buckets, gaps/missing logs, ownership/scope, operating costs, official-engine boosts, 300/1500/6000 coverage, warmup/import/drawdown suppression, bounded history');
+{
+    const f=fixture(),p=f.unit('pioneer',100);p.memory={home:'R',role:'pioneer',target:'S'};f.ctx.Game.creeps.pioneer=p;
+    const other={name:'S',find:()=>[],getEventLog:()=>[]};
+    const sample=(rooms=[f.room,other])=>{f.ctx.Game.time++;f.ctx.module.exports.observe(rooms);return f.ctx.Memory.frontier.energy.rooms;};
+    sample();p.pos.roomName='S';let r=sample();
+    assert.equal(r.R.latest.scopeComplete,true,'a pioneer in its observed owned target does not invalidate the home ledger');
+    assert.equal(r.R.latest.exports,100);assert.equal(r.S.latest.imports,100);
+    assert.equal(r.R.latest.residual,0);assert.equal(r.S.latest.residual,0);
+    assert.equal(p.memory.home,'R','accounting never changes replacement ownership');
+    p.pos.roomName='unowned';r=sample();assert.equal(r.R.latest.scopeComplete,false,'unobserved transit remains outside scope');
+    p.pos.roomName='S';p.memory.role='hauler';sample();r=sample();assert.equal(r.R.latest.scopeComplete,false,'remote economic roles are not silently exempted');
+    p.memory.role='pioneer';sample([f.room]);r=sample([f.room]);assert.equal(r.R.latest.scopeComplete,false,'visible but unobserved target remains incomplete');
+    p.memory.target='different';sample();r=sample();assert.equal(r.R.latest.scopeComplete,false,'only the assigned target gets the exception');
+    p.memory.target='S';sample();r=sample();assert.equal(r.R.latest.accountingComplete,true);
+    console.log('PASS: covered pioneer scope, conserved border cargo, unchanged home and conservative transit/role/target exclusions');
+}

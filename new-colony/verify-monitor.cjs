@@ -42,3 +42,24 @@ assert(logs.some(s=>s.includes('recovered R:source-backlog-s')));
 for(let t=160;t<=1800;t+=20)tick(t);assert.equal(ctx.Memory.frontier.telemetry.rooms.R.history.length,60,'history is bounded');
 box.store.energy=100;drop.amount=700;m=tick(1820);assert.equal(m.mining[0].backlogSince,1820,'ground backlog is detected even with a non-full nearby container');
 console.log('PASS: in-position mining WORK, per-source stock and persistent backlog, net stock trend, fatigue vs blockage, road coverage, recovery alerts, bounded history');
+// Colony establishment has physical supporters before it has a home roster or spawn.
+{
+    ctx.Game.creeps={};room.energyAvailable=0;room.energyCapacityAvailable=0;
+    const pioneer=unit('support','pioneer',12,12,2);pioneer.memory.home='Mother';pioneer.memory.target='R';
+    let entry=tick(1840),alerts=ctx.Memory.frontier.telemetry.alerts;
+    assert.equal(Object.keys(entry.roleCounts).length,0,'home roster remains separate from resident support');
+    assert.equal(entry.bootstrap.supportPioneers,1);assert.equal(entry.bootstrap.residentWork,2);
+    assert(!alerts['R:spawn-starved']);assert(!alerts['R:missing-mining']);assert(!alerts['R:bootstrap-unassisted']);
+    pioneer.pos.roomName='Transit';entry=tick(1860);assert.equal(entry.bootstrap.incomingPioneers,1);
+    assert(!ctx.Memory.frontier.telemetry.alerts['R:bootstrap-unassisted'],'healthy incoming support is not absence');
+    pioneer.spawning=true;pioneer.ticksToLive=undefined;entry=tick(1880);assert.equal(entry.bootstrap.incomingPioneers,1);
+    delete ctx.Game.creeps.support;
+    for(let t=1900;t<=2200;t+=20)entry=tick(t);
+    assert(ctx.Memory.frontier.telemetry.alerts['R:bootstrap-unassisted'],'abandoned spawnless room still raises a specific alert');
+    const originalFind=room.find.bind(room),spawn={id:'origin',my:true,structureType:C.STRUCTURE_SPAWN,pos:pos(10,10),store:store(0,300)};
+    room.find=(type,opt)=>{let a=originalFind(type);if(type===C.FIND_STRUCTURES)a=a.concat(spawn);return opt&&opt.filter?a.filter(opt.filter):a;};
+    entry=tick(2220);alerts=ctx.Memory.frontier.telemetry.alerts;
+    assert(!entry.bootstrap.active);assert(!alerts['R:bootstrap-unassisted']);
+    assert(alerts['R:spawn-starved']);assert(alerts['R:missing-mining'],'normal colony recovery alarms remain enabled after first spawn');
+    console.log('PASS: pioneer support, incoming/spawning support, abandoned bootstrap and post-spawn recovery alerts');
+}

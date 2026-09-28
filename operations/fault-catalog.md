@@ -12,6 +12,19 @@
 | L003 | 容器未满、近处满载车无任务 | 空载取货任务提前占满目的地货量额度 | .15实货回收未兑现额度，线上验证中 | #1/#5 |
 | L004 | 近车有货有任务仍对整箱退避 | 远途车辆提前独占卸货格 | .15仅近场车辆独占格，线上验证中 | #1/#5 |
 | U001 | 升级工有能量在范围内却轮休 | 把人数规划预算当作每tick升级动作额度 | .16已部署，升级/建设预算只作规划 | #4 |
+| W004 | 新工人反复超过剩余产能需求 | 每个新增身体按整个岗位预算定型 | 2026-09-27.1按剩余有效容量，待线上续代验收 | #4 |
+| M001 | 两房已观测但母房用能率缺测 | 用home把目标房先驱误判为未覆盖外矿 | 2026-09-27.1限定已观测目标房例外 | #4 |
+| M002 | 有先驱开拓却报警无矿工/出生饥饿 | home人口和无Spawn阶段未区分 | 2026-09-27.1分开bootstrap支援与本地恢复 | #7 |
+| X001 | 首Spawn已成而扩张仍超时blocked | 6000tick超时早退阻止后续稳定验收 | 2026-09-27.1精确超时原因与已建Spawn恢复 | #7 |
+
+## W004 / M001 / M002 / X001 — 2026-09-27 confirmed mechanisms
+
+- W004: With1300 capacity,9 existing WORK and12.77/t pool, old sizing buys another9WORK/1200 energy; natural renewal repeats the excess. Builder sizing has the same whole-pool error. Sandbox confirms the mechanism; historical reserve permanence is excluded by later storage19337. New sizing buys4WORK in that case and1WORK for a small deficit. Full-seat profitable replacement and pending births remain tested. Run `node new-colony/verify-economy.cjs`; review: `diagnostics/2026-09-26-workforce-reserve-review.md`.
+- M001: At73980140 the mother ledger has complete productive events but zero total-use coverage solely because its pioneers are physically in another observed owned room. Only assigned-target pioneers in the same observation pass are exempted; unowned transit, other remote roles and unmatched targets remain excluded. Imports/exports and residuals are unchanged. Run `node new-colony/verify-ledger.cjs`.
+- M002: At73980186 two2WORK pioneers physically support W23N26 while its home roster is zero and no Spawn exists yet. Old alerts incorrectly require ordinary miner/spawn roles. New bootstrap support reports residents/incoming pioneers and retains an unattended-room alarm; normal recovery alarms resume after Spawn construction. Run `node new-colony/verify-monitor.cjs`.
+- X001: The6000tick deadline can block an unfinished but progressing colony; a later completed Spawn previously could not clear that exact state. At73985060 target capacity300/41 home creeps coexist with bootstrap-timeout blocked. Only an owned target with a real Spawn and that exact reason resumes stabilizing; ownership/layout blocks persist. Run `node new-colony/verify-expansion.cjs`.
+- Independent review and sandbox: `diagnostics/2026-09-27-expansion-review.md`. These mechanisms are confirmed; full post-deployment efficiency/CPU and self-sufficiency remain separate acceptance checkpoints.
+- CPU73985060: mean31.9062 against limit20, bucket627; small300-capacity bodies, long68/80 routes and workforce duty estimates together demand41 target-room creeps. The emergency birth guard prevents additional nonessential growth, not current-creep actions. Missing essential roles and miner renewal bypass it. Test in verify-economy; immediately compare live bucket and upgrade progress. Do not claim recovery from the guard or local tests alone.
 
 ## U001 — 规划预算导致就绪升级工人为轮休
 

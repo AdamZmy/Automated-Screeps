@@ -138,3 +138,12 @@ assert.equal(e.goals.length,5,'A failed sole exit must not be retried immediatel
 e.setJam(false);e.ctx.Game.time=1055;e.run();
 assert.deepEqual([e.c.pos.x,e.c.pos.y],[20,49],'The fifty-tick exclusion expires and allows a recovered sole exit');
 console.log('PASS: real blocked-exit OK/no-movement regression, obstacle/rampart/occupancy filtering, bounded stuck recovery, fatigue/stale exclusions and retry expiry');
+for(const reason of ['bootstrap timeout; review required','target claimed by another player','Target room layout or resource access is incomplete']){
+ const f=fixture();f.root.expansion={home:f.homeName,target:f.targetName,state:'blocked',started:0,reason};f.ctx.Game.rooms[f.targetName]=f.target;
+ f.run();assert.equal(f.root.expansion.state,reason==='bootstrap timeout; review required'?'stabilizing':'blocked');
+ if(reason==='bootstrap timeout; review required')assert.equal(f.root.expansion.reason,undefined);
+}
+{
+ const f=fixture();f.root.expansion={home:f.homeName,target:f.targetName,state:'blocked',started:0,reason:'bootstrap timeout; review required'};f.ctx.Game.rooms[f.targetName]=f.target;f.target.controller.my=false;f.run();assert.equal(f.root.expansion.state,'blocked');
+}
+console.log('PASS: late first spawn recovers only its obsolete bootstrap timeout; other ownership/layout blocks persist');

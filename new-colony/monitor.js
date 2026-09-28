@@ -80,6 +80,13 @@ function tick(owned){
         const roads=roadTelemetry(plan,structures,sites);
         const entry={tick:Game.time,capturedAt:telemetry.capturedAt,rcl:c.level,progress:c.progress||0,total:c.progressTotal||0,upgradeRate,upgradeEMA,stagnant,roleCounts,mining,hauling,roads,energy:room.energyAvailable,capacity:room.energyCapacityAvailable,storage,buffers,dropped,upkeep,harvestPotential:mining.reduce((n,s)=>n+s.potential,0),sourceTheoreticalRate:sources.reduce((n,s)=>n+s.energyCapacity/ENERGY_REGEN_TIME,0),constructionSites:sites.length,planComplete:!!(plan&&plan.complete),oldestCreep:Math.min(...all.filter(c=>!c.spawning).map(c=>c.ticksToLive),1500)};
         const measured=root.energy.rooms[room.name];
+        const hasSpawn=structures.some(s=>s.my&&s.structureType===STRUCTURE_SPAWN);
+        const residents=creeps.filter(u=>u.pos.roomName===room.name&&!u.spawning);
+        const residentWork=residents.reduce((n,u)=>n+u.getActiveBodyparts(WORK),0);
+        const incoming=creeps.filter(u=>u.memory.role==='pioneer'&&u.memory.target===room.name&&
+            u.pos.roomName!==room.name&&(u.spawning||u.ticksToLive>100));
+        entry.bootstrap={active:!hasSpawn,residents:residents.length,residentWork,
+            supportPioneers:residents.filter(u=>u.memory.role==='pioneer').length,incomingPioneers:incoming.length};
         entry.energyLedger={tick:measured.tick,inventory:measured.inventory.total,windows:measured.windows,indicator:measured.indicator,utilizationIndicator:measured.utilizationIndicator};
         entry.economy=root.rooms[room.name]&&root.rooms[room.name].economy;
         entry.constructionByType=constructionByType;
@@ -90,11 +97,13 @@ function tick(owned){
         telemetry.rooms[room.name]=entry;
         alert(room.name,'upgrade-stalled','Controller has made no progress for '+stagnant+' ticks',c.level<8&&stagnant>=200&&all.length>=4);
         alert(room.name,'haul-backlog','Dropped energy '+dropped+'; check carrying capacity and access',dropped>1000);
-        alert(room.name,'missing-mining','A source has no miner WORK at harvesting range',c.level>=2&&mining.some(s=>!s.work),300);
+        alert(room.name,'missing-mining','A source has no miner WORK at harvesting range',hasSpawn&&c.level>=2&&mining.some(s=>!s.work),300);
         for(const source of mining)alert(room.name,'source-backlog-'+source.id,'Source '+source.x+','+source.y+' stock '+source.stock+' (ground '+source.dropped+', buffer '+source.buffer+'/'+source.bufferCapacity+'); inspect pickup and delivery',source.backlogSince!==null,100);
         alert(room.name,'haul-blocked','Loaded haulers stalled: '+hauling.stalled,hauling.stalled>0,60);
         alert(room.name,'road-disconnected','Economic routes missing: '+roads.missing.join(', '),roads.missing.length>0,100);
-        alert(room.name,'spawn-starved','Spawn energy remains below recovery body cost',room.energyAvailable<100&&all.length<2,200);
+        alert(room.name,'spawn-starved','Spawn energy remains below recovery body cost',hasSpawn&&room.energyAvailable<100&&all.length<2,200);
+        alert(room.name,'bootstrap-unassisted','Room has no spawn, working residents or incoming pioneers; inspect colony support',
+            !hasSpawn&&!residentWork&&!incoming.length&&stagnant>=200&&!(measured.windows[300].G>0),100);
         alert(room.name,'layout-incomplete',plan&&plan.missing||'Full room layout is not ready',!entry.planComplete,100);
         alert(room.name,'downgrade-risk','Controller downgrade timer '+c.ticksToDowngrade,c.ticksToDowngrade<2500,0);
         alert(room.name,'useful-energy-low','Measured useful-energy efficiency '+Math.round((measured.windows[1500].eta||0)*100)+'% over 1500 observed ticks',measured.indicator.status==='active',0);

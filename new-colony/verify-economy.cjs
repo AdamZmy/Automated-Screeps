@@ -1220,3 +1220,30 @@ for(const reason of ['sustainable-upgrade','sustained-source-backlog','measured-
  assert.equal(ctx.Memory.frontier.rooms[f.room.name].development.buildIntentEnergy,0,'no site means no invented building intent');
 }
 console.log('PASS: every-tick primary upgrades with partial fuel, concurrent refueling/movement, zero-energy and out-of-range guards, heap deduplication, separate intent accounting, every-tick partial-fuel builders under all planning modes and no-job safeguards');
+function marginalFixture(pool=12.77){
+ const f=capacityFixture([9]);f.room.controller.level=4;f.room.energyAvailable=f.room.energyCapacityAvailable=1300;
+ for(const c of f.ups){const b=body('upgrader',1300,{stationary:true,workLimit:9});c.body=b;c.getActiveBodyparts=p=>countPart(b,p);c.ticksToLive=1000;}
+ f.structure(C.STRUCTURE_STORAGE,'marginal-storage',24,29,0,1000000);
+ Object.assign(f.control,{target:12,buildEnergyTarget:0,usefulTarget:pool,developmentBudget:pool,baseMode:'reserve',mode:'reserve',carry:f.haulers.reduce((n,c)=>n+c.getActiveBodyparts(C.CARRY),0)});return f;
+}
+{
+ const f=marginalFixture(),d=workforceDemand(f.room,f.control,Object.values(ctx.Game.creeps));
+ assert(d.upgrade);assert.equal(countPart(d.upgradeBody,C.WORK),4,'existing9WORK needs a4WORK addition, not another9WORK');
+ spawnRoom(f.room);assert.equal(countPart(f.request.body,C.WORK),4);
+ const next=f.creep('marginal-pending','upgrader',21,28,0,100,f.request.body);next.spawning=true;
+ f.request=null;spawnRoom(f.room);assert.equal(f.request,null,'pending marginal capacity prevents duplicate birth');
+}
+{
+ const f=marginalFixture(10),d=workforceDemand(f.room,f.control,Object.values(ctx.Game.creeps));assert.equal(countPart(d.upgradeBody,C.WORK),1,'a small deficit uses the smallest sufficient body');
+ const g=pipelineFixture();g.room.energyAvailable=g.room.energyCapacityAvailable=1300;g.room.sites[0].pos=g.pos(22,32);g.room.sites[0].progressTotal=100000;
+ const control=updateEconomy(g.room);Object.assign(control,{target:2,buildEnergyTarget:9.2,developmentBudget:11.2,usefulTarget:11.2});
+ const b=workforceDemand(g.room,control,Object.values(ctx.Game.creeps));assert(b.build);assert(countPart(b.builderBody,C.WORK)<5,'existing builder capacity is subtracted before buying construction WORK');
+}
+{
+ const f=marginalFixture();const savedCpu=ctx.Game.cpu;ctx.Game.cpu={limit:20,bucket:627};ctx.Memory.frontier.performance={mean:31.9};
+ spawnRoom(f.room);assert.equal(f.request,undefined,'observed CPU exhaustion prevents discretionary capacity growth');
+ assert.equal(ctx.Memory.frontier.rooms[f.room.name].economy.spawnHold,'cpu-recovery');
+ for(const c of f.haulers)delete ctx.Game.creeps[c.name];f.request=null;spawnRoom(f.room);assert(f.request&&f.request.memory.role==='hauler','missing hauling recovery remains allowed');
+ ctx.Game.cpu=savedCpu;delete ctx.Memory.frontier.performance;
+}
+console.log('PASS: marginal upgrader/builder bodies, tiny deficit, pending capacity and CPU birth recovery guard');
