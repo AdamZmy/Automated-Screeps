@@ -6,6 +6,11 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.5.2 — 2026-09-28
+
+- Add five newly observed cold-room layouts to the lossless static archive so
+  the runtime can replace their full Memory payloads with restorable summaries.
+
 ## 0.5.1 — 2026-09-28
 
 - Game build `2026-09-27.4` keeps completed room planning on its 10-tick
