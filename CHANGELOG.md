@@ -6,6 +6,13 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.5.3 — 2026-09-28
+
+- Game build `2026-09-27.5` stops creating Rampart construction sites. Existing
+  Rampart structures and their planned coordinates remain intact.
+- Add an explicit operational command that removes every active Rampart
+  construction site during the emergency cancellation.
+
 ## 0.5.2 — 2026-09-28
 
 - Add five newly observed cold-room layouts to the lossless static archive so

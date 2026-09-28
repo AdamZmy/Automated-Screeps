@@ -1,0 +1,1 @@
+(()=>{let n=0,e=[];for(let id in Game.constructionSites){let s=Game.constructionSites[id];if(s.structureType!==STRUCTURE_RAMPART)continue;let r=s.remove();if(r===OK)n++;else e.push([id,r])}return JSON.stringify({ok:!e.length,removed:n,errors:e})})()

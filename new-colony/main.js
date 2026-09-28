@@ -1,6 +1,6 @@
 'use strict';
 // Frontier24 composition root. Gameplay policy lives in focused modules.
-const VERSION='2026-09-27.4';
+const VERSION='2026-09-27.5';
 const runtime=require('runtime');
 const development=require('development');
 const logistics=require('logistics');

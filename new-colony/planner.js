@@ -317,11 +317,11 @@ function build(room,plan){
         (a.type===STRUCTURE_ROAD&&b.type===STRUCTURE_ROAD?(Number(b.roadSwamp)-Number(a.roadSwamp)||Number(!!(b.sourceIds&&b.sourceIds.length))-Number(!!(a.sourceIds&&a.sourceIds.length))||(a.roadOrder||0)-(b.roadOrder||0)):0)||a.rcl-b.rcl);
     for(const item of sorted){
         if(slots<=0)break;if(item.rcl>level)continue;
+        if(item.type===STRUCTURE_RAMPART)continue;
         if(item.type===STRUCTURE_ROAD){
             if(roadSlots<=0)continue;
             if(item.roadClass!=='economy'&&(economyPending||level<4||!room.storage||room.storage.store[RESOURCE_ENERGY]<20000))continue;
         }
-        if(item.type===STRUCTURE_RAMPART&&(!room.storage||room.storage.store[RESOURCE_ENERGY]<10000))continue;
         if([STRUCTURE_LAB,STRUCTURE_FACTORY,STRUCTURE_NUKER,STRUCTURE_POWER_SPAWN,STRUCTURE_EXTRACTOR].includes(item.type)&&(!room.storage||room.storage.store[RESOURCE_ENERGY]<40000))continue;
         const k=key(item.x,item.y),here=at.get(k)||[];
         if(here.includes(item.type)||siteTiles.has(k))continue;
