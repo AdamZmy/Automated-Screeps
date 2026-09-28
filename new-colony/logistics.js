@@ -11,9 +11,10 @@ const ownsHauling=c=>c.memory.role==='hauler'||c.memory.haul&&c.memory.haul.exec
 function fixtureStamp(room) {
     // Deterministic fixtures can replace objects/stores/tasks inside one tick;
     // real Room objects have no `objects` collection and skip this test adapter.
-    if(!room.objects)return null;
+    const objectSnapshot=room.objects||room.snapshotObjects;
+    if(!objectSnapshot)return null;
     const control=economyMemory(room).economyControl||{},parts=[room.controller&&room.controller.level,control.target,control.developmentBudget];
-    for(const o of room.objects)parts.push(o.id,o.structureType,o.pos&&o.pos.x,o.pos&&o.pos.y,energy(o));
+    for(const o of objectSnapshot)parts.push(o.id,o.structureType,o.pos&&o.pos.x,o.pos&&o.pos.y,energy(o));
     for(const c of Object.values(Game.creeps))if(c.room&&c.room.name===room.name){
         const h=c.memory.haul,t=h&&h.task,b=c.memory.workSupply;
         parts.push(c.name,c.memory.role,energy(c),h&&h.state,h&&h.executorTick,t&&t.id,t&&t.source,t&&t.amount,t&&t.pickupAmount,t&&t.expires,
@@ -25,9 +26,10 @@ function fixtureStamp(room) {
 function getBoard(room,extra=null,refresh=false) {
     if(boardTick!==Game.time){boardTick=Game.time;boards=new Map();}
     let board=boards.get(room.name);
-    const stamp=refresh&&(!board||!board.active)?fixtureStamp(room):undefined;
+    const fixture=room.objects||room.snapshotObjects;
+    const stamp=refresh&&fixture&&!board?.active?fixtureStamp(room):undefined;
     if(!board||board.room!==room||board.root!==Game.creeps||stamp!==undefined&&stamp!==board.stamp){
-        board={room,root:Game.creeps,stamp:stamp===undefined?fixtureStamp(room):stamp,active:0,prepared:!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps),members:[],names:new Set(),
+        board={room,root:Game.creeps,stamp:stamp===undefined?(fixture?fixtureStamp(room):null):stamp,active:0,prepared:!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps),members:[],names:new Set(),
             entries:new Map(),destinations:new Map(),sourceMembers:new Map(),destinationTotals:new Map(),sourceTotals:new Map(),layouts:new Map()};
         boards.set(room.name,board);
         for(const c of allCreeps())if(Game.creeps[c.name]===c&&!c.spawning&&c.room&&c.room.name===room.name&&ownsHauling(c)){
@@ -37,7 +39,7 @@ function getBoard(room,extra=null,refresh=false) {
     if(extra&&!board.names.has(extra.name)){board.members.push(extra);board.names.add(extra.name);indexCreep(extra,board);board.prepared=false;}
     return board;
 }
-function finishBoard(board) {if(!board.active&&board.room.objects)board.stamp=fixtureStamp(board.room);}
+function finishBoard(board) {if(!board.active&&(board.room.objects||board.room.snapshotObjects))board.stamp=fixtureStamp(board.room);}
 function indexCreep(c,board=boards.get(c.room.name)) {
     if(!board||boardTick!==Game.time)return;
     const old=board.entries.get(c.name);
@@ -305,9 +307,37 @@ function prepare(room,extra=null) {
 }
 function release(c) {if(c.memory.haul){clearTask(c);delete c.memory.haul.executorTick;}}
 function chooseHaulTarget(c,includeStorage=true) {
-    if(c.memory.role!=='hauler')haulMemory(c).executorTick=Game.time;
+    const h=haulMemory(c);
+    if(c.memory.role!=='hauler')h.executorTick=Game.time;
+    // The room-level prepare pass has already reconciled and prioritized every
+    // real Hauler for this tick. Reusing that assignment avoids running the
+    // full destination-gap and source reservation scan once per Hauler. A
+    // temporary worker still takes the immediate path below because it was not
+    // necessarily present during the room pass.
+    const board=getBoard(c.room,null,true);
+    if(c.memory.role==='hauler'&&board.prepared){
+        // A physical cargo change can occur between helper calls in a fixture
+        // or after an accepted pickup. Reconcile only this loaded-pickup edge;
+        // empty pickups and deliveries can reuse the prepared assignment.
+        if(h.task&&h.state==='pickup'&&availableEnergy(c)>0&&!pending(h.task))
+            reconcile(c,cachedNeeds(c.room,includeStorage));
+        const task=h.task,target=task&&Game.getObjectById(task.id);
+        if(pending(task))return target;
+        if(!task)return assign(c,cachedNeeds(c.room,includeStorage));
+        if(h.state==='idle'||h.state==='pickup'&&!availableEnergy(c))return validDelivery(c,task)?target:null;
+        // Loaded carriers must see a newly urgent sink (for example a spawn
+        // that appeared after the room pass); a fixture/engine snapshot change
+        // has rebuilt the cached demand before this branch runs.
+        const requests=cachedNeeds(c.room,includeStorage);reconcile(c,requests);
+        const refreshed=h.task,refreshedTarget=refreshed&&Game.getObjectById(refreshed.id),request=refreshed&&requests.find(n=>n.node.id===refreshed.id),funded=availableEnergy(c)>0;
+        const uncovered=n=>deliveryGap(n)-reservedDelivery(c,n.node.id,funded);
+        const urgent=request&&requests.some(n=>n.priority<request.priority&&n.node.id!==h.origin&&!(c.memory.haulBlocked||{})[n.node.id]&&uncovered(n)>0);
+        if(refreshed&&request&&!urgent&&uncovered(request)>=refreshed.amount)
+            return refreshedTarget;
+        return assign(c,requests);
+    }
     const requests=cachedNeeds(c.room,includeStorage);reconcile(c,requests);
-    const h=haulMemory(c),task=h.task;
+    const task=h.task;
     if(pending(task))return Game.getObjectById(task.id);
     if(task){
         const request=requests.find(n=>n.node.id===task.id),funded=availableEnergy(c)>0;
@@ -323,7 +353,10 @@ function chooseHaulTarget(c,includeStorage=true) {
 }
 function haulTarget(c,includeStorage=true) {
     if(c.memory.role!=='hauler')haulMemory(c).executorTick=Game.time;
-    const board=prepare(c.room,c);board.active++;
+    // Refresh the fixture/engine snapshot before marking this executor active;
+    // a newly completed spawn or depleted node must invalidate a prepared plan.
+    prepare(c.room,c);
+    const board=getBoard(c.room,c,true);board.active++;
     try{return chooseHaulTarget(c,includeStorage);}finally{indexCreep(c,board);board.active--;finishBoard(board);}
 }
 function obstacleTiles(board) {

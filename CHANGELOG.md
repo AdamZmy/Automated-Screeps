@@ -8,7 +8,7 @@ individually reviewable; tested releases receive immutable version tags.
 
 ## 0.6.0 — 2026-09-28
 
-- Game build `2026-09-28.2` implements the reviewed Colony module boundaries:
+- Game build `2026-09-28.3` implements the reviewed Colony module boundaries:
   economy, mining, development, defense, links and movement own separate work;
   runtime shares tick contexts and accepted resource intents.
 - Replace overlapping Hauler flags with idle/pickup/deliver and one stable task,
@@ -24,6 +24,8 @@ individually reviewable; tested releases receive immutable version tags.
 - Bound unchanged busy-spawn workforce planning and per-tick logistics indexes so
   repeated body, route, destination and unloading-geometry scans are reused while
   critical births and accepted resource reservations still reconcile every tick.
+- Reuse the room-level Hauler assignment during its execution tick, while keeping
+  immediate reassignment for temporary non-Hauler transport workers.
 
 ## 0.5.3 — 2026-09-28
 
