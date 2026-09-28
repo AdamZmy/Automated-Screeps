@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T18:44:20.524Z",
+  "updatedAt": "2026-09-28T18:48:39.222Z",
   "days": [
     "2026-09-28",
     "2026-09-27",
@@ -12,12 +12,12 @@
       "id": "2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e",
       "kind": "scheduled",
       "startedAt": "2026-09-28T18:36:20.692Z",
-      "updatedAt": "2026-09-28T18:44:20.524Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-28T18:48:39.222Z",
+      "completedAt": "2026-09-28T18:48:10Z",
+      "status": "completed",
       "title": "Hauler 路线缓存与 CPU 优化",
-      "summary": "CPU investigation identified repeated Hauler route feasibility checks and short local path reuse as optimization targets; user requested route/port caching and reusePath extension, while deferring empty-pickup waiting.",
-      "tick": 74003300,
+      "summary": "Implemented and deployed the requested CPU changes: bounded static Hauler route caching, short delivery-port lease retention, and reusePath extended from 15 to 50 ticks. Empty-pickup waiting/backoff remains intentionally unchanged. Post-deploy code parity passed; the available monitor snapshot shows the new build and counters, while its Tick did not advance during the observation interval, so a long stable CPU comparison remains a follow-up measurement.",
+      "tick": 74003700,
       "issueNumbers": []
     },
     {

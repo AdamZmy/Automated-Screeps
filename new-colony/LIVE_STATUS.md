@@ -1,3 +1,10 @@
+## 2026-09-28：Hauler 路线缓存与路径复用上线
+
+- 提交 `7a7d953`、game `2026-09-28.7` 已通过 HTTP API 发布到 `frontier24`；17 个受管模块逐项哈希一致。用户要求暂缓的空车无货等待/退避没有加入。
+- `logistics.js` 现在对同一房间 source→destination 共享有界堆内路线可达性缓存，并保留短期被占 delivery port；`movement.js` 将稳定本地 `reusePath` 从15提高到50 tick，仍逐tick提交移动指令，目标/路线变化和受阻恢复会使缓存失效。
+- 发布后快照（tick74003700）已出现 `pathSearches` 1.1429/t、`haulRouteCacheHits` 0.0714/t、`portCacheHits` 9.3571/t；代码校验 `all_match=true`。监控 Tick 在短观测期间未继续推进，因此 CPU 长窗口只列为待观测，不把切换窗口的21.9421均值当成优化结论。
+- 离线 `npm test`、定向物流/经济回归、Node语法检查、inspection archive validate 全部通过。记录：`operations/inspections/2026-09-28/2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e.json`。
+
 ## 2026-09-26：RCL4仓储与地图核验、巡检改为每小时
 
 - 新API tick73952560→73952900，build2026-09-25.16；340tick升级+6120，矿区掉落0、运输停滞0、CPU均7.4783/bucket10000。1500总用能98.06%，库存-71、残差23，仍不满足可持续验收。未改游戏代码或部署游戏。

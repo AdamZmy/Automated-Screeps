@@ -1,8 +1,8 @@
 # Screeps World 当前交接
 
 - 唯一源码：`/Users/zmy/screepsworld/new-colony`；账号 AdamZmy，shard1，活动分支 `frontier24`，主房 W21N26，辅房 W23N26。
-- 当前发布：game `2026-09-28.6`，版本代码已由 API 上传并逐模块回读；最近备份：`new-colony/backups/api-deploy-20260928T040645.480163Z/remote-code.json`。
-- 17 个受管模块全部 `all_match=true`；GitHub 主分支最新提交 `94f3dd0`。
+- 当前发布：game `2026-09-28.7`，版本代码已由 API 上传并逐模块回读；本轮改动提交 `7a7d953`。
+- 17 个受管模块全部 `all_match=true`；本轮增加有界 Hauler 静态路线缓存、delivery port 短租约保留、`reusePath:50`，空车无货等待仍按用户要求暂缓。
 - 用户要求暂停的 `screeps-world` automation 继续保持 `PAUSED`，不得因发布自动恢复。
 
 ## 本轮已完成
@@ -16,7 +16,8 @@
 ## 验证与线上状态
 
 - `npm test` 全部通过：game、layout、API、operations、diagnostics、policy；Node 语法及 diff 检查通过。
-- 线上 .6 模块错误为空。状态快照显示主房 RCL5、辅房 RCL2，升级和运输仍在运行；Hauler 线上状态为 idle/pickup/deliver，旧标记为 0。
+- 线上 .7 远端哈希全部匹配。状态快照显示主房 RCL5、辅房 RCL3，升级和运输仍在运行；Hauler 线上状态为 pickup/deliver，旧标记为 0。
+- 切换后的快照已报告 `pathSearches` 1.1429/t、`haulRouteCacheHits` 0.0714/t、`portCacheHits` 9.3571/t；监控 Tick 在短观察期间未推进，长窗口 CPU 对比暂不下结论。
 - .6 性能窗口 `73991822–73991840` 收到 17/20 个样本，平均 `19.5677`、峰值 `23.1396` CPU/tick、bucket `14`。存在缺测，因此只记录为部分窗口，不宣称长期稳定性能。
 - 运行日志：`operations/inspections/2026-09-28/2026-09-28T03-15-24Z-hauler-d79b92fba8c0.json`；Issue #13 为已完成的本轮重构记录。
 

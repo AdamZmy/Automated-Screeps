@@ -3,20 +3,20 @@
   "id": "2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e",
   "kind": "scheduled",
   "startedAt": "2026-09-28T18:36:20.692Z",
-  "updatedAt": "2026-09-28T18:44:20.524Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-28T18:48:39.222Z",
+  "completedAt": "2026-09-28T18:48:10Z",
+  "status": "completed",
   "title": "Hauler 路线缓存与 CPU 优化",
-  "summary": "CPU investigation identified repeated Hauler route feasibility checks and short local path reuse as optimization targets; user requested route/port caching and reusePath extension, while deferring empty-pickup waiting.",
+  "summary": "Implemented and deployed the requested CPU changes: bounded static Hauler route caching, short delivery-port lease retention, and reusePath extended from 15 to 50 ticks. Empty-pickup waiting/backoff remains intentionally unchanged. Post-deploy code parity passed; the available monitor snapshot shows the new build and counters, while its Tick did not advance during the observation interval, so a long stable CPU comparison remains a follow-up measurement.",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26",
       "W23N26"
     ],
-    "version": "2026-09-28.6",
-    "tick": 74003300,
-    "fetchedAt": "2026-09-28T18:19:19Z"
+    "version": "2026-09-28.7",
+    "tick": 74003700,
+    "fetchedAt": "2026-09-28T18:46:15Z"
   },
   "findings": [
     {
@@ -85,6 +85,18 @@
       "description": "Updated logistics, movement and regression fixtures; bumped project and game build versions.",
       "status": "done",
       "result": "Targeted checks and full test suite passed."
+    },
+    {
+      "at": "2026-09-28T18:46:15Z",
+      "description": "Applied build 2026-09-28.7 to frontier24 through the HTTP API.",
+      "status": "done",
+      "result": "Remote deployment returned unchanged on the verification retry, confirming the first apply had already written the new hashes."
+    },
+    {
+      "at": "2026-09-28T18:46:15Z",
+      "description": "Ran remote code check and fetched post-deploy status.",
+      "status": "done",
+      "result": "All 17 managed modules match; telemetry reports version 2026-09-28.7, pathSearches, haulRouteCacheHits and portCacheHits."
     }
   ],
   "checks": [
@@ -102,10 +114,21 @@
       "name": "Full test suite",
       "result": "passed",
       "detail": "npm test exits 0 across game, layout, API, operations, diagnostics and policy checks."
+    },
+    {
+      "name": "HTTP deployment",
+      "result": "passed",
+      "detail": "frontier24 remote code matches the new main, logistics and movement hashes; unchanged modules were preserved."
+    },
+    {
+      "name": "Post-deploy CPU comparison",
+      "result": "pending",
+      "detail": "The monitor snapshot exposes the new counters, but the Tick remained 74003700 across the available observation interval; collect a longer advancing window before quantifying CPU reduction."
     }
   ],
   "next": [
-    "Deploy build 2026-09-28.7 through the HTTP API, verify all modules, and observe a fresh CPU window."
+    "Collect a stable advancing CPU window after the monitor Tick resumes; compare Hauler CPU, pathSearches and cache-hit rates against the pre-change window.",
+    "Keep empty-pickup waiting/backoff deferred unless the measured post-change window still justifies it."
   ],
   "references": [
     {
