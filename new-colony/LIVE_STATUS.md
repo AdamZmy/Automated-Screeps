@@ -287,3 +287,11 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - 完整 `npm test` 通过，API manifest 扩为12个受管模块；dry-run仅发现预期的入口与六个新模块变化。实际上传后12模块远端回读一致，备份为 `backups/api-deploy-20260928T015525.881056Z/remote-code.json`。
 - 初次状态读取仍落在旧采样点73989980；随后73990020报告版本`2026-09-27.2`，确认新模块已由实际主循环加载。该窗CPU mean24.6509/max29.9906、EMA25.3856/20、bucket1，不能宣称CPU恢复。
 - 本版只改组织和加载边界，不修改策略。W23N26积压、Upgrader不足、能源堆积及主房Controller Container历史原因留待后续独立处理。用户暂停的`screeps-world`巡检继续保持PAUSED。
+
+## 2026-09-28T04:13:00Z — v0.6.0 模块重构与 Hauler 状态机完成
+
+- 用户确认后完成已审核的 Colony 模块重构：game build `2026-09-28.6` 已通过 API 部署到 `frontier24`；17 个受管模块逐一回读，`code-check all_match=true`，部署备份为 `backups/api-deploy-20260928T040645.480163Z/remote-code.json`。
+- `npm test` 全部通过，覆盖 game、layout、API、operations、diagnostics、policy；新增 overflowUpgrade 无停车位、物流共享 tick board、workforce body/cache 回归均通过。GitHub 主分支提交 `94f3dd0`。
+- 线上 .6 版本的模块健康记录为空错误；主房 W21N26 RCL5、辅房 W23N26 RCL2 均继续运行，Hauler 线上状态使用 `idle/pickup/deliver`，旧 `loaded/haulPickup/haulDelivery` 标记均为 false。
+- 纯 .6 性能窗口 `73991822–73991840` 收到 17/20 个样本，平均 `19.5677`、峰值 `23.1396` CPU/tick、bucket `14`；因为有缺测，只作为部分窗口证据，不宣称长期稳定达到预算。Hauler 角色约 `2.6753/t`，creeps 阶段约 `10.7416/t`。
+- 本次部署保持已审核布局、Rampart 自动施工关闭、Ledger 统计口径和 `screeps-world` automation `PAUSED`。长期 CPU、能源利用率、W23 源侧积压与扩张经济性仍沿用既有问题生命周期观察。

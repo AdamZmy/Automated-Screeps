@@ -3,33 +3,40 @@
   "id": "2026-09-28T03-15-24Z-hauler-d79b92fba8c0",
   "kind": "manual",
   "startedAt": "2026-09-28T03:15:24.694Z",
-  "updatedAt": "2026-09-28T03:27:42.026Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-28T04:14:21.793Z",
+  "completedAt": "2026-09-28T04:13:00Z",
+  "status": "completed",
   "title": "落实房间模块重构与 Hauler 状态机",
-  "summary": "模块重构与新行为测试已落地，完整回归到历史物流诊断接口迁移；独立审阅确认的三个边界正完成修正。尚未部署。",
+  "summary": "完成 Colony/Logistics/Workforce 等模块重构、Hauler idle/pickup/deliver 状态机、缓存边界修正与完整回归；game 2026-09-28.6 已通过 API 部署、17 模块 hash 回读，线上新 tick 无模块错误。长期能源效率与完整 CPU 覆盖仍由既有巡检问题跟踪。",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26",
       "W23N26"
     ],
-    "version": "2026-09-27.5",
-    "tick": 73991080,
-    "fetchedAt": "2026-09-28T03:14:13Z"
+    "version": "2026-09-28.6",
+    "tick": 73991840,
+    "fetchedAt": "2026-09-28T04:09:31Z"
   },
   "findings": [],
   "tasks": [
     {
       "issue": 13,
       "title": "Colony模块、运输状态和统一调度",
-      "status": "in-progress",
+      "status": "done",
       "owner": "root01a0e5d9-dc86-7f83-883c-af5c434fcefe",
-      "progress": "分离Colony/mining/defense/links/movement；单一Hauler状态与双端预约；统一出生/施工。新场景与经济、布局、API、operations通过。",
-      "next": "历史物流诊断迁移、最终完整回归与独立审阅；API部署并检查新tick。"
+      "progress": "分离Colony/mining/defense/links/movement；单一Hauler状态与双端预约；统一出生/施工；完成缓存与CPU热点优化。完整 npm test、API 部署回读和线上状态检查通过。",
+      "next": "长期 CPU/能源窗口继续由现有巡检问题跟踪，不再修改本次已验收的模块边界。"
     }
   ],
-  "actions": [],
+  "actions": [
+    {
+      "at": "2026-09-28T04:06:45Z",
+      "description": "通过 API 将 game 2026-09-28.6 部署到 frontier24，并备份远端代码。",
+      "status": "done",
+      "result": "17 个受管模块回读校验成功；备份位于 new-colony/backups/api-deploy-20260928T040645.480163Z/remote-code.json。"
+    }
+  ],
   "checks": [
     {
       "name": "源码与归属基线",
@@ -38,23 +45,28 @@
     },
     {
       "name": "重构及真实tick验收",
-      "result": "pending",
-      "detail": "实现后运行完整回归、API部署回读及在线行为检查。"
+      "result": "passed",
+      "detail": "npm test 全部通过；game 2026-09-28.6 在 tick 73991840 运行，模块错误为空；Hauler 线上快照使用统一 state，旧 loaded/haulPickup/haulDelivery 标记为 0。"
     },
     {
       "name": "新模块与主要历史回归",
       "result": "passed",
-      "detail": "verify-economy/planner/expansion/monitor/ledger/runtime/logistics/workforce/missions及RCL1–8布局执行通过，API23项通过。完整npm最终一次仍待历史诊断接口迁移。"
+      "detail": "verify-economy/planner/expansion/monitor/ledger/runtime/logistics/workforce/missions/overflow 及 RCL1–8 布局执行通过，API、operations、diagnostics、policy 全部通过。"
     },
     {
       "name": "独立审视",
       "result": "passed",
-      "detail": "独立复现临时工旧port租约、同优先级期限资金占用、cancelled扩张储备残留；前两项已修复验证，第三项交实现者补回归。"
+      "detail": "独立复现并验证临时工 port 租约、同优先级期限资金占用、cancelled 扩张储备残留及 overflowUpgrade 无停车位异常路径；修复均有回归覆盖。"
+    },
+    {
+      "name": "线上性能窗口",
+      "result": "passed",
+      "detail": "game .6 窗口 73991822–73991840 收到 17/20 个样本，平均 19.5677、峰值 23.1396 CPU/tick、bucket 14；样本有缺测，作为部分窗口记录，不作长期性能承诺。"
     }
   ],
   "next": [
-    "修复/验证取消扩张储备残留，完成历史物流诊断与全量测试。",
-    "API备份部署/逐模块回读，检查实际新tick版本、任务状态、消费和CPU。"
+    "长期观察完整 CPU/能源窗口；现有长期能效问题保持原 Issue 生命周期。",
+    "继续保持 screeps-world automation 为 PAUSED。"
   ],
   "references": [
     {

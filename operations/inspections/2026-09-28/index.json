@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T03:27:42.026Z",
+  "updatedAt": "2026-09-28T04:14:21.793Z",
   "day": "2026-09-28",
   "runs": [
     {
       "id": "2026-09-28T03-15-24Z-hauler-d79b92fba8c0",
       "kind": "manual",
       "startedAt": "2026-09-28T03:15:24.694Z",
-      "updatedAt": "2026-09-28T03:27:42.026Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-28T04:14:21.793Z",
+      "completedAt": "2026-09-28T04:13:00Z",
+      "status": "completed",
       "title": "落实房间模块重构与 Hauler 状态机",
-      "summary": "模块重构与新行为测试已落地，完整回归到历史物流诊断接口迁移；独立审阅确认的三个边界正完成修正。尚未部署。",
-      "tick": 73991080,
+      "summary": "完成 Colony/Logistics/Workforce 等模块重构、Hauler idle/pickup/deliver 状态机、缓存边界修正与完整回归；game 2026-09-28.6 已通过 API 部署、17 模块 hash 回读，线上新 tick 无模块错误。长期能源效率与完整 CPU 覆盖仍由既有巡检问题跟踪。",
+      "tick": 73991840,
       "issueNumbers": [
         13
       ]
