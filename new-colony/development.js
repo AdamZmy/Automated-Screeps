@@ -467,15 +467,20 @@ function mine(c) {
         }
         delete c.memory.replaces;
     }
-    const others=allCreeps().filter(o=>o.name!==c.name&&o.memory.role==='miner'&&o.memory.source===s.id);
     const containers=structures(c.room).filter(t=>t.structureType===STRUCTURE_CONTAINER&&range(s,t)<=1);
     const plan=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[c.room.name]&&Memory.frontier.rooms[c.room.name].plan;
     const planned=plan&&plan.sourcePlans&&plan.sourcePlans.find(p=>p.id===s.id);
-    const opts=miningSpots(c.room,s).filter(p=>!others.some(o=>o.memory.spot&&o.memory.spot.x===p.x&&o.memory.spot.y===p.y));
     const score=p=>containers.some(t=>t.pos.x===p.x&&t.pos.y===p.y)?-100:containers.some(t=>range(t,p)<=1)?-50:planned&&planned.x===p.x&&planned.y===p.y?-20:0;
-    opts.sort((a,b)=>score(a)-score(b)||range(c,a)-range(c,b));
     let spot=c.memory.spot;
-    if(!spot||!opts.some(p=>p.x===spot.x&&p.y===spot.y)||opts.length&&score(opts[0])<score(spot))spot=c.memory.spot=opts[0];
+    const atSpot=spot&&c.pos.x===spot.x&&c.pos.y===spot.y;
+    const betterContainer=atSpot&&!containers.some(t=>t.pos.x===spot.x&&t.pos.y===spot.y)&&containers.some(t=>miningSpots(c.room,s).some(p=>p.x===t.pos.x&&p.y===t.pos.y));
+    const review=(Game.time+c.name.split('').reduce((n,ch)=>n+ch.charCodeAt(0),0))%25===0;
+    if(!atSpot||betterContainer||review){
+        const others=allCreeps().filter(o=>o.name!==c.name&&o.memory.role==='miner'&&o.memory.source===s.id);
+        const opts=miningSpots(c.room,s).filter(p=>!others.some(o=>o.memory.spot&&o.memory.spot.x===p.x&&o.memory.spot.y===p.y));
+        opts.sort((a,b)=>score(a)-score(b)||range(c,a)-range(c,b));
+        if(!spot||!opts.some(p=>p.x===spot.x&&p.y===spot.y)||opts.length&&score(opts[0])<score(spot))spot=c.memory.spot=opts[0];
+    }
     if(!spot)return;
     if(c.pos.x!==spot.x||c.pos.y!==spot.y){
         if(!c.fatigue&&range(c,spot)<=1){
