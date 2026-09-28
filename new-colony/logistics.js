@@ -26,7 +26,9 @@ function fixtureStamp(room) {
 function getBoard(room,extra=null,refresh=false) {
     if(boardTick!==Game.time){boardTick=Game.time;boards=new Map();}
     let board=boards.get(room.name);
-    const fixture=room.objects||room.snapshotObjects;
+    // The Set marker exists only in deterministic fixtures. Never walk a
+    // non-public Room property on the live engine just to validate a cache.
+    const fixture=room.walls&&typeof room.walls.has==='function'&&(room.objects||room.snapshotObjects);
     const stamp=refresh&&fixture&&!board?.active?fixtureStamp(room):undefined;
     if(!board||board.room!==room||board.root!==Game.creeps||stamp!==undefined&&stamp!==board.stamp){
         board={room,root:Game.creeps,stamp:stamp===undefined?(fixture?fixtureStamp(room):null):stamp,active:0,prepared:!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps),members:[],names:new Set(),
@@ -39,7 +41,7 @@ function getBoard(room,extra=null,refresh=false) {
     if(extra&&!board.names.has(extra.name)){board.members.push(extra);board.names.add(extra.name);indexCreep(extra,board);board.prepared=false;}
     return board;
 }
-function finishBoard(board) {if(!board.active&&(board.room.objects||board.room.snapshotObjects))board.stamp=fixtureStamp(board.room);}
+function finishBoard(board) {if(!board.active&&board.room.walls&&typeof board.room.walls.has==='function'&&(board.room.objects||board.room.snapshotObjects))board.stamp=fixtureStamp(board.room);}
 function indexCreep(c,board=boards.get(c.room.name)) {
     if(!board||boardTick!==Game.time)return;
     const old=board.entries.get(c.name);

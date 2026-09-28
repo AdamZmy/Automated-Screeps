@@ -8,7 +8,7 @@ individually reviewable; tested releases receive immutable version tags.
 
 ## 0.6.0 — 2026-09-28
 
-- Game build `2026-09-28.3` implements the reviewed Colony module boundaries:
+- Game build `2026-09-28.4` implements the reviewed Colony module boundaries:
   economy, mining, development, defense, links and movement own separate work;
   runtime shares tick contexts and accepted resource intents.
 - Replace overlapping Hauler flags with idle/pickup/deliver and one stable task,
@@ -26,6 +26,8 @@ individually reviewable; tested releases receive immutable version tags.
   critical births and accepted resource reservations still reconcile every tick.
 - Reuse the room-level Hauler assignment during its execution tick, while keeping
   immediate reassignment for temporary non-Hauler transport workers.
+- Restrict fixture-only cache invalidation to the test adapter marker so live
+  Room objects are never scanned through non-public properties.
 
 ## 0.5.3 — 2026-09-28
 
