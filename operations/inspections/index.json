@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T01:19:50.928Z",
+  "updatedAt": "2026-09-28T01:33:15.365Z",
   "days": [
     "2026-09-28",
     "2026-09-27",
@@ -458,16 +458,19 @@
       "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
       "kind": "scheduled",
       "startedAt": "2026-09-26T09:38:51.389Z",
-      "updatedAt": "2026-09-27T14:23:40.375Z",
-      "completedAt": null,
-      "status": "running",
-      "title": "RCL4 主窗与真实运输周期巡检",
-      "summary": "执行跨日恢复；已保存旧180tick完整运输样本。新tick73980140主房RCL5/Storage19337，游戏自主拓展W23N26至RCL2；主房账本scope/coverage缺测，新房报警正独立审视。",
-      "tick": 73980140,
+      "updatedAt": "2026-09-28T01:33:15.365Z",
+      "completedAt": "2026-09-28T01:33:15.319Z",
+      "status": "completed",
+      "title": "RCL5分基地修复已部署；CPU仍超载，按用户要求停止",
+      "summary": "跨日中断后恢复本轮，已部署v0.4.3并核验实际新tick；CPU改善但未恢复、主窗覆盖不足。主房RCL5，首个分基地已有Spawn。用户已暂停自动巡检，停止新采样/修复/部署，只完成记录与交接。Vercel授权阻塞，新地图未发布。",
+      "tick": 73989580,
       "issueNumbers": [
+        1,
         4,
         5,
+        6,
         7,
+        8,
         9
       ]
     },

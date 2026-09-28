@@ -3,75 +3,228 @@
   "id": "2026-09-26T09-38-51Z-rcl4-1aa7cbe95156",
   "kind": "scheduled",
   "startedAt": "2026-09-26T09:38:51.389Z",
-  "updatedAt": "2026-09-27T14:23:40.375Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "RCL4 主窗与真实运输周期巡检",
-  "summary": "执行跨日恢复；已保存旧180tick完整运输样本。新tick73980140主房RCL5/Storage19337，游戏自主拓展W23N26至RCL2；主房账本scope/coverage缺测，新房报警正独立审视。",
+  "updatedAt": "2026-09-28T01:33:15.365Z",
+  "completedAt": "2026-09-28T01:33:15.319Z",
+  "status": "completed",
+  "title": "RCL5分基地修复已部署；CPU仍超载，按用户要求停止",
+  "summary": "跨日中断后恢复本轮，已部署v0.4.3并核验实际新tick；CPU改善但未恢复、主窗覆盖不足。主房RCL5，首个分基地已有Spawn。用户已暂停自动巡检，停止新采样/修复/部署，只完成记录与交接。Vercel授权阻塞，新地图未发布。",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26",
       "W23N26"
     ],
-    "version": "2026-09-25.16",
-    "tick": 73980140,
-    "fetchedAt": "2026-09-27T14:21:38Z"
+    "version": "2026-09-27.1",
+    "tick": 73989580,
+    "fetchedAt": "2026-09-28T01:27:09Z"
   },
   "findings": [
     {
-      "severity": "info",
-      "title": "主房RCL5并自主启动双矿辅房",
-      "detail": "本轮没有部署；恢复执行后发现游戏自然进展。W23N26尚未自给，不能称扩张完成。",
+      "severity": "critical",
+      "title": "CPU仍高于配额且bucket接近耗尽",
+      "detail": "出生保护已生效，但现有群体仍造成超额开销，不能称CPU恢复。暂停要求后不再采样或修复。",
       "evidence": [
-        "73955120 RCL4/Storage0；73980140 RCL5/Storage19337，W23N26 RCL2"
+        "新版73989480至73989580 mean31.0944降至23.729，limit20/bucket6；末窗29samples/40elapsedticks",
+        "运输者9.768CPU/t，Memory解析3.5311/t；两房spawnHold=cpu-recovery",
+        "W23N26末样22creeps、13hauler、6miner；地面2021，双矿积压仍在"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "warning",
+      "title": "控制器固定补给容器重建中",
+      "detail": "旧容器最后存在和首次缺失仅能由保存样本限定区间，原因未证实。当前无固定席，升级输出偏低。",
+      "evidence": [
+        "地图73983666有16,23容器；73989480同位置container工地2443/5000",
+        "73989580容器3493/5000，stationSeats0，主房2upgrader共8WORK、末40tick升级2.625/t"
+      ],
+      "issue": 1
+    },
+    {
+      "severity": "warning",
+      "title": "1500tick主窗覆盖不足，未通过持续能效验收",
+      "detail": "先驱跨房scope机制已修复；执行观察缺口和历史窗口仍使结果不合格。不能以库存消耗或高短窗值代替持续90%。",
+      "evidence": [
+        "73989580两房coverage0.2707；主房U88.93%/stock+276，目标U62.25%/stock+2309，均ineligible",
+        "当前物理scope complete；最新ledger仍可出现observation-gap"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "主房RCL5，首个分基地已有Spawn",
+      "detail": "游戏在本轮中断期间自主发展；明确bootstrap timeout后已有Spawn的恢复已部署。内部complete不等于经济验收。",
+      "evidence": [
+        "expansion.started73977000；73980140已见W23N26 RCL2；73980185 Spawn8180/15000；73985060已见完成Spawn",
+        "内部complete73989500；73989580主房progress211550/storage16662，分基地progress3295/capacity300"
       ],
       "issue": 7
     },
     {
       "severity": "warning",
-      "title": "能效主窗口缺少完整范围覆盖",
-      "detail": "300/1500 utilizationCoverage0，总用能率不可用；不把缺测当作低效或健康。正在审视跨房先驱影响与账本范围。",
+      "title": "RCL5地图已准备，Vercel发布受阻",
+      "detail": "既有项目部署返回Not authorized，已停止同权限重试；未声称新地图公开上线。",
       "evidence": [
-        "73980140 incomplete-scope/unresolved-accounting；primary1500 imports0,exports400"
+        "快照73983666：205项=112built+88planned+5sites，Links16,40及25,28已建",
+        "导出7项、dashboard API28项及layout/UI回归通过；交接与地图提交9b1d76c已推送"
       ],
-      "issue": 4
+      "issue": null
     }
   ],
   "tasks": [
     {
+      "issue": 4,
+      "title": "CPU与持续总用能",
+      "status": "verifying",
+      "progress": "04b8ceb修复和独立回归已完成，真实新版仍超CPU；不能关闭。",
+      "next": "当前回顾任务接手分析；暂停期间不自主继续修复。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    },
+    {
+      "issue": 1,
+      "title": "固定补给节点",
+      "status": "verifying",
+      "progress": "当前控制器容器重建且无固定席；历史RCL4交付已实测。",
+      "next": "解释消失时间和原因时区分已知区间与未证实假设。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    },
+    {
       "issue": 5,
-      "title": "真实运输周期观测",
-      "status": "in-progress",
-      "progress": "旧180tick样本已执行并自动恢复原monitor；待本地计算完整周期。",
-      "next": "区分实际transfer事件与意图，明确历史RCL4路线。",
-      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+      "title": "运输周期和成本",
+      "status": "verifying",
+      "progress": "历史180tick共27次交付3210能源、21完整周期，近/远/混合中位26.5/43/48tick。",
+      "next": "当前RCL5/Link路径需另行实测，不能直接套用历史周期。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    },
+    {
+      "issue": 6,
+      "title": "储备与续代经济",
+      "status": "verifying",
+      "progress": "主房储备16662，旧storage0门槛已过；主窗仍不合格。",
+      "next": "恢复工作须验收净库存与必要支出。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    },
+    {
+      "issue": 7,
+      "title": "首个分基地",
+      "status": "verifying",
+      "progress": "内部complete但CPU和积压仍有问题；Spawn与RCL2是已证实里程碑。",
+      "next": "验收实际自给、extension进度及续代；不按内部状态关闭。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    },
+    {
+      "issue": 8,
+      "title": "RCL5–6 Link",
+      "status": "verifying",
+      "progress": "两个RCL5 Link已建；地图已导出但发布授权阻塞。",
+      "next": "恢复后实测吞吐/损耗，controller Link等RCL6。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
     },
     {
       "issue": 9,
-      "title": "邻房适配器与旧不可达判定",
-      "status": "in-progress",
-      "progress": "neighbor_review只读离线核查，父任务本root。",
-      "next": "报告可复现问题和新布局必需输入；不改冷计划。",
-      "owner": "neighbor_review; parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+      "title": "近邻成熟布局复核",
+      "status": "ready",
+      "progress": "旧W22 archive在73955175地形上60/60extension可达；历史误判根因未知，报告已保存。",
+      "next": "冷房需独立种子输入与完整审计，未改计划。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963; released after final publication"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "核对已经完成的受控游戏发布",
+      "status": "done",
+      "result": "04b8ceb/v0.4.3/build2026-09-27.1，API远端备份后上传main/expansion/monitor/ledger，六模块读回匹配。"
     },
     {
-      "issue": 4,
-      "title": "体型与能效范围独立审视",
-      "status": "in-progress",
-      "progress": "workforce_review审视剩余容量定型；expansion_review审视新房报警与账本scope，均本地沙盒。",
-      "next": "与新tick区分，不以旧储备0推断当前持续故障。",
-      "owner": "root; reviewers parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "汇总独立审视与实际本地回归",
+      "status": "done",
+      "result": "workforce与expansion审视已交付；neighbor流断前已验证结果由root落报告。game/diagnostic/policy/API23及probe回归通过，未当作线上验收。"
+    },
+    {
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "核对探针结束与清理",
+      "status": "done",
+      "result": "180tick观察于73955353自动恢复原monitor；最终清理回读inspectionCleanupTick73989543。"
+    },
+    {
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "完成并发让行日志发布",
+      "status": "done",
+      "result": "25个真实同ID初始/终态分别提交并推送：dc1044f/207fe16和28702c1/39222c3；game:null保留，未虚构观测。"
+    },
+    {
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "核对网站发布结果",
+      "status": "failed",
+      "result": "Vercel返回Not authorized；RCL5地图仅本地/Git已就绪，生产仍旧RCL4部署。"
+    },
+    {
+      "at": "2026-09-28T01:33:15.319Z",
+      "description": "按用户暂停要求收尾并交接",
+      "status": "done",
+      "result": "回顾任务01a0e59f-6dbf-7542-a88c-e879ef934275已将screeps-world暂停；本轮停止新增采样/修复/部署/子任务，传递已有时间区间和CPU证据。"
     }
   ],
-  "actions": [],
   "checks": [
     {
-      "name": "跨轮文件归属",
+      "name": "归属与独立审视",
       "result": "passed",
-      "detail": "上轮01a0dcda idle/completed；旧游戏owner01a0d7a3 notLoaded/latestTurn completed；01a0dc5e idle/completed。本轮root01a0dd13-1434-7c73-b6c1-69d67742d963。"
+      "detail": "接管前核验旧协调者停止；结束前全部审视者completed或errored并无文件持有，root串行API/Git。"
+    },
+    {
+      "name": "回归与API部署",
+      "result": "passed",
+      "detail": "test:game、test:diagnostics、test:policy、verify-api23、verify-transport-probe通过；六模块部署读回匹配，实际73989480–73989580为新版。"
+    },
+    {
+      "name": "线上CPU与能效",
+      "result": "pending",
+      "detail": "CPU23.729仍>20、bucket6、1500coverage0.2707；保护生效不等于恢复，持续能效未达验收。"
+    },
+    {
+      "name": "地图导出与网页回归",
+      "result": "passed",
+      "detail": "7导出测试、28API测试、layout/UI回归通过，快照tick和205项一致。"
+    },
+    {
+      "name": "网站发布",
+      "result": "failed",
+      "detail": "Not authorized；停止相同凭据重试。"
+    },
+    {
+      "name": "用户暂停",
+      "result": "passed",
+      "detail": "已停止新工作并向当前回顾任务交付证据；不重启自动化。"
     }
   ],
-  "next": [],
-  "references": []
+  "next": [
+    "用户已暂停巡检，不自动恢复；由当前回顾任务分析Container消失、扩张时间与CPU/能源因果。",
+    "交接完成后释放API/Git和文件所有权；接手仍须核验此任务停止。",
+    "若之后获准恢复，优先CPU/bucket、控制器容器、目标真实交付/积压，再验收完整1500tick主窗与续代成本。",
+    "网站新地图需恢复既有Vercel项目部署授权，不能称已发布。"
+  ],
+  "references": [
+    {
+      "label": "游戏修复04b8ceb",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/04b8ceb"
+    },
+    {
+      "label": "CPU与能效Issue4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "首个分基地Issue7",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
+    },
+    {
+      "label": "交接与地图9b1d76c",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/commit/9b1d76c"
+    },
+    {
+      "label": "巡检日志",
+      "url": "https://screeps-energy-observatory.vercel.app/logs?id=2026-09-26T09-38-51Z-rcl4-1aa7cbe95156"
+    }
+  ]
 }
