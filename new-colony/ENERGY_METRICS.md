@@ -1,6 +1,6 @@
 # Energy north star and operating loop
 
-Initial ledger implemented in release `2026-09-25.3`; total-use metric and supply fixes added in `.5`. Sources: `ledger.js`, `monitor.js`, `main.js`.
+Initial ledger implemented in release `2026-09-25.3`; total-use metric and supply fixes added in `.5`. Sources: `ledger.js`, `monitor.js`, `development.js`, `logistics.js`, `workforce.js`; `main.js` only schedules them.
 
 ## Definitions and scope
 
@@ -33,7 +33,7 @@ An ineligible window is not evidence of a healthy room. Persistent missing accou
 
 When low performance is sustained, inspect in order: actual harvest and source coverage; source-side stock/drops; transport route duration, carrying capacity, fatigue and blocking; worker supply and actual productive events; spawn replacement/maintenance costs; spending policy, reserves and CPU. Save the baseline, make a bounded change, run relevant tests, deploy via API, verify a new version/tick and compare subsequent windows. Never react to one sample or burn reserves merely to increase G.
 
-`main.js` now plans hauler CARRY from source capacity and route round-trip cost, with a confirmed backlog increment. Decisions run on a 100-tick cadence; reductions require 300 ticks. Miner renewal includes spawn/travel/queue lead time. Necessary construction gets a measured energy duty budget, then remaining income supports upgrading; storage modes have 12000/18000 hysteresis. Credible drawdown data may reduce spending; automatic increases based on low efficiency require the confirmed indicator.
+`development.js` calculates route/income budgets, `logistics.js` executes hauling, and `workforce.js` sizes future CARRY/WORK bodies. Decisions run on a 100-tick cadence; reductions require 300 ticks. Miner renewal includes spawn/travel/queue lead time. Necessary construction gets a measured energy duty budget, then remaining income supports upgrading; storage modes have 12000/18000 hysteresis. Credible drawdown data may reduce spending; automatic increases based on low efficiency require the confirmed indicator.
 
 Release `.4` fixes a confirmed budgeting defect: only fueled, work-ready builders in range of their own current construction target share the duty denominator. Traveling/refueling/temporarily yielding workers do not consume construction quota, and travel is not duty-throttled. A retired 4-WORK miner outside construction range had reduced the productive 3-WORK group's expected throughput to about 5.1 energy/tick. The regression restores approximately 11.85 within an 11.93 budget; actual post-deployment throughput still requires game observations.
 

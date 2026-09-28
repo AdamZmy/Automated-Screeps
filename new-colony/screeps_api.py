@@ -37,7 +37,11 @@ import urllib.request
 ORIGIN = "https://screeps.com"
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_TOKEN_FILE = Path("/Users/zmy/.config/screepsworld/auth-token")
-MODULES = ("main", "planner", "expansion", "monitor", "ledger", "plans")
+MODULES = (
+    "main", "runtime", "development", "logistics", "workforce",
+    "infrastructure", "metrics", "planner", "expansion", "monitor",
+    "ledger", "plans",
+)
 DEPLOY_BRANCH = "frontier24"
 DEPLOY_USERNAME = "AdamZmy"
 MAX_BYTES = 16 * 1024 * 1024

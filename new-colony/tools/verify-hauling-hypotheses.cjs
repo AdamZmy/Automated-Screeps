@@ -5,7 +5,7 @@
 // The multi-port oracle requires correct behavior: it intentionally fails .12.
 // Other candidate mechanisms are printed with their evidence limitations.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const {constants:C,enginePath:engine,readSource}=require('../test-support/runtime.cjs');
+const {constants:C,enginePath:engine,readSource,loadGameModule}=require('../test-support/runtime.cjs');
 const lodash=require(require.resolve('lodash',{paths:[engine]}));
 const utility={};
 function fragment(file,startText,endText){
@@ -26,8 +26,7 @@ function engineProcessor(relative){
 }
 const transfer=engineProcessor('creeps/transfer'),pickup=engineProcessor('creeps/pickup'),decay=engineProcessor('energy/tick');
 const context={...C,module:{exports:{}},console,RoomPosition:Position,Game:{},Memory:{},global:{}};
-vm.createContext(context);vm.runInContext(readSource('main.js')+'\nmodule.exports.review={VERSION,range,walkable,controllerStation,deliverHaul,haulTarget,collectHaul,body,workforceDemand,deliveryNeeds,work,developmentPlan,finishDevelopment,upgrade};',context);
-const policy=context.module.exports.review;
+vm.createContext(context);const policy=loadGameModule(context,'main').test;
 const reviewed=JSON.parse(readSource('fixtures/layout-plan-reviewed.json'));
 const world=JSON.parse(readSource('fixtures/layout-world-before.json'));
 const key=p=>p.x+','+p.y,cost=b=>b.reduce((n,p)=>n+C.BODYPART_COST[p],0);

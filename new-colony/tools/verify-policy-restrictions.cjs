@@ -1,10 +1,9 @@
 'use strict';
 // Independent behavior checks against real main.js; no game API or source edits.
 const assert=require('node:assert/strict'),vm=require('node:vm');
-const {constants:C,readSource}=require('../test-support/runtime.cjs');
+const {constants:C,loadGameModule}=require('../test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.audit={body,work,updateEconomy,workforceDemand,spawnRoom,refuel,collectHaul,haulTarget,links};',ctx);
-const policy=ctx.module.exports.audit,cost=b=>b.reduce((n,p)=>n+C.BODYPART_COST[p],0),parts=(b,p)=>b.filter(x=>x===p).length;
+vm.createContext(ctx);const policy=loadGameModule(ctx,'main').test,cost=b=>b.reduce((n,p)=>n+C.BODYPART_COST[p],0),parts=(b,p)=>b.filter(x=>x===p).length;
 for(const budget of [200,800,1300,2300,5600])for(const role of ['hauler','upgrader','builder']){
  const b=policy.body(role,budget);assert(b&&b.length<=50);assert(cost(b)<=budget);assert(parts(b,C.MOVE)>0);
 }

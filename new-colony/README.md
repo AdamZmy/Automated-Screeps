@@ -10,13 +10,41 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `main.js` | 出生、矿工、运输、建造与升级、防御、模块调度和异常隔离 |
+| `main.js` | 极薄的 composition root：加载模块、安排每 tick 调用顺序、隔离房间/角色异常；不放具体策略 |
+| `runtime.js` | 无状态通用工具：坐标距离、移动、能量读取、矿位和建筑集合；移动计数交给 `metrics.js` |
+| `development.js` | 房间经济预算、Controller 固定站、升级/施工执行、工人补能、矿工动作和发展意图记账 |
+| `logistics.js` | 固定节点配送需求、取货/送货预约、多卸货口、运输者状态机和拥堵恢复 |
+| `workforce.js` | 身体设计、有效产能估算、矿工续代、岗位缺口和 Spawn 决策 |
+| `infrastructure.js` | Tower 防御、safe mode 条件、Link 角色识别与传能 |
+| `metrics.js` | 可重建的 CPU 阶段/角色/移动计数及每 20 tick 汇总 |
 | `planner.js` | RCL 1–8 布局、资源与出口通路、建筑配额校验、旧建筑复用、分批施工 |
 | `plans.js` | 冷房静态执行归档，开拓时按需恢复；完整规划另存本地 |
 | `expansion.js` | 侦察、双矿候选评分、单目标开拓、自给验收和扩张间隔 |
 | `monitor.js` | 每 20 tick 保存逐矿库存、道路进度、运输阻塞、升级速度、CPU EMA 和有限历史，异常去重 |
 | `ledger.js` | 每tick依据真实事件记录G/eta、费用、库存、残差和300/1500/6000tick窗口 |
 | `ARCHITECTURE.md` | 架构研究、开源参考、代理边界、已实现状态及后续改进 |
+
+### 修改前先定位文件
+
+以后处理代码问题时，先从本表选择职责文件，只读取该文件、它直接依赖的接口和对应测试。除非调用链跨模块或回归失败，不需要先通读全部源码。
+
+常用入口：
+
+| 要改的问题 | 首读文件 | 通常还需读取 |
+| --- | --- | --- |
+| tick 顺序、异常隔离、模块是否执行 | `main.js` | 被调度模块的导出接口 |
+| Upgrader、Builder、Controller Container、发展预算 | `development.js` | `workforce.js`；涉及配送时再读 `logistics.js` |
+| Hauler、矿区积压、补给目标、卸货口 | `logistics.js` | `development.js` 的站点/需求接口、`runtime.js` 的移动工具 |
+| 出生顺序、身体大小、续代和 CPU 出生保护 | `workforce.js` | `development.js` 的需求输出 |
+| Tower、safe mode、Link | `infrastructure.js` | `planner.js` 中的 Link tag/坐标 |
+| 路径、卡位、矿位判定 | `runtime.js` | 调用它的单个角色模块 |
+| CPU 归因 | `metrics.js` | `main.js` 的测量边界、`monitor.js` 的发布字段 |
+| 布局和施工点生成 | `planner.js` / `plans.js` | 对应布局 fixture 与生成器说明 |
+| 新房选择、claimer/pioneer、扩张状态 | `expansion.js` | `workforce.js` 的 Spawn 接口 |
+| 告警和遥测摘要 | `monitor.js` | `ledger.js`（仅涉及能量口径时） |
+| 能量事件与窗口指标 | `ledger.js` | `ENERGY_METRICS.md` |
+
+运行时依赖保持单向为主：`main → workforce/logistics/development/infrastructure → runtime`，`metrics`由入口和移动工具记录；`planner`、`expansion`、`monitor`由`main`调度，`monitor → ledger`。`development`仅在需要让工人临时运输时延迟调用`logistics`，避免模块初始化循环。
 
 ## 主房地理与升级
 
@@ -47,7 +75,7 @@
 
 ## API 巡检与诊断
 
-认证已通过，账号AdamZmy，shard1 Memory读取、frontier24六模块校验和Console诊断回读均已实测。只使用本机CLI，不在参数或源码中放Token：
+认证已通过，账号AdamZmy，shard1 Memory读取、frontier24受管模块校验和Console诊断回读均已实测。只使用本机CLI，不在参数或源码中放Token：
 
 ```sh
 python3 screeps_api.py identity
@@ -71,6 +99,12 @@ python3 screeps_api.py memory --path frontier.apiSnapshot
 
 ```sh
 node --check main.js
+node --check runtime.js
+node --check development.js
+node --check logistics.js
+node --check workforce.js
+node --check infrastructure.js
+node --check metrics.js
 node --check planner.js
 node --check expansion.js
 node --check monitor.js
@@ -86,9 +120,9 @@ python3 screeps_api.py deploy --apply
 
 经济检查覆盖恢复体型、矿位与容器、部分负载、仓库循环、实际升级节流、单矿位换体、持久补能目标及矿位预约；布局检查覆盖真实房间地形、已有建筑、堵路、失败重试和逐级施工；扩张检查覆盖储备/CPU/岗位门槛及自给验收。模拟不能替代线上吞吐、CPU 与续代观察。
 
-Codex 已设置每 1 小时新开独立对话复查的定时任务（用户2026-09-26调整），名称“Screeps World 基地巡检”、ID `screeps-world`。游戏代码和服务器侧监控逐 tick/每 20 tick 运行；Codex 的复查依赖本机API客户端、网络与有效Token。仅重要进展、故障或需用户处理时通知。最近人工/代理读取结果记录在 `LIVE_STATUS.md`。
+Codex 的独立复查任务名称为“Screeps World 基地巡检”、ID `screeps-world`；用户已于2026-09-27要求暂停，当前保持 `PAUSED`，不得因代码发布自动恢复。游戏代码和服务器侧监控仍逐 tick/每 20 tick 运行。最近人工/代理读取结果记录在 `LIVE_STATUS.md`。
 
-仅整合者通过API发布六模块。deploy默认预览；--apply校验AdamZmy/frontier24、备份远端代码、保留其他模块、上传并回读比对，不切分支；无变化不POST。写入结果不明时先code-check。发布后仍要通过Memory确认版本、tick推进及实际策略效果。旧分支与历次部署备份在backups/。不自动调用市场、不购买订阅，也不操作其他游戏项目。
+仅整合者通过API发布 README 表中的受管游戏模块。deploy默认预览；--apply校验AdamZmy/frontier24、备份远端代码、保留其他模块、上传并回读比对，不切分支；无变化不POST。写入结果不明时先code-check。发布后仍要通过Memory确认版本、tick推进及实际策略效果。旧分支与历次部署备份在backups/。不自动调用市场、不购买订阅，也不操作其他游戏项目。
 
 ## 2026-09-25.3 能源账本与动态调度
 

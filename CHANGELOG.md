@@ -6,6 +6,19 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.5.0 — 2026-09-28
+
+- Game build `2026-09-27.2` turns `main.js` into a 39-line composition root.
+  Existing behavior is separated into runtime helpers, development/worker actions,
+  logistics, workforce planning, infrastructure and CPU-metrics modules.
+- Preserve the existing tick order and gameplay policy. The full economy, hauling,
+  planner, expansion, monitor, ledger and API regressions pass against the modular
+  loader; no energy or spawning threshold changes are included in this release.
+- Extend the API deploy/check manifest so every new module is uploaded, hashed,
+  backed up and verified with the existing remote modules.
+- Add a README task-to-file routing table and dependency map so future work starts
+  from the relevant module and direct interfaces instead of rereading all logic.
+
 ## 0.4.3 — 2026-09-27
 
 - Game build `2026-09-27.1` sizes new upgrader/builder bodies for the remaining

@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const {constants:C,enginePath:engine,readSource}=require('./test-support/runtime.cjs');
+const {constants:C,enginePath:engine,readSource,loadGameModule}=require('./test-support/runtime.cjs');
 const ctx={...C,module:{exports:{}},console,Game:{time:1,creeps:{}},Memory:{},global:{}};
-vm.createContext(ctx);vm.runInContext(readSource('main.js')+'\nmodule.exports.test={body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts,collectHaul};',ctx);
-const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts,collectHaul}=ctx.module.exports.test;
+vm.createContext(ctx);const game=loadGameModule(ctx,'main');
+const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy,upgradeAllowed,minerReplacement,upgraderAssignment,constructionJobs,updateEconomy,routeTravel,minerRenewal,buildAllowed,near,go,controllerStation,stationUpgrade,deliveryNeeds,workerSupply,links,linkNetwork,range,developmentPlan,recordDevelopment,finishDevelopment,workforceDemand,workerDuty,deliverHaul,deliveryPorts,collectHaul}=game.test;
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
@@ -129,8 +129,8 @@ function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++
 }
 {
  const f=fixture();ctx.Game.time=101;let spawned=0;const sp=f.structure(C.STRUCTURE_SPAWN,'spawn',21,28,300,300);sp.spawnCreep=()=>{spawned++;return C.OK;};
- ctx.require=name=>name==='planner'?{run(){throw Error('expected planning failure');}}:{tick(){},spawn(){}};
- const logs=[];ctx.console={log:t=>logs.push(t)};ctx.module.exports.loop();ctx.console=console;
+ ctx.gameModuleOverrides={planner:{run(){throw Error('expected planning failure');}},expansion:{tick(){},spawn(){}},monitor:{tick(){}}};
+ const logs=[];ctx.console={log:t=>logs.push(t)};game.loop();ctx.console=console;
  assert.equal(spawned,1);assert(logs.some(s=>s.includes('expected planning failure')),'planner error must be reported and isolated');
 }
 console.log('PASS: occupied-source rerouting, legal miner slots, container migration, source coverage, storage loop prevention, partial loads, live upgrade reserve budget, planner fault isolation');
@@ -555,21 +555,21 @@ console.log('PASS: fixed construction supply priority, controller emergency/spaw
 console.log('PASS: empty/adjacent path fast paths, genuine reachability, stable delivery trips, urgent preemption, completion/blockage invalidation, consecutive movement-only stuck detection and explicit cached-path recovery');
 {
  let used=0,memoryTick=-1;const mem={};
- const prof={...C,module:{exports:{}},console,global:{},Game:{time:1,creeps:{},rooms:{},gcl:{},cpu:{bucket:10000,getUsed(){used+=.01;return used;}}},require:()=>({tick(){},run(){}})};
+ const prof={...C,module:{exports:{}},console,global:{},Game:{time:1,creeps:{},rooms:{},gcl:{},cpu:{bucket:10000,getUsed(){used+=.01;return used;}}},gameModuleOverrides:{planner:{run(){}},expansion:{tick(){},run(){}},monitor:{tick(){}}}};
  Object.defineProperty(prof,'Memory',{get(){if(memoryTick!==prof.Game.time){used+=3;memoryTick=prof.Game.time;}return mem;}});
- vm.createContext(prof);vm.runInContext(readSource('main.js'),prof);
- for(let tick=1;tick<=20;tick++){prof.Game.time=tick;used=0;prof.module.exports.loop();}
+ vm.createContext(prof);const profGame=loadGameModule(prof,'main');
+ for(let tick=1;tick<=20;tick++){prof.Game.time=tick;used=0;profGame.loop();}
  const first=mem.frontier.performance;
  assert.equal(first.samples,20);assert.equal(first.from,1);assert.equal(first.tick,20);
  assert(first.stages.memory.mean>=3,'the first lazy Memory parse must be included in its own CPU stage');
  assert(first.mean>=3);assert(first.totals.entry.mean<.1,'entry CPU must precede the lazy Memory read');
  assert(first.stages.monitor.calls===20&&first.max>=first.mean);
- for(let tick=21;tick<=40;tick++){prof.Game.time=tick;used=0;prof.module.exports.loop();}
+ for(let tick=21;tick<=40;tick++){prof.Game.time=tick;used=0;profGame.loop();}
  assert.equal(mem.frontier.performance.samples,20);assert.equal(mem.frontier.performance.from,21,'CPU counters reset after each bounded summary');
  assert.equal(mem.frontier.performance.tick,40);
  assert(JSON.stringify(mem.frontier.performance).length<2000,'the CPU monitor must not create an unbounded per-creep log');
  prof.RawMemory={get:()=>'{"fixture":true}'};
- for(let tick=41;tick<=1240;tick++){prof.Game.time=tick;used=0;prof.module.exports.loop();}
+ for(let tick=41;tick<=1240;tick++){prof.Game.time=tick;used=0;profGame.loop();}
  assert.equal(mem.frontier.performance.memoryBytes,16);
  assert.equal(mem.frontier.performance.history.length,60,'published CPU history retains only sixty compact samples');
  assert.equal(mem.frontier.performance.history[0].tick,60);assert.equal(mem.frontier.performance.history.at(-1).tick,1240);

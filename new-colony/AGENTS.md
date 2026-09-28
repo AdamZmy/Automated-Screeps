@@ -4,13 +4,13 @@
 - 用户目标：提高主基地升级效率，以双能源、交通可达和后续扩张空间选择辅房；每房提前规划RCL1–8。
 - 用户明确要求“站在巨人的肩膀上”：布局、道路、防线等设计先深入研究GitHub源码、作者说明和玩家论坛的成熟方案，记录可核验来源、许可、适用条件及实际地形验证；优先复用已有算法。不能仅借鉴项目名称/管理架构后自行拼布局，也不能将数量合规或可达当作布局质量验收。先完成研究与方案对比，再实施替换。
 - Link可作为主房入口的外矿接收中继：运输者跨房后卸载，再传给房内仓库端；按实际外矿路线、吞吐、损耗及RCL配额评估并预留，不为填满上限任意摆放。新基地、外矿、交通走廊要统一规划。
-- 唯一游戏源码目录 `/Users/zmy/screepsworld/new-colony`，六模块为main.js、planner.js、expansion.js、monitor.js、ledger.js、plans.js。Screeps Arena、其地图编辑器及旧结构图均不属于此项目。
+- 唯一游戏源码目录 `/Users/zmy/screepsworld/new-colony`。受管模块及按问题选读规则以本目录 `README.md` 的文件职责表为准；`main.js` 只做调度，经济、物流、人口、基础设施和指标分别位于对应模块。Screeps Arena、其地图编辑器及旧结构图均不属于此项目。
 - **用户明确要求全部游戏数据读取与操作仅通过HTTP API，禁止computer use、截图、原生UI或浏览器自动化；不以界面为失败回退。** 此偏好持续适用于后续巡检及子代理。
 - 读取可复用操作skill：[screeps-world-api](/Users/zmy/.codex/skills/screeps-world-api/SKILL.md)。每轮巡检先读本文件、父目录OPERATIONS.md和CURRENT_STATE.md；README/LIVE_STATUS/ROADMAP只按相关问题检索。修改游戏代码前读相关模块和ARCHITECTURE.md。历史研究建议不等于已实现功能。
 
 ## API 入口与凭据
 
-- 默认 `python3 screeps_api.py status`，固定服务 `https://screeps.com`，默认shard1/frontier24；`identity`核验AdamZmy，`code-check`核验六模块。
+- 默认 `python3 screeps_api.py status`，固定服务 `https://screeps.com`，默认shard1/frontier24；`identity`核验AdamZmy，`code-check`核验 README 所列全部受管模块。
 - 认证已真实通过，Token仅由CLI从 `/Users/zmy/.config/screepsworld/auth-token` 读取。文件0600、目录0700，不回显、不放源码/游戏Memory/日志/命令行参数/版本备份，不读取客户端会话凭据。Token只用X-Token请求头，不传其他主机，拒绝重定向。
 - `status`输出并保存 `state/api-frontier.json`，包含fetchedAt和游戏tick。新的fetchedAt/HTTP200不代表遥测已更新；与此前有效tick比较，在正常20tick采样窗口内相同属正常，跨足够窗口仍未前进则通过Game诊断快照核验。磁盘快照不代表实时。
 - HTTP401/403或其他API失败：记录准确阻碍，不猜测状态，不反复重试同一失败凭据，不转用UI；同一阻碍只通知一次。用户更新凭据后再验证。429遵守限流。
@@ -29,7 +29,7 @@
 - GitHub 工作管理的唯一规范见父目录 `OPERATIONS.md`，长期阶段见 `ROADMAP.md`。巡检读取真实 Issue/checkpoint 与实际任务状态，按 planned/ready/in-progress/verifying/blocked/done 推进；已有运行任务不重复派工，代码完成后的等待窗口保持 verifying，失去工作者的未完成任务从检查点恢复。父仓库保留所有版本，只有有验收证据才关闭 Issue。
 
 - root是唯一凭据持有、API采样、Console提交、整合和部署者。子代理默认只读root提供的脱敏state工件，注明fetchedAt和tick；不重复调用API或自行部署。
-- 能源代理负责main.js及经济测试；布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
+- 代码修改按 README 的职责表定位文件：调度归 `main.js`，经济/角色动作归 `development.js`，运输归 `logistics.js`，出生归 `workforce.js`，防御/Link归 `infrastructure.js`，共享移动归 `runtime.js`，CPU归 `metrics.js`。布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
 - 每次启动有限、独立的小任务，约定文件归属，交付发现/测试/待验证点并释放。不要把子代理当永久运行进程；游戏代码逐tick工作，独立定时任务每1小时新开对话复查（用户2026-09-26调整）。不给子代理复制整段历史，仅传对应Issue及必要证据。
 - 跨轮当前状态写父目录CURRENT_STATE.md，工作检查点写GitHub Issue，重要历史才追加LIVE_STATUS.md，不依赖代理永久保留context。每轮另按OPERATIONS的日志步骤创建并发布独立批次，记录问题/待办/进度/动作/验证和下一步；无变化/受阻/跳过也留日志，页面为 `/logs`。先核验上轮父任务及文件负责者，避免并行重复修改或部署；新协调树没有旧代理不等于它已退出。只在重要进展、故障、干预结果或需用户处理时通知。
 
