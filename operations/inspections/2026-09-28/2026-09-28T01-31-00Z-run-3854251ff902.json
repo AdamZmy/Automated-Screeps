@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-28T01-31-00Z-run-3854251ff902",
+  "kind": "manual",
+  "startedAt": "2026-09-28T01:31:00.651Z",
+  "updatedAt": "2026-09-28T01:31:00.651Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "暂停巡检并回顾控制器容器、首次扩张与升级积压",
+  "summary": "",
+  "game": null,
+  "findings": [],
+  "tasks": [],
+  "actions": [],
+  "checks": [],
+  "next": [],
+  "references": []
+}

@@ -9,6 +9,18 @@
   ],
   "runs": [
     {
+      "id": "2026-09-28T01-31-00Z-run-3854251ff902",
+      "kind": "manual",
+      "startedAt": "2026-09-28T01:31:00.651Z",
+      "updatedAt": "2026-09-28T01:31:00.651Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "暂停巡检并回顾控制器容器、首次扩张与升级积压",
+      "summary": "",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
       "id": "2026-09-28T01-16-06Z-run-74f3b9e45d01",
       "kind": "scheduled",
       "startedAt": "2026-09-28T01:16:06.011Z",
@@ -838,22 +850,6 @@
       "summary": "核验到上轮协调者仍active；本轮仅记录跳过原因，日志隔离保存，等待唯一协调者串行合并发布。",
       "tick": null,
       "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-25T20-48-03Z-run-99b41795cee1",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T20:48:03.800Z",
-      "updatedAt": "2026-09-26T07:33:04.745Z",
-      "completedAt": "2026-09-25T21:46:33.881Z",
-      "status": "skipped",
-      "title": "协调者运行中，本轮巡检跳过",
-      "summary": "上轮协调者仍active，本轮跳过基地接管。起初共享归档校验失败，随后其他运行任务已修复并通过26轮归档校验。本轮隔离日志已本地提交，待唯一协调者合并推送；没有新游戏观测。",
-      "tick": null,
-      "issueNumbers": [
-        1,
         4,
         12
       ]
