@@ -1,40 +1,46 @@
 # Screeps World 当前交接
 
 - 唯一 World 源码目录：`/Users/zmy/screepsworld/new-colony`；账号 AdamZmy，官方 shard1，活动分支 `frontier24`。
-- 用户要求暂停的巡检 automation `screeps-world` 仍为 `PAUSED`；本次重构没有恢复调度。
-- 当前发布：v0.5.0 / game build `2026-09-27.2` / commit `b7b96b1`。
-- 2026-09-28T01:55Z 已通过 API 上传并逐模块回读；备份位于 `new-colony/backups/api-deploy-20260928T015525.881056Z/remote-code.json`。
-- 线上 tick `73990020` 已报告版本 `2026-09-27.2`，确认拆分后的主循环实际运行。
+- 用户要求暂停的巡检 automation `screeps-world` 仍为 `PAUSED`；代码发布不得恢复调度。
+- 当前发布：v0.5.1 / game build `2026-09-27.4` / commit `2ada4e6`。
+- 2026-09-28T02:15Z 已通过 API 上传并逐模块回读；备份位于 `new-colony/backups/api-deploy-20260928T021529.075544Z/remote-code.json`。
+- 上传后 shard tick 暂停在 `73990280`，Memory 仍报告旧构建 `.3`；远端源码 hash 已确认 `.4`，下一游戏 tick 才会加载。
 
 ## 代码边界
 
-- `main.js` 仅 39 行，负责装配模块、tick 调用顺序和异常隔离；具体游戏策略不再放在入口。
-- `runtime.js`：移动、距离、能量、矿位等通用工具。
+- `main.js` 负责装配模块、tick 调用顺序和异常隔离；具体游戏策略位于职责模块。
+- `runtime.js`：移动、距离、能量、矿位及逐 tick 房间查询缓存。
 - `development.js`：发展预算、Controller 固定站、升级、施工、补能和矿工动作。
 - `logistics.js`：运输需求、预约、取送目标、多卸货口和 Hauler 状态机。
 - `workforce.js`：身体、有效产能、续代、岗位缺口和 Spawn 决策。
-- `infrastructure.js`：Tower、safe mode 和 Link。
-- `metrics.js`：CPU 阶段、角色和移动计数。
+- `infrastructure.js`：Tower、safe mode 和 Link；`metrics.js`：CPU 阶段、角色和移动计数。
 - `planner.js` / `plans.js`：布局与执行档案；`expansion.js`：扩张；`monitor.js` / `ledger.js`：监控与能量账本。
-- 修改前先查 `new-colony/README.md` 的“修改前先定位文件”表，只读职责文件、直接依赖和对应测试；调用链或回归失败时再扩大范围。
+- 修改前先查 `new-colony/README.md` 的“修改前先定位文件”表，只读职责文件、直接依赖和对应测试。
+
+## CPU 优化结果
+
+- 优化前 `.2` 完整窗口：31 samples，平均 `20.9712` CPU/tick，峰值 `27.1579`；Hauler `8.5892/t`、Miner `3.4249/t`、Memory `3.5427/t`、Spawn `1.6710/t`。
+- `.3` 共享同 tick 的 creep/房间对象查询，缓存升级站、工地和 Link 分类，并删除 Hauler 第一次配送前的重复目标规划。最佳完整窗口 `17.09/t`，最近完整窗口 `17.8111/t`；相对基线分别下降 `18.5%` 和 `15.1%`。
+- `.4` 让已完成布局只按每 10 tick 的原施工周期调用 planner；计划缺失或未完成仍立即运行。bucket <500 时暂停纯展示文字。远端已发布，尚无推进后的完整测量窗口。
+- 约 29–30 个 creep 才是当前负载单位：新房有 19 个、主房 10 个；最近窗口每 tick 平均移动 `10.8333` 次。房间虽只有两个，但逐 creep 搜索和寻路会乘以单位数。
+- 当前最大项目依次为 Hauler `5.7833/t`、Memory 首次解析 `3.4757/t`、Miner `3.4236/t`、Spawn `1.5138/t`、Monitor `1.0648/t`。Hauler 已较基线下降约 `32.7%`；不同窗口会随移动和目标切换波动。
+- Memory 约 `686075` bytes。主要是 `frontier.energy` 的两房长历史和 `frontier.rooms` 中多个完整冷布局；解析成本约 `3.5/t`。后续最大结构性优化是先归档/压缩冷布局和历史编码，必须保持仪表盘口径与可恢复性，不能直接删除。
 
 ## 验证
 
-- `npm test` 全部通过：game、layout、API 23项、operations、diagnostics、policy。
-- 所有受管模块通过语法、部署 dry-run、实际上传和远端 hash/readback 校验。
-- `test-support/runtime.cjs` 已支持在同一 VM 中加载拆分模块；经济和策略回归不再依赖单文件 `main.js`。
-- 这次只调整代码组织与加载方式，没有修改能源阈值、出生策略或角色行为。
+- `npm test` 全部通过：game、layout、API 23 项、operations、diagnostics、policy。
+- 三次优化提交均已推送：`894616a`、`cad8ae0`、`2ada4e6`；12 个受管模块通过实际上传和远端 hash/readback 校验。
+- 未修改能源阈值、岗位数量、出生优先级或角色工作优先级。
 
-## 仍待后续处理的运行问题
+## 仍待处理
 
-- tick `73990020`：CPU 窗口 mean `24.6509`、max `29.9906`，CPU EMA `25.3856 / 20`，bucket `1`；仍未恢复。
-- W23N26 的源侧与地面能源积压仍有告警；Upgrader 少、能源堆积的策略问题尚未在本次重构中修复。
-- 主房 Controller Container 曾消失及重建的历史原因仍未证实；不要把当前存在或模块拆分当作根因结论。
-- 下一次处理上述问题时，首读 `development.js`、`workforce.js` 和 `logistics.js`，再按需要读取 `monitor.js` / `ledger.js` 的证据口径。
+- bucket 最近仍在 `7`，因为当前 CPU 虽已低于 20，但余量很小且存在移动/监控峰值；不能宣布已经恢复。
+- W23N26 仍有两处 source backlog 和约 5.5k 地面能源；Upgrader 少与能源堆积的策略问题尚未在本次 CPU 优化中改变。
+- 主房 Controller Container 曾消失及重建的历史原因仍未证实。
+- 下一轮 CPU 工作先取得 `.4` 的完整窗口；再设计可逆的 Memory 归档压缩，而不是继续扩大逐 tick 缓存。
 
 ## 发布与维护规则
 
 - API 受管模块共 12 个：`main/runtime/development/logistics/workforce/infrastructure/metrics/planner/plans/expansion/monitor/ledger`。
 - `screeps_api.py deploy` 默认只预览；`deploy --apply` 才上传，上传后必须 `code-check` 并等待 Memory 中版本和 tick 推进。
-- 游戏代码、README、AGENTS、架构文档及本机 `screeps-world-api` skill 均已指向新的文件边界。
 - 不因代码发布自动恢复巡检 automation；只有用户明确要求时再启用。
