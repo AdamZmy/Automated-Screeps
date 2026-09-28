@@ -3,31 +3,175 @@
   "id": "2026-09-28T01-15-39Z-run-49b6ea2740bc",
   "kind": "scheduled",
   "startedAt": "2026-09-28T01:15:39.651Z",
-  "updatedAt": "2026-09-28T01:19:45.980Z",
-  "completedAt": null,
-  "status": "running",
-  "title": "每小时巡检：核验任务归属",
-  "summary": "已读操作规则和活动Issue；当前工具缺少跨任务即时状态查询，正在保存本轮隔离记录，尚未接管。",
+  "updatedAt": "2026-09-28T01:19:50.803Z",
+  "completedAt": "2026-09-28T01:17:16.106Z",
+  "status": "skipped",
+  "title": "每小时巡检跳过：任务归属无法即时核验",
+  "summary": "已读取短状态与活动Issue；旧协调者及工作者父任务的即时状态未知，按归属规则不接管。本轮隔离起止记录已本地提交，等待唯一发布者同步。",
   "game": null,
-  "findings": [],
-  "tasks": [],
+  "findings": [
+    {
+      "severity": "info",
+      "title": "跨任务即时状态查询能力未提供",
+      "detail": "当前可调用工具无wait_threads、list_threads、read_thread或tool_search，不能证明旧工作已结束；历史状态和现有修改不替代即时核验。这是巡检归属阻碍，不是新发现的游戏故障。",
+      "evidence": [
+        "CURRENT_STATE及Issue #4/#5/#7协调者为01a0dd13-1434-7c73-b6c1-69d67742d963；#9 neighbor_review及#4既有审视者/实现者父任务亦为该协调者。",
+        "Issue #1/#6仍为verifying，历史owner为01a0dcda-c46c-74c1-9a5e-6b933c0d6856，其即时状态同样未核验。",
+        "共享HEAD 207fe16；游戏模块、相关测试、布局快照及诊断文件已有本轮之外的改动，均未触碰。"
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 1,
+      "title": "固定节点交接验收",
+      "status": "verifying",
+      "progress": "仍待完整卸货与最长路线往返实测。",
+      "next": "确认归属后继续既有验收。",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 4,
+      "title": "持续用能率与工人体型",
+      "status": "in-progress",
+      "progress": "已有独立审视及实现者；代码改动尚由既有owner持有。",
+      "next": "核验root和工作者父任务，复用当前审视与实现。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 5,
+      "title": "实际运输周期观测",
+      "status": "in-progress",
+      "progress": "最新检查点仍待有界探针回读。",
+      "next": "确认归属后核验真实执行、结果与清理，不重复装探针。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 6,
+      "title": "仓储过渡验收",
+      "status": "verifying",
+      "progress": "保持验证状态，不据旧短状态改动结论。",
+      "next": "在新鲜tick核验库存趋势及必要续代成本。",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 7,
+      "title": "首个双能源辅房",
+      "status": "in-progress",
+      "progress": "Issue记录W23N26已自动开拓；历史tick73980185的spawn工地8180/15000仅为既有证据，本轮未复测。",
+      "next": "核验首spawn、自给与bootstrap状态，不能将历史超时门槛当本轮故障。",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 8,
+      "title": "Link投产",
+      "status": "planned",
+      "progress": "保持planned。",
+      "next": "取得实际RCL和供需证据后判断门槛。",
+      "owner": "未接管"
+    },
+    {
+      "issue": 9,
+      "title": "近邻布局与路线复核",
+      "status": "in-progress",
+      "progress": "已有neighbor_review，父任务为旧协调者。",
+      "next": "核验父任务与交付，不重复派工。",
+      "owner": "neighbor_review; parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 10,
+      "title": "成熟基地设施",
+      "status": "planned",
+      "progress": "保持planned。",
+      "next": "按实际门槛解锁。",
+      "owner": "未接管"
+    }
+  ],
   "actions": [
     {
       "at": "2026-09-28T01:15:39.651Z",
       "description": "建立本轮独立批次",
       "status": "done",
       "result": "在隔离档案中运行官方init；共享代码、日志索引和现有文件归属保持原状。"
+    },
+    {
+      "at": "2026-09-28T01:17:16.106Z",
+      "description": "遵守未知owner不接管规则",
+      "status": "done",
+      "result": "没有调用游戏API，没有新tick或版本观测；没有修改共享代码、Issue、CURRENT_STATE或LIVE_STATUS，没有部署、派重复代理或更改调度。"
+    },
+    {
+      "at": "2026-09-28T01:17:16.106Z",
+      "description": "保存本轮起止日志供单一发布者同步",
+      "status": "done",
+      "result": "官方隔离init/write/validate及起始显式Git提交已完成；终态执行同样校验并显式提交。未取得共享发布归属，不尝试push，不声称GitHub故障或已发布。"
     }
   ],
   "checks": [
     {
-      "name": "任务归属即时核验",
+      "name": "必需文档、自动化记忆及活动Issue",
+      "result": "passed",
+      "detail": "已读World skill、AGENTS、OPERATIONS、CURRENT_STATE、日志规范及近期自动化记忆；github_ops.py list成功。未恢复或读取旧聊天。"
+    },
+    {
+      "name": "旧协调者及工作者父任务即时状态",
       "result": "pending",
-      "detail": "当前可调用工具无wait_threads/list_threads/read_thread或工具搜索；旧协调者和工作者父任务的即时状态未知。"
+      "detail": "可调用工具无跨任务状态查询；未知即保留归属，不依据经过时间、空协调树或文件改动推断停止。"
+    },
+    {
+      "name": "实时游戏、能源和CPU验证",
+      "result": "pending",
+      "detail": "本轮按归属规则跳过，game=null；历史Issue证据不表示实时状态。"
+    },
+    {
+      "name": "独立日志起始校验",
+      "result": "passed",
+      "detail": "官方validate通过1run/1day；起始本地commit 7905e7b70644517b5bb95c187cd5765a43bf79b5。"
+    },
+    {
+      "name": "公开日志起止发布",
+      "result": "pending",
+      "detail": "隔离记录本地留痕，公共push尚未尝试。须由已核验的单一发布者导入原始两份修订，重建完整索引并依次提交推送。"
     }
   ],
   "next": [
-    "获得旧协调者和Issue工作者及父任务的即时停止证据后，才接管API、共享Git与部署。"
+    "先获得Codex跨任务即时查询能力，核验最新CURRENT_STATE协调者、活动Issue owner及工作者父任务，确认停止后才接管。",
+    "由确认后的唯一发布者导入同ID的initial-publication.json和final-publication.json，保留真实startedAt/completedAt，分别校验、显式提交并推送；不能复制隔离索引覆盖完整公共档案。",
+    "接管后继续既有#4/#5/#7/#9检查点；#1/#6保持verifying，#8/#10按实际门槛解锁；先复用既有审视者和故障目录。"
   ],
-  "references": []
+  "references": [
+    {
+      "label": "Issue #1",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/1"
+    },
+    {
+      "label": "Issue #4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "Issue #5",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/5"
+    },
+    {
+      "label": "Issue #6",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/6"
+    },
+    {
+      "label": "Issue #7",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
+    },
+    {
+      "label": "Issue #8",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/8"
+    },
+    {
+      "label": "Issue #9",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/9"
+    },
+    {
+      "label": "Issue #10",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/10"
+    }
+  ]
 }
