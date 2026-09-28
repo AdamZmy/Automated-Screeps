@@ -3,11 +3,11 @@
   "id": "2026-09-28T03-15-24Z-hauler-d79b92fba8c0",
   "kind": "manual",
   "startedAt": "2026-09-28T03:15:24.694Z",
-  "updatedAt": "2026-09-28T03:15:45.300Z",
+  "updatedAt": "2026-09-28T03:27:42.026Z",
   "completedAt": null,
   "status": "running",
   "title": "落实房间模块重构与 Hauler 状态机",
-  "summary": "用户已批准完整模块重构和游戏部署。旧协调者均已停止并释放代码归属，本轮由 root 统筹三个有限实现子任务。",
+  "summary": "模块重构与新行为测试已落地，完整回归到历史物流诊断接口迁移；独立审阅确认的三个边界正完成修正。尚未部署。",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -19,7 +19,16 @@
     "fetchedAt": "2026-09-28T03:14:13Z"
   },
   "findings": [],
-  "tasks": [],
+  "tasks": [
+    {
+      "issue": 13,
+      "title": "Colony模块、运输状态和统一调度",
+      "status": "in-progress",
+      "owner": "root01a0e5d9-dc86-7f83-883c-af5c434fcefe",
+      "progress": "分离Colony/mining/defense/links/movement；单一Hauler状态与双端预约；统一出生/施工。新场景与经济、布局、API、operations通过。",
+      "next": "历史物流诊断迁移、最终完整回归与独立审阅；API部署并检查新tick。"
+    }
+  ],
   "actions": [],
   "checks": [
     {
@@ -31,10 +40,26 @@
       "name": "重构及真实tick验收",
       "result": "pending",
       "detail": "实现后运行完整回归、API部署回读及在线行为检查。"
+    },
+    {
+      "name": "新模块与主要历史回归",
+      "result": "passed",
+      "detail": "verify-economy/planner/expansion/monitor/ledger/runtime/logistics/workforce/missions及RCL1–8布局执行通过，API23项通过。完整npm最终一次仍待历史诊断接口迁移。"
+    },
+    {
+      "name": "独立审视",
+      "result": "passed",
+      "detail": "独立复现临时工旧port租约、同优先级期限资金占用、cancelled扩张储备残留；前两项已修复验证，第三项交实现者补回归。"
     }
   ],
   "next": [
-    "单一Hauler状态机、双端预约、统一出生/施工入口；迁移模块并执行回归。"
+    "修复/验证取消扩张储备残留，完成历史物流诊断与全量测试。",
+    "API备份部署/逐模块回读，检查实际新tick版本、任务状态、消费和CPU。"
   ],
-  "references": []
+  "references": [
+    {
+      "label": "重构工作项",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/13"
+    }
+  ]
 }
