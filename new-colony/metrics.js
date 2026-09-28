@@ -19,7 +19,7 @@ function finishCpu(start){
     if(Game.time%20!==0)return;
     const compact=group=>Object.fromEntries(Object.entries(cpuWindow[group]).map(([name,s])=>[name,{calls:s.calls,mean:+(s.total/s.calls).toFixed(4),perTick:+(s.total/cpuWindow.samples).toFixed(4),max:+s.max.toFixed(4)}]));
     const movement=Object.fromEntries(Object.entries(cpuWindow.movement).map(([name,total])=>[name,{total,perTick:+(total/cpuWindow.samples).toFixed(4)}]));
-    const stats={from:cpuWindow.from,tick:Game.time,samples:cpuWindow.samples,mean:+(cpuWindow.totals.loop.total/cpuWindow.samples).toFixed(4),max:+cpuWindow.totals.loop.max.toFixed(4),totals:compact('totals'),stages:compact('stages'),roles:compact('roles'),movement};
+    const stats={from:cpuWindow.from,tick:Game.time,samples:cpuWindow.samples,mean:+(cpuWindow.totals.loop.total/cpuWindow.samples).toFixed(4),max:+cpuWindow.totals.loop.max.toFixed(4),totals:compact('totals'),stages:compact('stages'),roles:compact('roles'),rooms:compact('rooms'),movement};
     if(typeof RawMemory!=='undefined'&&typeof RawMemory.get==='function')stats.memoryBytes=RawMemory.get().length;
     const previous=Memory.frontier.performance;
     stats.history=previous&&Array.isArray(previous.history)?previous.history.slice(-59):[];
@@ -30,7 +30,7 @@ function finishCpu(start){
 
 function startCpu(){
     const start=cpuNow();
-    if(start!==null&&!cpuWindow)cpuWindow={from:Game.time,samples:0,totals:{},stages:{},roles:{},movement:{}};
+    if(start!==null&&!cpuWindow)cpuWindow={from:Game.time,samples:0,totals:{},stages:{},roles:{},rooms:{},movement:{}};
     return start;
 }
 module.exports={startCpu,cpuNow,movementCount,cpuAdd,measured,finishCpu};

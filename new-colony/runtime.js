@@ -42,26 +42,36 @@ function near(c,arr) {
     if(adjacent){movementCount('adjacentChoices');return adjacent;}
     movementCount('targetSearches');return c.pos.findClosestByPath(arr);
 }
-function go(c,t,r=1,options={}) {
-    if (!t) return;
-    const p=t.pos || t;
-    // Waiting for fatigue or working in place is not failed movement.
-    if(c.fatigue){movementCount('fatigueWaits');c.memory.stuck=0;return ERR_TIRED;}
-    const key=c.pos.roomName+':'+c.pos.x+','+c.pos.y;
-    const target=p.roomName+':'+p.x+','+p.y+':'+r;
-    c.memory.stuck=c.memory.moveAttempt===Game.time-1&&c.memory.moveTarget===target&&c.memory.last===key ? (c.memory.stuck||0)+1:0;
-    c.memory.last=key;
-    c.memory.moveTarget=target;
-    c.memory.moveAttempt=Game.time;
-    movementCount('moveCalls');if(c.memory.stuck)movementCount('blockedSteps');
-    // Changing ignoreCreeps alone does not invalidate moveTo's serialized path.
-    // Replan around occupants after two actual failed steps, with a short retry
-    // cadence if congestion persists. Keep normal successful routes cached.
-    if(c.memory.stuck>=2&&c.memory.stuck%3===2){delete c.memory._move;movementCount('pathResets');}
-    return c.moveTo(p,{range:r,reusePath:15,maxRooms:p.roomName===c.room.name?1:16,ignoreCreeps:c.memory.stuck<2,...options});
+// All movement policy and final move ownership belong to movement.js.
+function go(c,t,r=1,options={}) {return require('movement').go(c,t,r,options);}
+// Accepted intents reserve initial energy/capacity only. Incoming cargo never
+// becomes spendable this tick; outgoing energy never creates immediate space.
+function intentBook(){const cache=tickCache();return cache.energyIntents||(cache.energyIntents={out:{},in:{}});}
+function resourceKey(o){return o&&(o.id||o.name);}
+function availableEnergy(o){if(!o)return 0;return Math.max(0,energy(o)-(intentBook().out[resourceKey(o)]||0));}
+function availableCapacity(o){if(!o||!o.store)return 0;return Math.max(0,(o.store.getFreeCapacity(E)||0)-(intentBook().in[resourceKey(o)]||0));}
+function commitEnergy(from,to,amount,received=amount){
+    const book=intentBook(),a=resourceKey(from),b=resourceKey(to);
+    if(a)book.out[a]=(book.out[a]||0)+Math.max(0,amount);
+    if(b)book.in[b]=(book.in[b]||0)+Math.max(0,received);
 }
-function take(c,t) { const r=t.resourceType?c.pickup(t):c.withdraw(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
-function give(c,t) { const r=c.transfer(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
+function take(c,t,limit=Infinity) {
+    if(!t)return ERR_INVALID_TARGET;
+    const amount=Math.min(availableEnergy(t),availableCapacity(c),limit);
+    if(amount<=0)return availableCapacity(c)>0?ERR_NOT_ENOUGH_RESOURCES:ERR_FULL;
+    const actual=t.resourceType?Math.min(availableEnergy(t),availableCapacity(c)):amount;
+    const r=t.resourceType?c.pickup(t):c.withdraw(t,E,actual);
+    if(r===ERR_NOT_IN_RANGE)go(c,t);else if(r===OK)commitEnergy(t,c,actual);
+    return r;
+}
+function give(c,t,limit=Infinity) {
+    if(!t)return ERR_INVALID_TARGET;
+    const amount=Math.min(availableEnergy(c),availableCapacity(t),limit);
+    if(amount<=0)return availableEnergy(c)>0?ERR_FULL:ERR_NOT_ENOUGH_RESOURCES;
+    const r=c.transfer(t,E,amount);
+    if(r===ERR_NOT_IN_RANGE)go(c,t);else if(r===OK)commitEnergy(c,t,amount);
+    return r;
+}
 function alive(c) {return c.spawning || (c.ticksToLive||0)>c.body.length*3+35;}
 function sources(room) { return cachedFind(room,'sources',FIND_SOURCES); }
 function stores(room) { return structures(room).filter(s=>s.store); }
@@ -78,4 +88,22 @@ function miningSpots(room,source) {
     return miningCache[key]=spots;
 }
 
-module.exports={E,vals,range,energy,near,go,take,give,alive,allCreeps,roomCreeps,hostiles,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots};
+// Contexts are disposable indexes for the current tick. Home ownership and
+// physical presence are intentionally separate, including spawn/travel status.
+function roomContext(roomOrName){
+    const name=typeof roomOrName==='string'?roomOrName:roomOrName.name;
+    const room=typeof roomOrName==='string'?(Game.rooms||{})[name]:roomOrName;
+    const cache=tickCache(),contexts=cache.contexts||(cache.contexts={});
+    if(contexts[name]&&contexts[name].room===room)return contexts[name];
+    const creeps=allCreeps(),home=creeps.filter(c=>c.memory.home===name),present=creeps.filter(c=>c.pos&&c.pos.roomName===name);
+    const context={tick:Game.time,roomName:name,colonyId:name,visible:!!room,room,
+        creepsByHome:home,creepsByPosition:present,spawning:home.filter(c=>c.spawning),
+        inTransit:home.filter(c=>!c.spawning&&c.pos&&c.pos.roomName!==name),
+        structuresByType:{},sources:[],sites:[],threats:[]};
+    if(room){for(const s of structures(room))(context.structuresByType[s.structureType]||(context.structuresByType[s.structureType]=[])).push(s);
+        context.sources=sources(room);context.sites=constructionSites(room);context.threats=hostiles(room);}
+    contexts[name]=context;return context;
+}
+function contexts(owned){return owned.map(roomContext);}
+
+module.exports={availableEnergy,availableCapacity,commitEnergy,intentBook,roomContext,contexts,E,vals,range,energy,near,go,take,give,alive,allCreeps,roomCreeps,hostiles,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots};

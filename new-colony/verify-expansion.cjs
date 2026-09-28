@@ -1,27 +1,27 @@
 const vm=require('node:vm'),assert=require('node:assert/strict');
-const {constants:C,readSource}=require('./test-support/runtime.cjs');
+const {constants:C,readSource,loadGameModule}=require('./test-support/runtime.cjs');
 function fixture(){
  const homeName='W21N26',targetName='W21N25';
  function room(name,owned,level){const sourceList=[{id:name+'a',pos:{x:10,y:10}},{id:name+'b',pos:{x:30,y:30}}];return{name,sourceList,controller:{my:owned,owner:owned?{username:'AdamZmy'}:undefined,level,pos:{x:20,y:20}},storage:{store:{energy:20000}},find(k){if(k===C.FIND_SOURCES)return sourceList;if(k===C.FIND_MY_SPAWNS)return[{}];return[];},getTerrain:()=>({get:()=>0})};}
  const home=room(homeName,true,4),target=room(targetName,true,2);
- function unit(role,name,source,n=5){return{memory:{role,home:name,source},ticksToLive:1000,getActiveBodyparts:p=>p===C.WORK&&role==='miner'?n:p===C.CARRY&&role==='hauler'?n:0};}
+ function unit(role,name,source,n=5){return{room:name===homeName?home:target,pos:{...(name===homeName?home:target).sourceList.find(s=>s.id===source)?.pos},memory:{role,home:name,source},ticksToLive:1000,getActiveBodyparts:p=>p===C.WORK&&role==='miner'?n:p===C.CARRY&&role==='hauler'?n:0};}
  const history=Array.from({length:6},(_,i)=>({bank:10000+i*100}));
- const root={rooms:{[homeName]:{plan:{complete:true}},[targetName]:{plan:{complete:true,sourcePlans:[{pathLength:10},{pathLength:15}]}}},intel:{[homeName]:{terrain:{plain:1500,swamp:0}},[targetName]:{seen:1000,controller:{},sources:[{},{}],exits:{1:'W21N26'},terrain:{plain:1500,swamp:0},hostiles:0}},status:{cpu:8},telemetry:{cpuEMA:8,alerts:{},rooms:{[homeName]:{history},[targetName]:{history,upgradeEMA:.5}}}};
+ const root={rooms:{[homeName]:{plan:{complete:true}},[targetName]:{plan:{complete:true,sourcePlans:[{pathLength:10},{pathLength:15}]}}},intel:{[homeName]:{terrain:{plain:1500,swamp:0}},[targetName]:{seen:1000,controller:{},sources:[{},{}],exits:{1:'W21N26'},terrain:{plain:1500,swamp:0},hostiles:0}},status:{cpu:8},telemetry:{cpuEMA:8,alerts:{},rooms:{[homeName]:{history},[targetName]:{tick:1000,history,upgradeEMA:.5}}}};
  const ctx={...C,module:{exports:{}},require:()=>({ensure:()=>({complete:true}),chooseAnchor:()=>({x:20,y:20})}),console:{log(){}},Memory:{frontier:root},Game:{time:1000,cpu:{bucket:9000},gcl:{level:7},rooms:{[homeName]:home},creeps:{a:unit('miner',homeName,homeName+'a'),b:unit('miner',homeName,homeName+'b'),h:unit('hauler',homeName,null,8)},map:{getRoomStatus:()=>({status:'normal'}),describeExits:()=>({3:targetName}),findRoute:()=>[{exit:3,room:targetName}]}}};
- vm.createContext(ctx);vm.runInContext(readSource('expansion.js'),ctx);
+ vm.createContext(ctx);ctx.module.exports=loadGameModule(ctx,'expansion');
  return {ctx,root,home,target,homeName,targetName,unit,run:()=>ctx.module.exports.tick([home])};
 }
-let f=fixture();f.run();assert.equal(f.root.expansion.target,f.targetName);assert.equal(f.root.expansion.state,'launching');
+let f=fixture();f.run();assert.equal(f.root.expansion.target,f.targetName);assert.equal(f.root.expansion.state,'ready');
 f=fixture();f.home.storage.store.energy=11999;f.run();assert.equal(f.root.expansion,undefined);
 f=fixture();f.root.telemetry.rooms[f.homeName].history[5].bank=9000;f.run();assert.equal(f.root.expansion,undefined);
 f=fixture();f.root.telemetry.cpuEMA=17;f.run();assert.equal(f.root.expansion,undefined);
 f=fixture();f.ctx.Game.creeps.b.ticksToLive=80;f.run();assert.equal(f.root.expansion,undefined);
 f=fixture();f.root.expansion={home:f.homeName,target:f.targetName,state:'launching',started:900};f.ctx.Game.rooms[f.targetName]=f.target;f.run();assert.equal(f.root.expansion.state,'stabilizing','Spawn alone must not mean self-sufficient');
-f.ctx.Game.creeps.ta=f.unit('miner',f.targetName,f.targetName+'a',2);f.ctx.Game.creeps.tb=f.unit('miner',f.targetName,f.targetName+'b',2);f.ctx.Game.creeps.th=f.unit('hauler',f.targetName,null,2);f.run();assert.equal(f.root.expansion.state,'complete');
+f.ctx.Game.creeps.ta=f.unit('miner',f.targetName,f.targetName+'a',2);f.ctx.Game.creeps.tb=f.unit('miner',f.targetName,f.targetName+'b',2);f.ctx.Game.creeps.th=f.unit('hauler',f.targetName,null,2);f.ctx.Game.creeps.ta.memory.birthRoom=f.targetName;f.ctx.Game.creeps.ta.memory.bornAt=950;f.run();assert.equal(f.root.expansion.state,'stabilizing');f.ctx.Game.time+=100;f.root.telemetry.rooms[f.targetName].tick=f.ctx.Game.time;f.run();assert.equal(f.root.expansion.state,'complete');
 f=fixture();f.root.expansion={home:f.homeName,target:f.targetName,state:'blocked',started:0};f.run();assert.equal(f.root.expansion.state,'blocked');
 f=fixture();f.root.expansion={home:f.homeName,target:f.targetName,state:'stabilizing',started:900};f.ctx.Game.rooms[f.targetName]=f.target;f.home.energyAvailable=1300;
-let pioneerRequests=0;f.ctx.module.exports.spawn(f.home,{spawnCreep(){pioneerRequests++;}},[{memory:{role:'scout'},ticksToLive:500}]);
-assert.equal(pioneerRequests,0,'An owned colony with a spawn must not trigger an endless stream of replacement pioneers');
+const pioneerRequests=f.ctx.module.exports.spawnRequests(f.home).filter(r=>r.role==='pioneer');
+assert.equal(pioneerRequests.length,0,'An owned colony with a spawn must not trigger an endless stream of replacement pioneers');
 console.log('PASS: funded launch, falling reserves/CPU/replacement gates, colony self-sufficiency, blocked-state persistence');
 
 // Inter-room travel must retain both its room route and exit endpoint. Repeated
@@ -33,11 +33,12 @@ function travelerFixture(){
  const find=f.home.find;f.home.find=k=>k===C.FIND_EXIT_RIGHT?[{x:49,y:20,roomName:f.homeName},{x:48,y:20,roomName:f.homeName}]:find(k);
  const creep={id:'traveler',room:f.home,memory:{role:'claimer',home:f.homeName,target:f.targetName},pos:{x:25,y:25,roomName:f.homeName,findClosestByPath(exits,options){exitCalls++;assert.equal(options.ignoreCreeps,true);assert.equal(options.maxRooms,1);return exits.find(p=>p.x===nextX)||exits[0];}}};
  const goals=[];let result=C.OK;
- const run=()=>f.ctx.module.exports.run(creep,{go(c,p,r){assert.equal(r,0);goals.push(p);return result;}});
- return {...f,creep,goals,run,routeCalls:()=>routeCalls,exitCalls:()=>exitCalls,setX:x=>{nextX=x;},setResult:r=>{result=r;}};
+ creep.moveTo=(p,options)=>{assert.equal(options.range,0);goals.push(p);return result;};
+ const movement=loadGameModule(f.ctx,'movement');const run=()=>movement.travel(creep,creep.memory.target);
+ return {...f,creep,goals,run,movement,routeCalls:()=>routeCalls,exitCalls:()=>exitCalls,setX:x=>{nextX=x;},setResult:r=>{result=r;}};
 }
 let t=travelerFixture();
-for(let i=0;i<80;i++){t.ctx.Game.time=1000+i;t.setX(49-i%2);t.run();}
+for(let i=0;i<80;i++){t.ctx.Game.time=1000+i;t.creep.pos.x=25+i%20;t.setX(49-i%2);t.run();}
 assert.equal(t.routeCalls(),1,'Eighty travel ticks should share one inter-room route');
 assert.equal(t.exitCalls(),1,'A moving creep must not reselect the exit every tick');
 assert.ok(t.goals.every(p=>p.x===49&&p.y===20),'The movement endpoint stays stable despite closest-exit changes');
@@ -62,8 +63,8 @@ t.setResult(C.OK);t.ctx.Game.time++;t.run();assert.equal(t.routeCalls(),2);asser
 t.creep.memory.target='W22N26';t.ctx.Game.time++;t.run();assert.equal(t.exitCalls(),3,'A target change requires a fresh exit selection');
 
 t=travelerFixture();
-for(let i=0;i<129;i++){t.creep.memory.target='W'+(100+i)+'N1';t.run();}
-assert.equal(t.routeCalls(),129);t.creep.memory.target='W100N1';t.run();
+for(let i=0;i<129;i++)t.movement.route(t.homeName,'W'+(100+i)+'N1');
+assert.equal(t.routeCalls(),129);t.movement.route(t.homeName,'W100N1');
 assert.equal(t.routeCalls(),130,'Bounded route cache evicts the oldest route instead of growing forever');
 console.log('PASS: shared route/exit caches, expiry, immediate hazard invalidation, failed-route backoff, path recovery and bounded memory');
 
@@ -81,16 +82,13 @@ function edgeFixture(){
   findClosestByPath(candidates){searches++;assert.ok(Array.isArray(candidates));return candidates.filter(p=>Math.max(Math.abs(p.x-this.x),Math.abs(p.y-this.y))<=1).at(-1)||candidates[0];}}};
  f.home.find=k=>{if(k===C.FIND_STRUCTURES){scans++;return structures;}if(k===C.FIND_CREEPS)return occupants;if(k===C.FIND_EXIT_BOTTOM)return exits;return [];};
  const goals=[];
- function go(creep,p){
-  if(creep.fatigue)return C.ERR_TIRED;
-  const key=roomName+':'+creep.pos.x+','+creep.pos.y,targetKey=roomName+':'+p.x+','+p.y+':0';
-  creep.memory.stuck=creep.memory.moveAttempt===f.ctx.Game.time-1&&creep.memory.moveTarget===targetKey&&creep.memory.last===key?(creep.memory.stuck||0)+1:0;
-  Object.assign(creep.memory,{last:key,moveTarget:targetKey,moveAttempt:f.ctx.Game.time});
-  goals.push({x:p.x,y:p.y,hadPath:!!creep.memory._move});
-  if(!jam&&!blocked(p)){creep.pos.x=p.x;creep.pos.y=p.y;}
+ c.moveTo=p=>{
+  goals.push({x:p.x,y:p.y,hadPath:!!c.memory._move});
+  if(!jam&&!blocked(p)){c.pos.x=p.x;c.pos.y=p.y;}
   return C.OK;
- }
- return {...f,c,goals,run:()=>f.ctx.module.exports.run(c,{go}),scans:()=>scans,searches:()=>searches,
+ };
+ const movement=loadGameModule(f.ctx,'movement');
+ return {...f,c,goals,run:()=>movement.travel(c,target),scans:()=>scans,searches:()=>searches,
   setStructures:v=>{structures=v;},setOccupants:v=>{occupants=v;},setExits:v=>{exits=v;},setJam:v=>{jam=v;},
   wall:(x=20,y=49)=>({structureType:C.STRUCTURE_WALL,pos:{x,y,roomName}}),
   cached(){Object.assign(c.memory,{travelExit:{key:roomName+'>'+target+':5',x:20,y:49,at:918},stuck:248,last:roomName+':19,48',moveAttempt:999,moveTarget:roomName+':20,49:0',_move:{path:'20494'}});}};

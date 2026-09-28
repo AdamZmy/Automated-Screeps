@@ -40,7 +40,7 @@ function executionActive(name,room){
     if(room&&room.controller&&room.controller.my)return true;
     if(!room&&Memory.frontier.intel&&Memory.frontier.intel[name]&&Memory.frontier.intel[name].mine)return true;
     const target=Memory.frontier.expansion;
-    return !!(target&&target.target===name&&!['complete','blocked'].includes(target.state));
+    return !!(target&&target.target===name&&!['complete','blocked','aborting','cancelled'].includes(target.state));
 }
 function planSummary(plan,archiveId){
     const summary={};
@@ -292,49 +292,55 @@ function ensure(room){
         // archives stay ineligible; they do not trigger full-room work on visit.
         if(!executionActive(room.name,room))return m.plan;
         const saved=planArchive(),restored=saved&&saved.load(room.name,m.plan.archiveId);
-        // Missing archives cannot strand a new colony waiting for Codex. Only
-        // this activated room replans once, then uses the normal retry policy.
-        m.plan=restored||makePlan(room);
+        // An archive receipt is not permission to invent replacement geometry.
+        // Keep the receipt/data intact until the exact compatible archive returns.
+        if(!restored||restored.version!==VERSION||restored.complete!==false&&!Array.isArray(restored.structures)){
+            m.planRecovery={at:Game.time,status:'blocked',archiveId:m.plan.archiveId,
+                reason:!restored?'archive unavailable':'archive version or payload incompatible'};
+            return m.plan;
+        }
+        m.plan=restored;delete m.planRecovery;
     }
+    if(m.plan&&m.plan.version!==VERSION){m.planRecovery={at:Game.time,status:'blocked',reason:'execution plan version incompatible'};return m.plan;}
     // A blocked active survey must recover if its obstructions later disappear.
-    if(!m.plan||m.plan.version!==VERSION||!m.plan.complete&&Game.time-(m.plan.created||0)>=500)m.plan=makePlan(room);
+    if(!m.plan||!m.plan.complete&&Game.time-(m.plan.created||0)>=500)m.plan=makePlan(room);
+    if(Array.isArray(m.plan.structures))delete m.planRecovery;
     if(m.plan.roadVersion!==ROAD_VERSION)classifyRoads(room,m.plan);
     return m.plan;
 }
-function build(room,plan){
-    if(!plan||!plan.complete||!plan.structures||!room.controller||!room.controller.my)return;
-    const migration=getMemory(room.name).planMigration;
-    if(migration&&migration.status==='blocked')return;
-    const level=room.controller.level;
-    const structures=room.find(FIND_STRUCTURES),sites=room.find(FIND_MY_CONSTRUCTION_SITES);
-    let slots=Math.min(5,8-sites.length,90-Object.keys(Game.constructionSites).length);if(slots<=0)return;
-    const count={},at=new Map(),siteTiles=new Set(sites.map(s=>key(s.pos.x,s.pos.y)));
-    for(const s of structures.concat(sites)){count[s.structureType]=(count[s.structureType]||0)+1;const k=key(s.pos.x,s.pos.y);if(!at.has(k))at.set(k,[]);at.get(k).push(s.structureType);}
-    let roadSlots=Math.max(0,3-sites.filter(s=>s.structureType===STRUCTURE_ROAD).length);
+function constructionRequests(room,plan){
+    plan=plan||getMemory(room.name).plan;
+    if(!plan||!plan.complete||!plan.structures||!room.controller||!room.controller.my)return [];
+    const memory=getMemory(room.name),migration=memory.planMigration;
+    if(migration&&migration.status==='blocked'||memory.planRecovery&&memory.planRecovery.status==='blocked')return [];
+    const level=room.controller.level,structures=room.find(FIND_STRUCTURES),sites=room.find(FIND_MY_CONSTRUCTION_SITES);
+    const at=new Map(),siteTiles=new Set(sites.map(s=>key(s.pos.x,s.pos.y)));
+    for(const s of structures.concat(sites)){const k=key(s.pos.x,s.pos.y);if(!at.has(k))at.set(k,[]);at.get(k).push(s.structureType);}
     const builtRoads=new Set(structures.filter(s=>s.structureType===STRUCTURE_ROAD).map(s=>key(s.pos.x,s.pos.y)));
     const economyPending=plan.structures.some(i=>i.type===STRUCTURE_ROAD&&i.roadClass==='economy'&&!builtRoads.has(key(i.x,i.y)));
     const sorted=plan.structures.slice().sort((a,b)=>b.priority-a.priority||
         (a.type===STRUCTURE_ROAD&&b.type===STRUCTURE_ROAD?(Number(b.roadSwamp)-Number(a.roadSwamp)||Number(!!(b.sourceIds&&b.sourceIds.length))-Number(!!(a.sourceIds&&a.sourceIds.length))||(a.roadOrder||0)-(b.roadOrder||0)):0)||a.rcl-b.rcl);
+    const requests=[];
     for(const item of sorted){
-        if(slots<=0)break;if(item.rcl>level)continue;
-        if(item.type===STRUCTURE_RAMPART)continue;
-        if(item.type===STRUCTURE_ROAD){
-            if(roadSlots<=0)continue;
-            if(item.roadClass!=='economy'&&(economyPending||level<4||!room.storage||room.storage.store[RESOURCE_ENERGY]<20000))continue;
-        }
+        if(item.rcl>level||item.type===STRUCTURE_RAMPART)continue;
+        if(item.type===STRUCTURE_ROAD&&item.roadClass!=='economy'&&(economyPending||level<4||!room.storage||room.storage.store[RESOURCE_ENERGY]<20000))continue;
         if([STRUCTURE_LAB,STRUCTURE_FACTORY,STRUCTURE_NUKER,STRUCTURE_POWER_SPAWN,STRUCTURE_EXTRACTOR].includes(item.type)&&(!room.storage||room.storage.store[RESOURCE_ENERGY]<40000))continue;
         const k=key(item.x,item.y),here=at.get(k)||[];
         if(here.includes(item.type)||siteTiles.has(k))continue;
-        // Roads, containers and ramparts may coexist; other occupied tiles must wait.
-        if(here.some(type=>type!==STRUCTURE_RAMPART&&item.type!==STRUCTURE_RAMPART&&!(type===STRUCTURE_ROAD&&item.type===STRUCTURE_CONTAINER)&&!(type===STRUCTURE_CONTAINER&&item.type===STRUCTURE_ROAD)))continue;
-        const limit=CONTROLLER_STRUCTURES[item.type][level]||0;if((count[item.type]||0)>=limit)continue;
-        const result=room.createConstructionSite(item.x,item.y,item.type);
-        if(result===OK){count[item.type]=(count[item.type]||0)+1;siteTiles.add(k);slots--;if(item.type===STRUCTURE_ROAD)roadSlots--;}
+        if(here.some(type=>type!==STRUCTURE_RAMPART&&!(type===STRUCTURE_ROAD&&item.type===STRUCTURE_CONTAINER)&&!(type===STRUCTURE_CONTAINER&&item.type===STRUCTURE_ROAD)))continue;
+        requests.push({id:'plan:'+room.name+':'+item.type+':'+item.x+':'+item.y,x:item.x,y:item.y,
+            structureType:item.type,minRCL:item.rcl,priority:item.priority,owner:'planner',reason:item.tag||'planned-structure',
+            ...(item.type===STRUCTURE_ROAD?{roadClass:item.roadClass,roadOrder:item.roadOrder,roadSwamp:item.roadSwamp}:{}),
+            ...(item.dependencies||item.dependsOn?{dependencies:item.dependencies||item.dependsOn}:{})});
     }
+    // Admission and result telemetry belong to development.runConstruction.
+    // Candidates describe available work; neither count nor create sites here.
+    return requests;
 }
-module.exports={ensure,makePlan,chooseAnchor,run(room){
+function build(room,plan){return constructionRequests(room,plan);}
+module.exports={ensure,makePlan,chooseAnchor,constructionRequests,build,run(room){
     const p=ensure(room);
-    if(Game.time%10===0)build(room,p);
+    const requests=Game.time%10===0?constructionRequests(room,p):[];
     if(Memory.frontier.showPlan&&p&&p.structures)for(const s of p.structures){if(s.rcl>(Memory.frontier.planViewRcl||8))continue;room.visual.circle(s.x,s.y,{radius:s.type===STRUCTURE_ROAD?.08:.24,fill:room.controller&&s.rcl<=room.controller.level?'#6ce7a3':'#7593b8',opacity:.25,stroke:'transparent'});}
-    maintainColdPlans(room);
+    maintainColdPlans(room);return requests;
 }};

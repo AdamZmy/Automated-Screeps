@@ -1,5 +1,7 @@
 'use strict';
-const {E,vals,range,energy,near,go,take,give,alive,allCreeps,roomCreeps,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots}=require('runtime');
+const {baseUpgradePolicy,economyMemory,routeTravel,updateEconomy,upgradePolicy}=require('colony');
+const {mine}=require('mining');
+const {E,vals,range,energy,availableEnergy,near,go,take,give,alive,allCreeps,roomCreeps,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots}=require('runtime');
 let upgradeIntentTick=-1,upgradeActors=new Set();
 let upgraderCacheTick=-1,upgraderCache={};
 let stationCacheTick=-1,stationCache={};
@@ -11,114 +13,6 @@ function upgrade(c) {
     upgradeActors.add(c);
     const result=c.upgradeController(t);recordDevelopment(c,'upgrade',result);
     if(result===ERR_NOT_IN_RANGE)go(c,t,3);
-}
-function baseUpgradePolicy(room) {
-    const level=room.controller.level;
-    if(level===1)return {target:2,mode:'bootstrap'};
-    if(level<=3&&!room.storage){
-        const capacity=level===2?550:800,workPerSource=level===2?4:5;
-        const miners=vals(Game.creeps).filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='miner');
-        const underMined=sources(room).some(s=>miners.filter(c=>c.memory.source===s.id&&range(c,s)<=1).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0)<workPerSource);
-        if(room.energyCapacityAvailable<capacity||underMined)return {target:2,mode:'infrastructure'};
-    }
-    const expansion=Memory.frontier&&Memory.frontier.expansion;
-    const expanding=!!(expansion&&expansion.home===room.name&&!['complete','blocked'].includes(expansion.state));
-    const reserve=room.storage?energy(room.storage):0;
-    const memory=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[room.name];
-    const previous=memory&&memory.economyControl&&memory.economyControl.baseMode;
-    // Keep stock movement around 15k from repeatedly bypassing the 100-tick
-    // decision interval. A new room retains the original 15k starting threshold.
-    const threshold=previous==='reserve'?18000:previous==='growth'?12000:15000;
-    const reserving=room.storage&&(expanding||reserve<threshold);
-    const target=room.controller.level===8?15:reserving?6:reserve>30000?16:10;
-    return {target,mode:room.controller.level===8?'rcl8':reserving?'reserve':'growth'};
-}
-// Slow, bounded control of production, transport and useful expenditure. Route
-// estimates are capacity planning, never reported as measured energy throughput.
-function economyMemory(room) {
-    Memory.frontier=Memory.frontier||{rooms:{},intel:{}};
-    Memory.frontier.rooms=Memory.frontier.rooms||{};
-    return Memory.frontier.rooms[room.name]||(Memory.frontier.rooms[room.name]={});
-}
-function routeTravel(room,source) {
-    const m=economyMemory(room),plan=m.plan;
-    const route=plan&&(plan.roadRoutes||[]).find(r=>r.sourceId===source.id||r.id==='source:'+source.id);
-    if(route&&route.complete&&route.tiles&&route.tiles.length){
-        const roads=new Set(room.find(FIND_STRUCTURES,{filter:s=>s.structureType===STRUCTURE_ROAD}).map(s=>s.pos.x+50*s.pos.y));
-        const terrain=room.getTerrain();
-        // Haulers use equal MOVE/CARRY: plains and roads cost one step, loaded
-        // unpaved swamp costs five. Empty return is conservatively also charged.
-        return route.tiles.reduce((n,k)=>n+(!roads.has(k)&&(terrain.get(k%50,Math.floor(k/50))&TERRAIN_MASK_SWAMP)?5:1),0);
-    }
-    const spawn=room.find(FIND_MY_SPAWNS)[0];
-    return spawn&&spawn.pos?Math.ceil(range(spawn,source)*1.5):15;
-}
-function updateEconomy(room) {
-    const m=economyMemory(room),base=baseUpgradePolicy(room),old=m.economyControl;
-    if(old&&Game.time-old.at<100&&old.baseMode===base.mode)return old;
-    const all=vals(Game.creeps).filter(c=>c.memory.home===room.name),ss=sources(room),plan=m.plan;
-    const telemetry=Memory.frontier.telemetry&&Memory.frontier.telemetry.rooms&&Memory.frontier.telemetry.rooms[room.name];
-    const recent=telemetry&&Game.time-telemetry.tick<=100?telemetry:null;
-    const controllerRoute=plan&&(plan.roadRoutes||[]).find(r=>r.id==='controller'&&r.complete);
-    const core=plan&&(plan.roadCore||plan.anchor),spawn=room.find(FIND_MY_SPAWNS)[0];
-    const tail=controllerRoute?controllerRoute.tiles.length:core?Math.max(2,range(room.controller,core)-3):spawn&&spawn.pos?Math.max(2,range(spawn,room.controller)-3):4;
-    const routes=ss.map(source=>{
-        const assigned=all.filter(c=>c.memory.role==='miner'&&c.memory.source===source.id);
-        const currentWork=assigned.filter(c=>!c.memory.replaces).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
-        const work=Math.max(currentWork,...assigned.map(c=>c.getActiveBodyparts(WORK)),0);
-        const activeWork=assigned.filter(c=>!c.spawning&&c.room&&c.room.name===room.name&&range(c,source)<=1).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
-        const rate=Math.min((source.energyCapacity||SOURCE_ENERGY_CAPACITY)/ENERGY_REGEN_TIME,work*HARVEST_POWER);
-        return {id:source.id,rate,activeRate:Math.min((source.energyCapacity||SOURCE_ENERGY_CAPACITY)/ENERGY_REGEN_TIME,activeWork*HARVEST_POWER),roundTrip:2*(routeTravel(room,source)+tail)+4};
-    });
-    const sustainedBacklog=!!(recent&&(recent.mining||[]).some(s=>s.backlogSince!==null&&s.backlogSince!==undefined&&Game.time-s.backlogSince>=100));
-    const harvest=routes.reduce((n,r)=>n+r.activeRate,0),plannedHarvest=routes.reduce((n,r)=>n+r.rate,0);
-    const rawCarry=Math.max(6,Math.ceil(routes.reduce((n,r)=>n+r.rate*r.roundTrip,0)*1.2/50)+(sustainedBacklog?2:0));
-    let carry=old?old.carry:rawCarry,lowerSince=old&&old.lowerSince;
-    if(rawCarry>carry){carry=Math.min(rawCarry,carry+4);lowerSince=null;}
-    else if(rawCarry<carry){lowerSince=lowerSince===null||lowerSince===undefined?Game.time:lowerSince;if(Game.time-lowerSince>=300)carry=Math.max(rawCarry,carry-2);}
-    else lowerSince=null;
-    const upkeep=all.reduce((n,c)=>n+c.body.reduce((v,p)=>v+(BODYPART_COST[p.type||p]||0),0)/(c.body.some(p=>(p.type||p)===CLAIM)?600:1500),0);
-    const expansion=Memory.frontier.expansion,expanding=!!(expansion&&expansion.home===room.name&&!['complete','blocked'].includes(expansion.state));
-    const stock=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE].includes(s.structureType)).reduce((n,s)=>n+energy(s),0);
-    const reserve=room.storage?energy(room.storage):stock;
-    const ledger=Memory.frontier.energy&&Memory.frontier.energy.rooms&&Memory.frontier.energy.rooms[room.name];
-    const measured=ledger&&ledger.windows&&ledger.windows['300'];
-    const trusted=measured&&!measured.warmingUp&&measured.coverage>=1&&measured.observedTicks>=300&&measured.tick!==undefined&&Game.time-measured.tick<=100;
-    const drawdownOnly=trusted&&Array.isArray(measured.blocked)&&measured.blocked.length>0&&measured.blocked.every(reason=>reason==='stock-drawdown');
-    const feedback=trusted&&(measured.eligible||drawdownOnly)?measured:null;
-    // Replacements and repairs get a recurring budget before useful expenditure.
-    const reserveRate=expanding?3:room.storage&&reserve<15000?2:!room.storage&&reserve<room.energyCapacityAvailable*2?1:0;
-    const income=feedback&&Number.isFinite(feedback.harvestRate)?Math.min(harvest,feedback.harvestRate):harvest;
-    const useful=Math.max(2,income-upkeep-1-reserveRate);
-    const sites=constructionJobs(room),building=sites.length>0;
-    const infrastructure=base.mode==='infrastructure';
-    let buildRate=building?Math.min(15,Math.max(0,useful-2)):0;
-    let target=infrastructure&&building?2:Math.max(2,Math.min(room.controller.level===8?15:20,Math.floor(useful-buildRate)));
-    let feedbackReason=feedback?'measured-sustainable-budget':null;
-    if(feedback&&drawdownOnly&&reserve<(room.storage?15000:room.energyCapacityAvailable*2)){
-        const previousUseful=old?old.target+old.buildEnergyTarget:target+buildRate;
-        const ceiling=Math.max(2,Math.min(useful,previousUseful-2));
-        target=Math.max(2,Math.min(target,ceiling-(building?Math.min(buildRate,ceiling-2):0)));
-        buildRate=Math.min(buildRate,Math.max(0,ceiling-target));feedbackReason='measured-reserve-drawdown';
-    }
-    // A low 300-tick sample is pending only. Additional discretionary demand
-    // requires the ledger's complete 1500-tick low-efficiency signal and stock.
-    if(feedback&&feedback.eligible&&ledger.indicator&&ledger.indicator.status==='active'&&!building&&!sustainedBacklog&&reserve>(room.storage?18000:room.energyCapacityAvailable*3)&&feedback.inventoryDelta>=0){
-        target=Math.min(room.controller.level===8?15:20,Math.max(target,(old?old.target:target)+2));feedbackReason='measured-idle-surplus';
-    }
-    // A storage surplus can fund a bounded burst while feedback warms up.
-    if(!building&&room.storage&&reserve>30000&&!expanding)target=Math.max(target,16);
-    if(!ss.length){target=base.target;buildRate=building?5:0;}
-    if(old&&old.baseMode===base.mode)target=Math.max(old.target-2,Math.min(old.target+2,target));
-    buildRate=Math.min(buildRate,Math.max(0,useful-target));
-    const builderWork=building?Math.max(1,Math.ceil(buildRate/BUILD_POWER)):0;
-    const reason=sustainedBacklog?'sustained-source-backlog':feedbackReason|| (infrastructure&&building?'capacity-and-mining-infrastructure':building?'planned-construction-first':reserveRate?'reserve-and-renewal':'sustainable-upgrade');
-    return m.economyControl={at:Game.time,baseMode:base.mode,mode:base.mode,reason,target,carry,rawCarry,lowerSince:lowerSince===undefined?null:lowerSince,
-        developmentBudget:+(feedbackReason==='measured-reserve-drawdown'?target+buildRate:Math.max(useful,target+buildRate)).toFixed(2),builderWork,feedbackTicks:feedback?feedback.observedTicks:0,incomeBasis:feedback?'measured-harvest':'active-work-potential',harvestPotential:harvest,plannedHarvest,upkeep:+upkeep.toFixed(2),reserveRate,usefulTarget:+useful.toFixed(2),buildEnergyTarget:+buildRate.toFixed(2),routes};
-}
-function upgradePolicy(room) {
-    const base=baseUpgradePolicy(room),m=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[room.name],control=m&&m.economyControl;
-    return control&&control.baseMode===base.mode&&Game.time-control.at<200?{target:control.target,mode:control.mode}:base;
 }
 function upgraderAssignment(room) {
     if(upgraderCacheTick!==Game.time){upgraderCacheTick=Game.time;upgraderCache={};}
@@ -192,15 +86,15 @@ function stationUpgrade(c,assignment) {
     const seat=c.memory.upgradeSeat;if(!seat)return false;
     delete c.memory.haulSupply;delete c.memory.refuelTarget;
     const held=energy(c),work=c.getActiveBodyparts(WORK),capacity=held+c.store.getFreeCapacity(E);
-    if(!held&&!station.nodes.some(s=>energy(s)>0)){
+    if(!held&&!station.nodes.some(s=>availableEnergy(s)>0)){
         if(c.memory.stationEmptySince===undefined)c.memory.stationEmptySince=Game.time;
         if(Game.time-c.memory.stationEmptySince>=20){c.memory.stationAvoid={id:station.node.id,until:Game.time+25};delete c.memory.upgradeSeat;return false;}
     }else delete c.memory.stationEmptySince;
     // Withdrawal and upgrading use separate intents. An empty creep cannot
     // issue upgrade at tick start merely because its withdrawal will succeed.
     if(held<=Math.min(capacity/2,Math.max(work*3,1))){
-        const supply=station.nodes.filter(s=>range(c,s)<=1&&energy(s)>0).sort((a,b)=>Number(b.structureType===STRUCTURE_LINK)-Number(a.structureType===STRUCTURE_LINK))[0];
-        if(supply)c.withdraw(supply,E);
+        const supply=station.nodes.filter(s=>range(c,s)<=1&&availableEnergy(s)>0).sort((a,b)=>Number(b.structureType===STRUCTURE_LINK)-Number(a.structureType===STRUCTURE_LINK))[0];
+        if(supply)take(c,supply);
     }
     if(held>0&&(c.room.controller.ticksToDowngrade<4000||c.room.controller.level===1||upgradeAllowed(c,assignment)))upgrade(c);
     if(c.pos.x!==seat.x||c.pos.y!==seat.y){
@@ -247,7 +141,7 @@ function workerSupply(c,job) {
     const excluded=s=>station&&station.nodes.some(n=>n.id===s.id);
     const avoid=c.memory.refuelAvoid,allowed=s=>!excluded(s)&&(!avoid||avoid.until<=Game.time||avoid.id!==s.id);
     if(target&&(!target.store||!allowed(target)))target=null;
-    const depleted=target&&energy(target)<=0;
+    const depleted=target&&availableEnergy(target)<=0;
     if(depleted){
         if(old.emptySince===undefined)old.emptySince=Game.time;
         // Keep the fixed building's refill request alive while the worker can
@@ -256,7 +150,7 @@ function workerSupply(c,job) {
         target=null;
     }else if(target)delete old.emptySince;
     if(!target){
-        const candidates=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>0&&allowed(s));
+        const candidates=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&availableEnergy(s)>0&&allowed(s));
         candidates.sort((a,b)=>range(job,a)-range(job,b));
         // Check reachability once per binding, rather than chasing a worker or
         // reconsidering a closer drop while the worker travels for a full batch.
@@ -267,7 +161,7 @@ function workerSupply(c,job) {
     const position=c.pos.x+','+c.pos.y;let task=c.memory.refuelTarget;
     if(!task||task.id!==target.id)task=c.memory.refuelTarget={id:target.id,kind:'take',room:room.name,position,progress:Game.time};
     if(task.position!==position||c.fatigue){task.position=position;task.progress=Game.time;}
-    const result=c.withdraw(target,E);
+    const result=take(c,target);
     if(result===OK){task.progress=Game.time;return true;}
     if(result===ERR_NOT_IN_RANGE&&Game.time-task.progress<=15&&go(c,target)!==ERR_NO_PATH)return true;
     c.memory.refuelAvoid={id:target.id,until:Game.time+15};delete c.memory.refuelTarget;delete c.memory.workSupply;return false;
@@ -283,9 +177,10 @@ function developmentPlan(room) {
     if(developmentTick!==Game.time){developmentTick=Game.time;developmentPlans={};}
     const cached=developmentPlans[room.name];if(cached&&cached.room===room&&cached.memory===m)return cached;
     delete m.developmentCredit;
-    const control=m.economyControl,assignment=upgraderAssignment(room),job=constructionJobs(room)[0],supportJob=assignment.support.length?constructionJobs(room,true)[0]:null;
-    const requests=[];let upgradeReady=0;
-    for(const c of allCreeps()){
+    const control=m.economyControl,assignment=upgraderAssignment(room),jobs=constructionJobs(room),supportJobs=constructionJobs(room,true);
+    const requests=[],reserved={};let upgradeReady=0;
+    const workers=allCreeps().slice().sort((a,b)=>Number(!!(jobs[0]&&range(b,jobs[0])<=3))-Number(!!(jobs[0]&&range(a,jobs[0])<=3))||a.name.localeCompare(b.name));
+    for(const c of workers){
         if(c.spawning||c.room.name!==room.name||!energy(c))continue;
         const work=c.getActiveBodyparts(WORK);if(!work)continue;
         const yielding=c.memory.yieldSource&&Game.getObjectById(c.memory.yieldSource);
@@ -295,10 +190,14 @@ function developmentPlan(room) {
             continue;
         }
         if(!['builder','bootstrap'].includes(c.memory.role)&&!assignment.support.includes(c))continue;
-        const target=assignment.support.includes(c)?supportJob:job;
-        if(!target||range(c,target)>3||c.memory.role==='bootstrap'&&room.energyAvailable<room.energyCapacityAvailable)continue;
-        const cost=Math.min(work*BUILD_POWER,energy(c),Number.isFinite(target.progressTotal)?Math.max(0,target.progressTotal-target.progress):Infinity);
-        if(cost>0)requests.push({creep:c,kind:'build',target,cost});
+        const candidates=(assignment.support.includes(c)?supportJobs:jobs).filter(target=>!Number.isFinite(target.progressTotal)||target.progressTotal-target.progress-(reserved[target.id]||0)>0);
+        const previous=candidates.find(target=>target.id===c.memory.workJob);
+        const target=previous&&candidates[0]&&previous.structureType===candidates[0].structureType?previous:candidates[0];
+        if(!target){delete c.memory.workJob;continue;}c.memory.workJob=target.id;
+        if(c.memory.role==='bootstrap'&&room.energyAvailable<room.energyCapacityAvailable)continue;
+        const ready=range(c,target)<=3;
+        const cost=ready?Math.min(work*BUILD_POWER,energy(c),Number.isFinite(target.progressTotal)?Math.max(0,target.progressTotal-target.progress-(reserved[target.id]||0)):Infinity):0;
+        requests.push({creep:c,kind:'build',target,cost,ready});if(ready)reserved[target.id]=(reserved[target.id]||0)+cost;
     }
     const plan={room,memory:m,requests,total:control&&control.developmentBudget||0,
         buildDemand:requests.reduce((n,r)=>n+r.cost,0),upgradeDemand:upgradeReady,spent:{build:0,upgrade:0},siteSpent:{},upgraded:new Set()};
@@ -346,15 +245,15 @@ function refuel(c,harvest=true,protectController=false) {
     let task=c.memory.refuelTarget,target=task&&Game.getObjectById(task.id);
     if(task&&task.position!==position){task.position=position;task.progress=Game.time;}
     const stalled=task&&!c.fatigue&&Game.time-task.progress>15;
-    if(task&&(!target||protectedStock(target)||task.room!==c.room.name||stalled||(task.kind==='harvest'? !harvest||target.energy<=0||!miningSpots(c.room,target).some(p=>p.x===task.x&&p.y===task.y&&free(p)):energy(target)<=0))){
+    if(task&&(!target||protectedStock(target)||task.room!==c.room.name||stalled||(task.kind==='harvest'? !harvest||target.energy<=0||!miningSpots(c.room,target).some(p=>p.x===task.x&&p.y===task.y&&free(p)):availableEnergy(target)<=0))){
         if(stalled)c.memory.refuelAvoid={id:task.id,until:Game.time+10};
         delete c.memory.refuelTarget;task=null;target=null;
     }
     if(!task){
         const avoid=c.memory.refuelAvoid,allowed=t=>!avoid||avoid.until<=Game.time||avoid.id!==t.id;
         const dropped=drops(c.room).filter(d=>d.resourceType===E&&d.amount>0&&allowed(d));
-        const stock=stores(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>0&&allowed(s)&&!protectedStock(s));
-        const loot=tombstones(c.room).concat(ruins(c.room)).filter(s=>energy(s)>0&&allowed(s));
+        const stock=stores(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&availableEnergy(s)>0&&allowed(s)&&!protectedStock(s));
+        const loot=tombstones(c.room).concat(ruins(c.room)).filter(s=>availableEnergy(s)>0&&allowed(s));
         target=near(c,dropped.concat(stock,loot));
         if(target)task={id:target.id,kind:'take'};
         else if(harvest){
@@ -365,7 +264,7 @@ function refuel(c,harvest=true,protectController=false) {
         if(!task)return false;
         Object.assign(task,{room:c.room.name,position,progress:Game.time});c.memory.refuelTarget=task;
     }
-    const result=task.kind==='harvest'?c.harvest(target):target.resourceType?c.pickup(target):c.withdraw(target,E);
+    const result=task.kind==='harvest'?c.harvest(target):take(c,target);
     if(result===OK){task.progress=Game.time;return true;}
     if(result===ERR_NOT_IN_RANGE){
         const moved=task.kind==='harvest'?go(c,new RoomPosition(task.x,task.y,c.room.name),0):go(c,target);
@@ -384,7 +283,7 @@ function constructionJobs(room,supportOnly=false) {
     const plan=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[room.name]&&Memory.frontier.rooms[room.name].plan;
     const roads=new Map((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD).map(s=>[s.x+50*s.y,s]));
     const priority={spawn:110,tower:100,container:96,extension:90,storage:80,link:70,road:40,rampart:30};
-    const jobs=roomSites.map(site=>{
+    const jobs=roomSites.filter(site=>site.structureType!==STRUCTURE_RAMPART).map(site=>{
         const road=site.structureType===STRUCTURE_ROAD&&roads.get(site.pos.x+50*site.pos.y);
         const economy=!!(road&&road.roadClass==='economy');
         return {site,road,economy,priority:economy?94:priority[site.structureType]||10};
@@ -392,9 +291,37 @@ function constructionJobs(room,supportOnly=false) {
     jobs.sort((a,b)=>b.priority-a.priority||Number(!!(b.economy&&b.road.roadSwamp))-Number(!!(a.economy&&a.road.roadSwamp))||(b.site.progress||0)-(a.site.progress||0)||(a.economy&&b.economy?(a.road.roadOrder||0)-(b.road.roadOrder||0):0));
     const value=jobs.map(j=>j.site);constructionCache[cacheKey]={room,sites:roomSites,value};return value;
 }
+// Containers decay independently of the construction queue. Keep the existing
+// maintenance health target, but order critical supply nodes by time to loss.
+let repairTick=-1,repairIntents={};
+function criticalRepairs(room) {
+    const ss=sources(room),ctrl=room.controller;
+    const bound=new Set(roomCreeps(room).map(c=>c.memory.workSupply&&c.memory.workSupply.id).filter(Boolean));
+    return structures(room).filter(s=>s.structureType===STRUCTURE_CONTAINER&&s.hits<s.hitsMax*.55&&
+        (ctrl&&range(s,ctrl)<=3||ss.some(source=>range(source,s)<=1)||bound.has(s.id))).map(node=>{
+        const decay=typeof CONTAINER_DECAY==='number'?CONTAINER_DECAY:5000;
+        const interval=typeof CONTAINER_DECAY_TIME_OWNED==='number'?CONTAINER_DECAY_TIME_OWNED:500;
+        return {node,deadline:Game.time+(node.ticksToDecay===undefined?interval:node.ticksToDecay)+Math.max(0,Math.ceil(node.hits/decay)-1)*interval,
+            desiredHits:Math.ceil(node.hitsMax*.55),reason:'critical-buffer-maintenance'};
+    }).sort((a,b)=>a.deadline-b.deadline||a.node.hits-b.node.hits);
+}
+function repairCritical(c) {
+    if(!energy(c)||!c.getActiveBodyparts(WORK))return false;
+    if(repairTick!==Game.time){repairTick=Game.time;repairIntents={};}
+    const job=criticalRepairs(c.room).find(r=>r.node.hits+(repairIntents[r.node.id]||0)<r.desiredHits);
+    if(!job)return false;
+    const result=c.repair(job.node);
+    if(result===ERR_NOT_IN_RANGE){go(c,job.node,3);return true;}
+    if(result!==OK)return false;
+    const repairPower=typeof REPAIR_POWER==='number'?REPAIR_POWER:100;
+    repairIntents[job.node.id]=(repairIntents[job.node.id]||0)+Math.min(energy(c),c.getActiveBodyparts(WORK))*repairPower;
+    const m=economyMemory(c.room);m.maintenance={tick:Game.time,target:job.node.id,deadline:job.deadline,reason:job.reason};
+    return true;
+}
 function work(c) {
     const ctrl=c.room.controller;
     if(c.memory.yieldSource){
+        require('logistics').release(c);
         const source=Game.getObjectById(c.memory.yieldSource);
         if(source&&range(c,source)<=1){const home=spawns(c.room)[0]||ctrl;if(home)go(c,home);return;}
         delete c.memory.yieldSource;
@@ -403,9 +330,13 @@ function work(c) {
     if(c.memory.role==='builder'&&c.getActiveBodyparts(WORK)>0&&ctrl&&ctrl.my&&ctrl.level>1&&
         !constructionSites(c.room).length&&
         !structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55)){
-        c.memory.role='upgrader';delete c.memory.workSupply;
+        c.memory.role='upgrader';c.memory.owner='development:'+c.memory.home;delete c.memory.workSupply;
     }
+    const ordinaryWork=c.memory.role==='upgrader'||!c.room.storage||!ctrl||!ctrl.my||ctrl.ticksToDowngrade<4000||ctrl.level===1||constructionJobs(c.room).length||structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
+    if(ordinaryWork&&c.memory.role!=='hauler')require('logistics').release(c);
     const assignment=c.memory.role==='upgrader'?upgraderAssignment(c.room):null;
+    const maintenanceWorker=!assignment||assignment.support.includes(c)||!roomCreeps(c.room).some(o=>o!==c&&!o.spawning&&['builder','bootstrap'].includes(o.memory.role)&&o.getActiveBodyparts(WORK)>0);
+    if(maintenanceWorker&&!(ctrl&&ctrl.my&&(ctrl.level===1||ctrl.ticksToDowngrade<4000))&&repairCritical(c))return;
     // Initial carried energy can upgrade while the same tick also withdraws,
     // picks up or moves. Refuel/readiness and seat routing must not hide work.
     if(assignment&&assignment.primary.includes(c)&&energy(c)>0&&ctrl&&range(c,ctrl)<=3)upgrade(c);
@@ -425,7 +356,7 @@ function work(c) {
     if(workReady(c))c.memory.loaded=true;
     if(c.memory.loaded)delete c.memory.refuelTarget;
     if(!c.memory.loaded){
-        const job=constructionJobs(c.room,!!assignment)[0];
+        const job=(criticalRepairs(c.room)[0]||{}).node||constructionJobs(c.room,!!assignment)[0];
         if(job&&workerSupply(c,job)||refuel(c)||!energy(c))return;
         c.memory.loaded=true;
     }
@@ -442,62 +373,69 @@ function work(c) {
     const sites=infrastructureSites||constructionJobs(c.room);
     if(ctrl&&ctrl.my&&ctrl.level===1){upgrade(c);return;}
     if(sites.length){
-        const t=sites[0];
-        // Travel consumes no construction energy and must not be duty-throttled.
-        if(range(c,t)>3){go(c,t,3);return;}
-        if(buildAllowed(c))build(c,t);
-        return;
+        const plan=developmentPlan(c.room),assigned=plan.requests.find(r=>r.creep===c&&!r.done);
+        const t=assigned&&assigned.target;
+        if(t){
+            // Travel consumes no construction energy and must not be duty-throttled.
+            if(range(c,t)>3){go(c,t,3);return;}
+            if(buildAllowed(c)){build(c,t);return;}
+        }
+        // Every site's remaining work is already covered this tick. Existing
+        // fueled WORK can still maintain the controller instead of idling.
+        if(ctrl&&ctrl.my){upgrade(c);return;}
     }
     const broken=structures(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
     const b=near(c,broken);if(b){if(c.repair(b)===ERR_NOT_IN_RANGE)go(c,b,3);return;}
     if(c.room.storage&&c.room.storage.store.getFreeCapacity(E)>0){give(c,c.room.storage);return;}
     upgrade(c);
 }
-function mine(c) {
-    const s=Game.getObjectById(c.memory.source);if(!s)return;
-    if(c.memory.replaces){
-        const previous=Game.creeps[c.memory.replaces];
-        if(previous&&previous.memory.role==='miner'&&previous.memory.source===s.id){
-            // The old miner keeps producing throughout spawn and travel. Retire it
-            // only when the replacement can step directly into the mining tile.
-            if(range(c,previous)>1){go(c,previous);return;}
-            if(c.fatigue||previous.fatigue)return;
-            previous.memory.role='builder';previous.memory.loaded=energy(previous)>0;previous.memory.yieldSource=s.id;
-            delete previous.memory.source;delete previous.memory.spot;
-        }
-        delete c.memory.replaces;
+
+// Sole construction intent gateway. Admission uses engine constraints and
+// semantic dependencies; physical site capacity is shared across rooms/tick.
+let constructionIntentTick=-1,constructionIntents=[],constructionResults={};
+function runConstruction(room,requests=[]) {
+    if(constructionIntentTick!==Game.time){constructionIntentTick=Game.time;constructionIntents=[];constructionResults={};}
+    const m=economyMemory(room),result={tick:Game.time,requested:requests.length,accepted:0,rejected:{},lastError:null};
+    const reject=(reason,request,code)=>{result.rejected[reason]=(result.rejected[reason]||0)+1;if(code!==undefined)result.lastError={id:request.id,reason,code};};
+    if(!room.controller||!room.controller.my){result.rejected['not-owned']=requests.length;m.construction=result;return result;}
+    const built=structures(room),sites=constructionSites(room),pending=constructionIntents.filter(i=>i.room===room.name);
+    const at=new Map(),counts={};
+    const knownSites=new Set(sites.map(s=>s.pos.x+':'+s.pos.y+':'+s.structureType));
+    for(const node of built.concat(sites,pending.filter(i=>!knownSites.has(i.x+':'+i.y+':'+i.structureType)))){
+        const type=node.structureType,key=(node.pos?node.pos.x:node.x)+50*(node.pos?node.pos.y:node.y);
+        counts[type]=(counts[type]||0)+1;if(!at.has(key))at.set(key,[]);at.get(key).push(node);
     }
-    const containers=structures(c.room).filter(t=>t.structureType===STRUCTURE_CONTAINER&&range(s,t)<=1);
-    const plan=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[c.room.name]&&Memory.frontier.rooms[c.room.name].plan;
-    const planned=plan&&plan.sourcePlans&&plan.sourcePlans.find(p=>p.id===s.id);
-    const score=p=>containers.some(t=>t.pos.x===p.x&&t.pos.y===p.y)?-100:containers.some(t=>range(t,p)<=1)?-50:planned&&planned.x===p.x&&planned.y===p.y?-20:0;
-    let spot=c.memory.spot;
-    const atSpot=spot&&c.pos.x===spot.x&&c.pos.y===spot.y;
-    const betterContainer=atSpot&&!containers.some(t=>t.pos.x===spot.x&&t.pos.y===spot.y)&&containers.some(t=>miningSpots(c.room,s).some(p=>p.x===t.pos.x&&p.y===t.pos.y));
-    const review=(Game.time+c.name.split('').reduce((n,ch)=>n+ch.charCodeAt(0),0))%25===0;
-    if(!atSpot||betterContainer||review){
-        const others=allCreeps().filter(o=>o.name!==c.name&&o.memory.role==='miner'&&o.memory.source===s.id);
-        const opts=miningSpots(c.room,s).filter(p=>!others.some(o=>o.memory.spot&&o.memory.spot.x===p.x&&o.memory.spot.y===p.y));
-        opts.sort((a,b)=>score(a)-score(b)||range(c,a)-range(c,b));
-        if(!spot||!opts.some(p=>p.x===spot.x&&p.y===spot.y)||opts.length&&score(opts[0])<score(spot))spot=c.memory.spot=opts[0];
+    const siteTiles=new Set(sites.concat(pending).map(s=>(s.pos?s.pos.x:s.x)+50*(s.pos?s.pos.y:s.y)));
+    const level=room.controller.level,terrain=room.getTerrain(),seen=new Set(),minerals=typeof FIND_MINERALS==='number'?room.find(FIND_MINERALS):[];
+    const quota=typeof CONTROLLER_STRUCTURES==='object'?CONTROLLER_STRUCTURES:{};
+    const maximum=typeof MAX_CONSTRUCTION_SITES==='number'?MAX_CONSTRUCTION_SITES:100;
+    // An accepted intent can be reflected in fixtures immediately; deduplicate
+    // by room/tile/type so the live and fixture accounting agree.
+    const globalSites=Object.values(Game.constructionSites||{}),globalKeys=new Set(globalSites.filter(s=>s.pos).map(s=>(s.pos.roomName||s.room&&s.room.name)+':'+s.pos.x+':'+s.pos.y+':'+s.structureType));
+    let globalCount=globalSites.length+constructionIntents.filter(i=>!globalKeys.has(i.room+':'+i.x+':'+i.y+':'+i.structureType)).length;
+    const dependencyReady=d=>typeof d==='string'?built.some(s=>s.id===d||s.structureType===d):d&&built.some(s=>s.structureType===(d.structureType||d.type)&&s.pos.x===d.x&&s.pos.y===d.y);
+    for(const request of requests.slice().sort((a,b)=>(b.priority||0)-(a.priority||0))){
+        const type=request.structureType||request.type,x=request.x,y=request.y,key=x+50*y,requestKey=room.name+':'+x+':'+y+':'+type;
+        if(seen.has(requestKey))continue;seen.add(requestKey);
+        if(request.enabled===false){reject('disabled',request);continue;}
+        if(type===STRUCTURE_RAMPART){reject('rampart-disabled',request);continue;}
+        if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>49||y<0||y>49||!quota[type]){reject('invalid-request',request);continue;}
+        if(level<(request.minRCL||request.rcl||1)){reject('rcl',request);continue;}
+        if((request.dependencies||[]).some(d=>!dependencyReady(d))){reject('dependency',request);continue;}
+        const here=at.get(key)||[];
+        if(here.some(s=>s.structureType===type)){reject('already-present',request);continue;}
+        if(siteTiles.has(key)){reject('site-conflict',request);continue;}
+        const mineral=minerals.some(s=>range(s,{x,y})===0),extractor=typeof STRUCTURE_EXTRACTOR==='string'&&type===STRUCTURE_EXTRACTOR;
+        if((terrain.get(x,y)&TERRAIN_MASK_WALL)&&!(extractor&&mineral)||extractor&&!mineral||mineral&&!extractor||sources(room).some(s=>range(s,{x,y})===0)||range(room.controller,{x,y})===0){reject('terrain-conflict',request);continue;}
+        if(here.some(s=>s.structureType!==STRUCTURE_RAMPART&&!(s.structureType===STRUCTURE_ROAD&&type===STRUCTURE_CONTAINER)&&!(s.structureType===STRUCTURE_CONTAINER&&type===STRUCTURE_ROAD))){reject('structure-conflict',request);continue;}
+        if((counts[type]||0)>=(quota[type][level]||0)){reject('quota',request);continue;}
+        if(globalCount>=maximum){reject('global-site-cap',request);continue;}
+        const code=request.name?room.createConstructionSite(x,y,type,request.name):room.createConstructionSite(x,y,type);
+        if(code!==OK){reject('engine-rejected',request,code);continue;}
+        const accepted={room:room.name,x,y,structureType:type};constructionIntents.push(accepted);counts[type]=(counts[type]||0)+1;
+        at.set(key,here.concat(accepted));siteTiles.add(key);globalCount++;result.accepted++;
     }
-    if(!spot)return;
-    if(c.pos.x!==spot.x||c.pos.y!==spot.y){
-        if(!c.fatigue&&range(c,spot)<=1){
-            const blocker=roomCreeps(c.room).find(o=>o.room.name===c.room.name&&!o.spawning&&o.pos.x===spot.x&&o.pos.y===spot.y&&['bootstrap','builder','upgrader'].includes(o.memory.role));
-            if(blocker){blocker.memory.yieldSource=s.id;delete blocker.memory.refuelTarget;}
-        }
-        go(c,new RoomPosition(spot.x,spot.y,c.room.name),0);return;
-    }
-    const link=myStructures(c.room).find(t=>t.structureType===STRUCTURE_LINK&&t.store.getFreeCapacity(E)>0&&range(c,t)<=1);
-    const box=containers.find(t=>range(c,t)<=1);
-    if(energy(c)){
-        if(box&&box.hits<box.hitsMax*.7){c.repair(box);return;}
-        else if(link)c.transfer(link,E);
-        else if(box&&box.store.getFreeCapacity(E)>0)c.transfer(box,E);
-        else c.drop(E);
-    }
-    c.harvest(s);
+    constructionResults[room.name]=result;m.construction=result;return result;
 }
 
-module.exports={upgrade,baseUpgradePolicy,economyMemory,routeTravel,updateEconomy,upgradePolicy,upgraderAssignment,upgradeAllowed,walkable,controllerStation,stationUpgrade,overflowUpgrade,workerSupply,workReady,developmentPlan,recordDevelopment,finishDevelopment,buildAllowed,build,refuel,urgentFill,constructionJobs,work,mine};
+module.exports={upgrade,baseUpgradePolicy,economyMemory,routeTravel,updateEconomy,upgradePolicy,upgraderAssignment,upgradeAllowed,walkable,controllerStation,stationUpgrade,overflowUpgrade,workerSupply,workReady,developmentPlan,recordDevelopment,finishDevelopment,buildAllowed,build,refuel,urgentFill,constructionJobs,criticalRepairs,repairCritical,runConstruction,work,mine};

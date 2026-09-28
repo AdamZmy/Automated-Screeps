@@ -1,3 +1,13 @@
+# 当前模块架构（2026-09-28）
+
+已审核重设计见 [module-redesign.md](research/module-redesign.md)，实际职责和接口见 [README.md](README.md)。本轮改为Colony政策、独立mining/development、统一workforce请求队列、Hauler显式状态与双端预约、独立defense/links/movement，以及独立逐tickledger。API受管17个模块，infrastructure仅为兼容导出。部署/线上验证证据以CURRENT_STATE与Issue13为准；架构完成不等于长期CPU或用能率达标。
+
+主要游戏写入口：workforce.spawnRoom负责spawnCreep；development.runConstruction负责createConstructionSite；movement.go负责最终moveTo。Planner与Mission仅提供请求，观察、政策和动作所有权分开。资源承诺分为未来软预约、实货和当tick已接受意图，实际库存与账本仍以下一tick事实为准。低CPU不让已到位、有能量的WORK人工轮休。
+
+以下保留2026-09-24起的研究与实施历史，旧模块数量、阈值说明和未完成状态不是当前权威。
+
+---
+
 # Frontier：CPU 20 的殖民地架构与扩张策略
 
 研究日期：2026-09-24。对象：AdamZmy / 官方 shard1 / W21N26 / Origin `(21,28)`；任务提供的初始状态为 GCL 7、CPU 20、RCL 1。本文的初审基线是 `main.js` `2026-09-24.2`、`planner.js` 版本 2 和 `expansion.js`，研究依据包括本地静态阅读、官方文档与原始 GitHub 源码。研究代理没有操作游戏或部署；后续由主代理完成的整合与部署状态见下文。

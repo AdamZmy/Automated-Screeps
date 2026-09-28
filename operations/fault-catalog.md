@@ -140,3 +140,11 @@
 - Exclude or narrow: CPU hold inactive, no missing consumer capacity, or safe role-specific replacement already spawning. The .1 guard cannot explain faults before its deployment.
 - Safe next treatment: protect independently necessary consumer-role replacement while reducing measured CPU overhead; avoid unrestricted population growth or deliberate waste.
 - Evidence: Issue4, build2026-09-27.1;73989640 target1upgrader/2WORK,0builder,13hauler,7miner,drop2529;mean25.7112/limit20,bucket1. No gameplay fix applied.
+
+## 模块重构回归（game2026-09-28.1 / Issue13）
+
+- R001：关键Container维修在持续施工前按损失期限分配；控制器紧急维护仍可抢占。W005：Builder和Upgrader恢复独立于另一角色是否存在。`new-colony/verify-workforce.cjs`与更新的`verify-retrospective-causes.cjs`要求修复后的行为。上述修复不证明历史Container失踪的直接原因。
+- L006：临时运输工已转回工作时，其旧task.port可能继续被全creep扫描当成有效租约。独立沙盒重现：旧工23,20持port21,20，真实Hauler22,20无法取得唯一合法卸货口；释放租约且不移动任何单位即可恢复。holdsDeliveryPort必须与数量预约使用相同执行者归属；verify-logistics覆盖旧lease/currentlease/release。
+- W006：同优先级紧急请求已经按期限排序，但资金保护只比较数值priority，会在700能量的更早请求缺100时先花200给较晚请求。verify-workforce使用600库存、两个priority1000而期限不同的请求；资金保护现按实际队列先后保留。
+- X002：新任务terminal状态cancelled/aborting未加入旧经济active谓词，导致母房持续reserveRate3。两处谓词均排除终态，verify-workforce覆盖active→cancelled/aborting。
+- 上述三项新边界由独立审视复现并写回测试；初次线上验收与长期吞吐证据记录在Issue13，不能把离线通过当作性能提升。

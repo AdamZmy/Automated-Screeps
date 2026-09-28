@@ -8,43 +8,35 @@
 
 服务器每 tick 执行 `main.loop`。开发子代理按需启动，分别处理战略、能源和布局；它们不充当永久运行的游戏进程。持续运行的是已经部署的 JavaScript 模块。
 
+当前运行架构为 game `2026-09-28.1`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
+
 | 文件 | 职责 |
 | --- | --- |
-| `main.js` | 极薄的 composition root：加载模块、安排每 tick 调用顺序、隔离房间/角色异常；不放具体策略 |
-| `runtime.js` | 通用工具及可重建的每 tick 对象快照：坐标距离、移动、能量读取、矿位、建筑与单位集合；移动计数交给 `metrics.js` |
-| `development.js` | 房间经济预算、Controller 固定站、升级/施工执行、工人补能、矿工动作和发展意图记账 |
-| `logistics.js` | 固定节点配送需求、取货/送货预约、多卸货口、运输者状态机和拥堵恢复 |
-| `workforce.js` | 身体设计、有效产能估算、矿工续代、岗位缺口和 Spawn 决策 |
-| `infrastructure.js` | Tower 防御、safe mode 条件、Link 角色识别与传能 |
-| `metrics.js` | 可重建的 CPU 阶段/角色/移动计数及每 20 tick 汇总 |
-| `planner.js` | RCL 1–8 布局、资源与出口通路、建筑配额校验、旧建筑复用、分批施工 |
-| `plans.js` | 冷房静态执行归档，开拓时按需恢复；完整规划另存本地 |
-| `expansion.js` | 侦察、双矿候选评分、单目标开拓、自给验收和扩张间隔 |
-| `monitor.js` | 每 20 tick 保存逐矿库存、道路进度、运输阻塞、升级速度、CPU EMA 和有限历史，异常去重 |
-| `ledger.js` | 每tick依据真实事件记录G/eta、费用、库存、残差和300/1500/6000tick窗口 |
-| `ARCHITECTURE.md` | 架构研究、开源参考、代理边界、已实现状态及后续改进 |
+| `main.js` | 调度、异常隔离、上一tick账本、全房间防御、策略与请求、角色动作、可选规划、遥测 |
+| `runtime.js` | 当tick共享查询/RoomContext，区分home与物理位置，初始能源/容量的已接受意图账本 |
+| `colony.js` | 经济政策、采运与成长预算；phase/security/cpuMode独立；关键变化触发重算 |
+| `mining.js` | 稳定矿点Operation、合法矿位、就位/在途产能、矿工接班和供给设施需求 |
+| `development.js` | 升级/施工/必要维修、工人补能；唯一 `createConstructionSite` 调用方 |
+| `logistics.js` | 显式 `idle/pickup/deliver` Hauler状态、稳定任务、取送双端预约、完整路线候选和卸货口 |
+| `workforce.js` | 集中需求与身体规划、岗位去重、期限/等待、共享出生能源；唯一 `spawnCreep` 调用方 |
+| `defense.js` | 威胁、Tower、避险抢占；全局仲裁一次safe mode请求 |
+| `links.js` | source/hub/controller网络、实际初始库存和接收占用，与物流共享意图预约 |
+| `movement.js` | 房内/跨房路径、准确出口、疲劳/阻塞区分、每creep一次最终移动 |
+| `planner.js` / `plans.js` | 已审核布局与候选工地、精确冷计划归档恢复；不创建工地 |
+| `expansion.js` | 情报、命名扩张政策、任务阶段、出生/首spawn请求、自主运营验收和交接 |
+| `ledger.js` | 独立逐tick真实事件与300/1500/6000窗口，意图不等于实际产出 |
+| `monitor.js` / `metrics.js` | 有界诊断、房间/模块/角色CPU、状态与原因；不控制游戏行为 |
+| `infrastructure.js` | 旧测试/导入的兼容导出；无第二条动作执行路径 |
 
 ### 修改前先定位文件
 
-以后处理代码问题时，先从本表选择职责文件，只读取该文件、它直接依赖的接口和对应测试。除非调用链跨模块或回归失败，不需要先通读全部源码。
+从上表选择职责文件、直接依赖接口与对应测试。`main.test` 保留原行为检查的函数入口，实际调用已按新职责分离。设计/数据契约见 `research/module-redesign.md`；演进状态见父目录 `CURRENT_STATE.md` 和 Issue #13。
 
-常用入口：
+主要顺序：账本结算 → 共享观察 → 全房防御与safe mode → 活跃任务/经济与出生请求 → Link → 物流分配 → 每个单位唯一执行者 → 可选布局/统一施工 → 监控。模块报错会留下有界 `Memory.frontier.modules` 状态，不跳过其他房间。必要移动在角色执行时提交。
 
-| 要改的问题 | 首读文件 | 通常还需读取 |
-| --- | --- | --- |
-| tick 顺序、异常隔离、模块是否执行 | `main.js` | 被调度模块的导出接口 |
-| Upgrader、Builder、Controller Container、发展预算 | `development.js` | `workforce.js`；涉及配送时再读 `logistics.js` |
-| Hauler、矿区积压、补给目标、卸货口 | `logistics.js` | `development.js` 的站点/需求接口、`runtime.js` 的移动工具 |
-| 出生顺序、身体大小、续代和 CPU 出生保护 | `workforce.js` | `development.js` 的需求输出 |
-| Tower、safe mode、Link | `infrastructure.js` | `planner.js` 中的 Link tag/坐标 |
-| 路径、卡位、矿位判定 | `runtime.js` | 调用它的单个角色模块 |
-| CPU 归因 | `metrics.js` | `main.js` 的测量边界、`monitor.js` 的发布字段 |
-| 布局和施工点生成 | `planner.js` / `plans.js` | 对应布局 fixture 与生成器说明 |
-| 新房选择、claimer/pioneer、扩张状态 | `expansion.js` | `workforce.js` 的 Spawn 接口 |
-| 告警和遥测摘要 | `monitor.js` | `ledger.js`（仅涉及能量口径时） |
-| 能量事件与窗口指标 | `ledger.js` | `ENERGY_METRICS.md` |
+Hauler只保留 `memory.haul={state,task,origin}`；旧 `loaded/haulPickup/haulDelivery` 在首次执行时迁移并移除。`creep.store` 是实际货物权威；`task.intent` 仅表示本tick接受的请求，下一tick重新核对。空车先预约完整取送任务，已携货车辆优先获得未覆盖需求；Storage与矿点/Hub一同竞选来源。已有任务通常保留，紧急需求、失效、耗尽和真实堵塞才改派。卸货按当前实际空位与本tick其他已接受意图计算，空车未来预约可被实货回收，不要求装至90%。
 
-运行时依赖保持单向为主：`main → workforce/logistics/development/infrastructure → runtime`，`metrics`由入口和移动工具记录；`planner`、`expansion`、`monitor`由`main`调度，`monitor → ledger`。完整房间计划只在计划缺失、尚未完成或每 10 tick 的施工周期调用；bucket 低于 500 时暂停纯展示用的房间文字。`development`仅在需要让工人临时运输时延迟调用`logistics`，避免模块初始化循环。
+出生与施工同样区分 accepted 与 observed。规划与任务只发布请求，实际游戏写入只由workforce/development各自负责。Rampart在规划候选和统一施工入口双重禁止，已有建筑和归档坐标保留。巡检自动任务仍暂停；部署不会恢复调度。
 
 ## 主房地理与升级
 

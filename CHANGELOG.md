@@ -6,6 +6,22 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.6.0 — 2026-09-28
+
+- Game build `2026-09-28.1` implements the reviewed Colony module boundaries:
+  economy, mining, development, defense, links and movement own separate work;
+  runtime shares tick contexts and accepted resource intents.
+- Replace overlapping Hauler flags with idle/pickup/deliver and one stable task,
+  dual-end quantity reservations, ordinary storage sourcing, full-route estimates,
+  loaded-cargo priority and next-tick reconciliation. Preserve full-fit unloading.
+- Centralize all birth and construction intents, coordinate multiple spawns,
+  deadlines/funding/role recovery, remaining construction work and critical repair.
+- Missions emit requests, hand over to local colonies and require observed local
+  birth and stable operation; scouting does not invoke full layout generation.
+- Run the real energy ledger independently, isolate faults and defer optional
+  planning until after necessary actions. Preserve ledger windows, reviewed
+  layouts, disabled Rampart construction and paused external inspection schedule.
+
 ## 0.5.3 — 2026-09-28
 
 - Game build `2026-09-27.5` stops creating Rampart construction sites. Existing

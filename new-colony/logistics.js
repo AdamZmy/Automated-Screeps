@@ -1,5 +1,5 @@
 'use strict';
-const {E,vals,range,energy,near,go,allCreeps,roomCreeps,hostiles,drops,tombstones,ruins,sources,stores}=require('runtime');
+const {E,vals,range,energy,availableEnergy,availableCapacity,commitEnergy,near,go,allCreeps,roomCreeps,hostiles,drops,tombstones,ruins,sources,stores}=require('runtime');
 const {controllerStation,upgraderAssignment,economyMemory,routeTravel,constructionJobs,walkable}=require('development');
 const {linkNetwork}=require('infrastructure');
 const movementCount=name=>require('metrics').movementCount(name);
@@ -47,61 +47,221 @@ function deliveryNeeds(room,includeStorage=true) {
     if(includeStorage&&room.storage)add(room.storage,energy(room.storage)+room.storage.store.getFreeCapacity(E),6);
     return needs.filter(n=>energy(n.node)<n.high);
 }
+// One task is authoritative. Cargo comes from this tick's Store snapshot;
+// intent amounts are promises accepted by the engine, never measured delivery.
+function haulMemory(c) {
+    let h=c.memory.haul;
+    if(!h||!['idle','pickup','deliver'].includes(h.state)){
+        const old=c.memory.haulDelivery,pickup=c.memory.haulPickup;
+        h=c.memory.haul={state:'idle',task:null};
+        if(old&&old.id&&old.room===c.room.name){
+            h.task={...old,source:old.source||pickup&&pickup.id};
+            h.state=energy(c)>0?'deliver':'pickup';
+            if(old.sent===Game.time)h.task.intent={kind:'deliver',at:Game.time,amount:old.amount,before:energy(c)};
+            else if(old.pickupTick===Game.time)h.task.intent={kind:'pickup',at:Game.time,amount:old.pickupAmount||0,before:energy(c)};
+            delete h.task.phase;delete h.task.sent;delete h.task.pickupTick;delete h.task.pickupAmount;
+        }
+        if(energy(c)>0&&(c.memory.withdrawnFrom||h.task&&h.task.source))h.origin=c.memory.withdrawnFrom||h.task.source;
+    }
+    // Idempotent migration: no old flag may override physical cargo after reset.
+    delete c.memory.loaded;delete c.memory.haulPickup;delete c.memory.haulDelivery;delete c.memory.withdrawnFrom;
+    return h;
+}
+function pending(task,kind) {return !!(task&&task.intent&&task.intent.at===Game.time&&(!kind||task.intent.kind===kind));}
+function clearTask(c) {const h=haulMemory(c);h.task=null;h.state='idle';}
 function validDelivery(c,task) {
     const target=task&&Game.getObjectById(task.id);
-    return task&&task.room===c.room.name&&task.expires>Game.time&&Number.isInteger(task.amount)&&task.amount>0&&
-        (task.sent===undefined||task.sent===Game.time)&&target&&target.structureType&&target.store&&target.store.getFreeCapacity(E)>0;
+    return !!(task&&task.room===c.room.name&&task.expires>Game.time&&Number.isInteger(task.amount)&&task.amount>0&&
+        target&&target.structureType&&target.store&&(target.store.getFreeCapacity(E)>0||pending(task,'deliver')));
 }
-// Pickup plans reserve future capacity, but loaded cargo and accepted intents
-// are firm. A ready carrier may reclaim only the unfunded portion of a pickup.
 function fundedDelivery(c,task) {
-    if(task.sent===Game.time||task.phase!=='pickup')return task.amount;
-    return Math.min(task.amount,energy(c)+(task.pickupTick===Game.time?task.pickupAmount||0:0));
+    if(!task)return 0;
+    if(pending(task,'deliver'))return 0; // already included in runtime incoming intents
+    return Math.min(task.amount,availableEnergy(c)+(pending(task,'pickup')?task.intent.amount:0));
 }
 function holdsDeliveryPort(c,task) {
-    return task&&task.phase==='deliver'&&task.sent===undefined&&task.port&&validDelivery(c,task)&&range(c,task.port)<=3;
+    return !!(task&&c.memory.haul&&(c.memory.role==='hauler'||c.memory.haul.executorTick===Game.time)&&c.memory.haul.state==='deliver'&&!pending(task)&&task.port&&validDelivery(c,task)&&range(c,task.port)<=3);
 }
-function haulTarget(c,includeStorage=true) {
-    const room=c.room,blocked=c.memory.haulBlocked||{};
+function carriers(room,extra=null) {
+    const list=allCreeps().filter(c=>Game.creeps[c.name]===c&&!c.spawning&&c.room&&c.room.name===room.name&&
+        (c.memory.role==='hauler'||c.memory.haul&&c.memory.haul.executorTick===Game.time));
+    if(extra&&!list.includes(extra))list.push(extra);
+    return list;
+}
+function deliveryGap(request) {
+    // A Link or another courier may already have accepted a transfer this tick.
+    const incoming=Math.max(0,request.node.store.getFreeCapacity(E)-availableCapacity(request.node));
+    return Math.max(0,Math.floor(Math.min(availableCapacity(request.node),request.high-energy(request.node)-incoming)));
+}
+function peers(c,id) {
+    return carriers(c.room).filter(p=>p!==c&&p.memory.haul&&p.memory.haul.task&&p.memory.haul.task.id===id&&validDelivery(p,p.memory.haul.task));
+}
+function reservedSource(c,id) {
+    return carriers(c.room).filter(p=>p!==c&&p.memory.haul&&p.memory.haul.state==='pickup'&&p.memory.haul.task&&
+        p.memory.haul.task.source===id&&validDelivery(p,p.memory.haul.task)&&!pending(p.memory.haul.task))
+        .reduce((n,p)=>n+Math.max(0,p.memory.haul.task.pickupAmount||p.memory.haul.task.amount-energy(p)),0);
+}
+function pickupNodes(room) {
+    const ss=sources(room),stock=stores(room),hub=linkNetwork(room).hub;
+    return drops(room).filter(d=>d.resourceType===E).concat(
+        stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&ss.some(src=>range(src,s)<=1)),
+        tombstones(room),ruins(room),hub?[hub]:[],room.storage?[room.storage]:[])
+        .filter((node,i,arr)=>availableEnergy(node)>0&&arr.findIndex(other=>other.id===node.id)===i);
+}
+function sourceAllowed(c,node,destination) {
+    const avoid=c.memory.haulPickupAvoid;
+    return !!destination&&node.id!==destination.id&&(!avoid||avoid.until<=Game.time||avoid.id!==node.id)&&
+        !(node.structureType===STRUCTURE_STORAGE&&destination.structureType===STRUCTURE_STORAGE);
+}
+function pathLeg(from,to) {
+    if(range(from,to)<=1)return {end:from.pos||from,length:0};
+    const pos=from.pos||from,path=pos.findPathTo(to.pos||to,{range:1,ignoreCreeps:true,maxRooms:1,maxOps:2000});
+    const end=path[path.length-1];
+    return end&&range(end,to)<=1?{end:new RoomPosition(end.x,end.y,pos.roomName),length:path.length}:null;
+}
+function routePossible(c,source,destination) {
+    const first=pathLeg(c,source);if(!first)return false;
+    return !!pathLeg(first.end,destination);
+}
+function reconcile(c,requests) {
+    const h=haulMemory(c),task=h.task,position=c.pos.x+','+c.pos.y;
+    const blocked=c.memory.haulBlocked||{};
     for(const id in blocked)if(blocked[id]<=Game.time)delete blocked[id];
-    let task=c.memory.haulDelivery;
-    if(task&&task.pickupTick<Game.time){delete task.pickupTick;delete task.pickupAmount;}
-    if(!validDelivery(c,task)||task.sent!==undefined&&task.sent<Game.time||blocked[task.id]){delete c.memory.haulDelivery;task=null;}
-    const capacity=energy(c)+c.store.getFreeCapacity(E);
-    const ready=energy(c)>0&&(c.memory.loaded||energy(c)>=Math.ceil(capacity*.9)||task&&energy(c)>=task.amount);
-    const load=ready?energy(c):capacity;
-    if(task&&task.sent===undefined)task.phase=ready?'deliver':'pickup';
-    const commitments=id=>allCreeps().filter(peer=>Game.creeps[peer.name]===peer&&peer.name!==c.name&&peer.memory.haulDelivery&&peer.memory.haulDelivery.id===id&&validDelivery(peer,peer.memory.haulDelivery));
-    const reserved=id=>commitments(id).reduce((n,peer)=>n+(ready?fundedDelivery(peer,peer.memory.haulDelivery):peer.memory.haulDelivery.amount),0);
-    const needs=deliveryNeeds(room,includeStorage).filter(n=>!blocked[n.node.id]&&n.node.id!==c.memory.withdrawnFrom)
-        .map(n=>({...n,gap:Math.max(0,Math.floor(n.high-energy(n.node))),amount:Math.max(0,Math.floor(n.high-energy(n.node)-reserved(n.node.id)))})).filter(n=>n.amount>0);
-    // Finish a batch inside its priority class; small normal gaps wait for the
-    // next batch, while spawn/defense/controller emergency gaps remain urgent.
-    needs.sort((a,b)=>a.priority-b.priority||Number(b.node.id===task?.id)-Number(a.node.id===task?.id)||range(c,a.node)-range(c,b.node));
-    for(const request of needs){
-        const committed=task&&request.node.id===task.id;
-        if(!committed&&!near(c,[request.node]))continue;
-        if(ready){
-            const peers=commitments(request.node.id),claim=committed?Math.min(task.amount,load,Math.floor(request.amount)):Math.min(load,Math.floor(request.amount));
-            let reclaim=Math.max(0,claim+peers.reduce((n,p)=>n+p.memory.haulDelivery.amount,0)-request.gap);
-            // Only edit pickup promises after choosing this destination. Existing
-            // cargo, same-tick transfers and accepted pickups cannot be stolen.
-            for(const peer of peers.sort((a,b)=>range(b,request.node)-range(a,request.node))){
-                if(reclaim<=0)break;
-                const t=peer.memory.haulDelivery,take=Math.min(reclaim,Math.max(0,t.amount-fundedDelivery(peer,t)));
-                if(!take)continue;
-                t.amount-=take;reclaim-=take;
-                if(t.amount<=0)delete peer.memory.haulDelivery;
+    if(!energy(c)&&!pending(task,'pickup'))delete h.origin;
+    if(!task){h.state='idle';return;}
+    if(task.intent&&task.intent.at<Game.time){
+        // Do not add expected pickup or subtract expected delivery from Memory.
+        // Actual next-tick cargo alone decides which phase can continue.
+        if(task.intent.kind==='pickup'&&energy(c)>0)h.origin=task.source;
+        delete task.intent;
+    }
+    if(pending(task))return;
+    if(!validDelivery(c,task)||blocked[task.id]||!requests.some(n=>n.node.id===task.id&&deliveryGap(n)>0)||h.origin===task.id){clearTask(c);return;}
+    task.priority=requests.find(n=>n.node.id===task.id).priority;
+    if(task.position!==position||c.fatigue){task.position=position;task.progress=Game.time;}
+    const source=task.source&&Game.getObjectById(task.source);
+    if(energy(c)>0){
+        // Finish the planned amount immediately. A partial carrier may top up
+        // only at an adjacent source with at most two extra route steps, and
+        // never while a spawn/defense/starvation request is urgent.
+        const destination=Game.getObjectById(task.id),detour=source?range(c,source)+range(source,destination)-range(c,destination):Infinity;
+        const topup=h.state==='pickup'&&energy(c)<task.amount&&task.priority>2&&source&&availableEnergy(source)>0&&range(c,source)<=1&&detour<=2;
+        h.state=topup?'pickup':'deliver';
+        if(!topup){task.amount=Math.min(task.amount,energy(c));task.pickupAmount=0;}
+    }else if(!source||availableEnergy(source)<=0||Game.time-(task.progress||Game.time)>=15){
+        if(source&&Game.time-(task.progress||Game.time)>=15)c.memory.haulPickupAvoid={id:source.id,until:Game.time+15};
+        clearTask(c);
+    }else h.state='pickup';
+}
+function reclaimSoft(c,request,amount) {
+    const others=peers(c,request.node.id).filter(p=>!pending(p.memory.haul.task,'deliver'));
+    let excess=Math.max(0,amount+others.reduce((n,p)=>n+p.memory.haul.task.amount,0)-deliveryGap(request));
+    for(const p of others.sort((a,b)=>range(b,request.node)-range(a,request.node))){
+        const h=p.memory.haul,t=h.task,take=Math.min(excess,Math.max(0,t.amount-fundedDelivery(p,t)));
+        if(!take)continue;t.amount-=take;excess-=take;
+        t.pickupAmount=Math.min(t.pickupAmount||0,Math.max(0,t.amount-energy(p)));
+        if(t.amount<=0)clearTask(p);
+        if(excess<=0)break;
+    }
+}
+function reclaimSource(c,source) {
+    let left=availableEnergy(source);
+    for(const peer of carriers(c.room)){
+        const h=peer.memory.haul,t=h&&h.task;
+        if(peer===c||!t||h.state!=='pickup'||t.source!==source.id||pending(t)||!validDelivery(peer,t))continue;
+        const keep=Math.min(left,Math.max(0,t.pickupAmount||t.amount-energy(peer)));left-=keep;
+        t.pickupAmount=keep;t.amount=Math.min(t.amount,energy(peer)+keep);
+        if(t.amount<=0)clearTask(peer);else if(!keep)h.state='deliver';
+    }
+}
+function assign(c,requests) {
+    const h=haulMemory(c),old=h.task;
+    if(pending(old))return old&&Game.getObjectById(old.id);
+    const cargo=availableEnergy(c),funded=cargo>0,blocked=c.memory.haulBlocked||{},capacity=availableCapacity(c);
+    const choices=requests.filter(n=>!blocked[n.node.id]&&n.node.id!==h.origin)
+        .map(n=>({...n,gap:Math.max(0,deliveryGap(n)-peers(c,n.node.id).reduce((sum,p)=>sum+
+            (funded?fundedDelivery(p,p.memory.haul.task):pending(p.memory.haul.task,'deliver')?0:p.memory.haul.task.amount),0))}))
+        .filter(n=>n.gap>0).sort((a,b)=>a.priority-b.priority||Number(b.node.id===old?.id)-Number(a.node.id===old?.id)||range(c,a.node)-range(c,b.node));
+    const routedPriorities=new Set();
+    for(const request of choices){
+        const same=old&&old.id===request.node.id;
+        if(funded){
+            if(!same&&!near(c,[request.node]))continue;
+            const amount=Math.min(cargo,request.gap,same?old.amount:Infinity);
+            reclaimSoft(c,request,amount);
+            if(same&&h.state==='pickup'&&old.source){
+                const source=Game.getObjectById(old.source),free=source&&Math.max(0,availableEnergy(source)-reservedSource(c,source.id));
+                if(free&&old.priority>2&&range(c,source)<=1){
+                    old.amount=Math.min(old.amount,request.gap,cargo+free);old.pickupAmount=Math.min(capacity,old.amount-cargo);return request.node;
+                }
+            }
+            if(!same){movementCount(old?'deliverySwitches':'deliveryStarts');h.task={id:request.node.id,room:c.room.name,source:h.origin,expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time};}
+            h.state='deliver';h.task.amount=amount;h.task.pickupAmount=0;h.task.priority=request.priority;
+            return request.node;
+        }
+        if(same&&old.source){
+            const node=Game.getObjectById(old.source),free=node&&Math.max(0,availableEnergy(node)-reservedSource(c,node.id));
+            if(free&&sourceAllowed(c,node,request.node)){
+                old.amount=Math.min(old.amount,request.gap,free,capacity);old.pickupAmount=Math.min(capacity,free,node.resourceType?capacity:old.amount);
+                old.priority=request.priority;h.state='pickup';return request.node;
             }
         }
-        if(!committed){
-            movementCount(task?'deliverySwitches':'deliveryStarts');
-            task=c.memory.haulDelivery={id:request.node.id,room:room.name,amount:Math.min(load,Math.floor(request.amount)),priority:request.priority,
-                phase:ready?'deliver':'pickup',expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time};
-        }else task.amount=Math.min(task.amount,load,Math.floor(request.amount));
-        return request.node;
+        if(routedPriorities.has(request.priority))continue;
+        routedPriorities.add(request.priority);
+        const nodes=pickupNodes(c.room),routes=choices.filter(n=>n.priority===request.priority).flatMap(destination=>
+            nodes.filter(node=>sourceAllowed(c,node,destination.node)).map(node=>{
+            const free=Math.max(0,availableEnergy(node)-reservedSource(c,node.id)),amount=Math.min(free,capacity,destination.gap);
+            // Chebyshev lengths are explicitly estimates, not measured travel.
+            // Both legs and the useful load participate; storage is an ordinary
+            // candidate. Overflowing mining buffers receive a pressure benefit.
+            const estimate=Math.max(0,range(c,node)-1)+Math.max(0,range(node,destination.node)-1)+2;
+            const pressure=node.structureType===STRUCTURE_STORAGE?0:energy(node);
+            return {node,destination,free,amount,estimate,score:estimate/Math.max(1,amount)/(1+pressure/1000)};
+        })).filter(r=>r.amount>0).sort((a,b)=>a.score-b.score||a.estimate-b.estimate||a.node.id.localeCompare(b.node.id));
+        for(const route of routes){
+            if(!routePossible(c,route.node,route.destination.node))continue;
+            movementCount(old?'deliverySwitches':'deliveryStarts');
+            h.state='pickup';h.task={id:route.destination.node.id,source:route.node.id,room:c.room.name,amount:route.amount,
+                pickupAmount:Math.min(capacity,route.free,route.node.resourceType?capacity:route.amount),priority:route.destination.priority,
+                expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time,routeEstimate:route.estimate};
+            return route.destination.node;
+        }
     }
-    delete c.memory.haulDelivery;return null;
+    clearTask(c);return null;
+}
+let preparedTick=-1,preparedRooms=new Map();
+function prepare(room,extra=null) {
+    if(preparedTick!==Game.time){preparedTick=Game.time;preparedRooms=new Map();}
+    const old=preparedRooms.get(room.name),list=carriers(room,extra);
+    if(old&&old.room===room&&old.root===Game.creeps&&(!extra||old.names.has(extra.name)))return old;
+    const requests=deliveryNeeds(room),record={room,root:Game.creeps,names:new Set(list.map(c=>c.name))};
+    preparedRooms.set(room.name,record);
+    for(const c of list)reconcile(c,requests);
+    // Current cargo gets first claim, including cargo whose old loaded flag was
+    // false. Empty promises remain reclaimable until an action is accepted.
+    list.sort((a,b)=>Number(energy(b)>0)-Number(energy(a)>0)||Number(!!b.memory.haul.task)-Number(!!a.memory.haul.task)||a.name.localeCompare(b.name));
+    for(const c of list)assign(c,requests);
+    return record;
+}
+function release(c) {if(c.memory.haul){clearTask(c);delete c.memory.haul.executorTick;}}
+function haulTarget(c,includeStorage=true) {
+    if(c.memory.role!=='hauler')haulMemory(c).executorTick=Game.time;
+    prepare(c.room,c);
+    const requests=deliveryNeeds(c.room,includeStorage);reconcile(c,requests);
+    const h=haulMemory(c),task=h.task;
+    if(pending(task))return Game.getObjectById(task.id);
+    if(task){
+        const request=requests.find(n=>n.node.id===task.id),funded=availableEnergy(c)>0;
+        const uncovered=n=>deliveryGap(n)-peers(c,n.node.id).reduce((sum,p)=>sum+
+            (funded?fundedDelivery(p,p.memory.haul.task):pending(p.memory.haul.task,'deliver')?0:p.memory.haul.task.amount),0);
+        const urgent=requests.some(n=>n.priority<request.priority&&n.node.id!==h.origin&&
+            !(c.memory.haulBlocked||{})[n.node.id]&&uncovered(n)>0);
+        const source=h.state==='pickup'&&Game.getObjectById(task.source);
+        if(!urgent&&uncovered(request)>=task.amount&&(!source||availableEnergy(source)-reservedSource(c,source.id)>=(task.pickupAmount||0))){
+            task.priority=request.priority;return request.node;
+        }
+    }
+    return assign(c,requests);
 }
 function deliveryPorts(room,target) {
     const station=controllerStation(room),plan=economyMemory(room).plan;
@@ -114,7 +274,7 @@ function deliveryPorts(room,target) {
 }
 function deliveryPort(c,target,task,layout) {
     const peers=roomCreeps(c.room).concat(hostiles(c.room)).filter(o=>(!o.my||Game.creeps[o.name]===o)&&o.name!==c.name);
-    const promised=allCreeps().filter(o=>Game.creeps[o.name]===o&&o.name!==c.name).map(o=>({creep:o,task:o.memory.haulDelivery}))
+    const promised=allCreeps().filter(o=>Game.creeps[o.name]===o&&o.name!==c.name).map(o=>({creep:o,task:o.memory.haul&&o.memory.haul.task}))
         .filter(o=>o.task&&o.task.room===c.room.name&&holdsDeliveryPort(o.creep,o.task)).map(o=>o.task.port);
     const avoid=task.portAvoid||{};
     for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
@@ -150,7 +310,7 @@ function clearStationTraffic(c,target=null) {
     const options=[];
     for(let y=c.pos.y-1;y<=c.pos.y+1;y++)for(let x=c.pos.x-1;x<=c.pos.x+1;x++){
         const p={x,y};if(walkable(c.room,p)&&!future.has(x+50*y)&&!endpoints.some(s=>range(s,p)===0)&&
-            !peers.some(o=>range(o,p)===0||o.memory&&holdsDeliveryPort(o,o.memory.haulDelivery)&&range(o.memory.haulDelivery.port,p)===0))options.push(p);
+            !peers.some(o=>range(o,p)===0||o.memory&&holdsDeliveryPort(o,o.memory.haul&&o.memory.haul.task)&&range(o.memory.haul.task.port,p)===0))options.push(p);
     }
     // Prefer parking off roads; a free outward road is still better than
     // holding the only transfer endpoint when all nearby parking is occupied.
@@ -158,56 +318,50 @@ function clearStationTraffic(c,target=null) {
     if(p)go(c,new RoomPosition(p.x,p.y,c.room.name),0,{ignoreCreeps:false});
 }
 function collectHaul(c) {
-    const position=c.pos.x+','+c.pos.y;
-    let task=c.memory.haulPickup,target=task&&Game.getObjectById(task.id);
-    if(task&&(task.position!==position||c.fatigue)){task.position=position;task.progress=Game.time;}
-    const stalled=task&&Game.time-task.progress>=15;
-    if(task&&(!target||task.room!==c.room.name||energy(target)<=0||stalled)){
-        if(stalled)c.memory.haulPickupAvoid={id:task.id,until:Game.time+15};
-        delete c.memory.haulPickup;task=null;target=null;
-    }
-    if(!task){
-        const ss=sources(c.room),stock=stores(c.room),avoid=c.memory.haulPickupAvoid;
-        const allowed=t=>(!avoid||avoid.until<=Game.time||avoid.id!==t.id)&&t.id!==c.memory.haulDelivery?.id;
-        const allDrops=drops(c.room).filter(d=>d.resourceType===E&&d.amount>0);
-        const boxes=stock.filter(s=>energy(s)>0&&s.structureType===STRUCTURE_CONTAINER&&ss.some(src=>range(src,s)<=1));
-        const loot=tombstones(c.room).concat(ruins(c.room)).filter(s=>energy(s)>0);
-        const pressure=new Map(ss.map(src=>[src.id,stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&range(src,s)<=1).reduce((n,s)=>n+energy(s),0)+allDrops.filter(d=>range(src,d)<=2).reduce((n,d)=>n+energy(d),0)]));
-        const free=c.store.getFreeCapacity(E);
-        const score=t=>{const src=ss.find(s=>range(s,t)<=2);return Math.min(energy(t),free)/(range(c,t)+3)*(1+(src?pressure.get(src.id):energy(t))/500);};
-        const hub=linkNetwork(c.room).hub,receivers=hub&&energy(hub)>0?[hub]:[];
-        const choices=allDrops.concat(boxes,loot,receivers).filter(allowed).sort((a,b)=>score(b)-score(a));
-        target=choices[0]||(!energy(c)&&c.memory.haulDelivery&&c.room.storage&&energy(c.room.storage)>0&&allowed(c.room.storage)?c.room.storage:null);
-        if(!target)return false;
-        task=c.memory.haulPickup={id:target.id,room:c.room.name,position,progress:Game.time};
-    }
-    const delivery=c.memory.haulDelivery;
-    if(delivery)delivery.source=target.id;
-    const amount=Math.min(c.store.getFreeCapacity(E),delivery?Math.max(0,delivery.amount-energy(c)):c.store.getFreeCapacity(E));
-    if(!amount)return false;
-    const result=target.resourceType?c.pickup(target):c.withdraw(target,E,Math.min(amount,energy(target)));
+    const h=haulMemory(c),task=h.task;
+    if(!task||h.state!=='pickup'||pending(task))return !!(task&&pending(task));
+    const target=Game.getObjectById(task.source);
+    if(!target||!sourceAllowed(c,target,Game.getObjectById(task.id))){clearTask(c);return false;}
+    const free=Math.max(0,availableEnergy(target)-reservedSource(c,target.id));
+    const amount=Math.min(availableCapacity(c),free,Math.max(0,task.amount-energy(c)));
+    if(!amount){if(energy(c)){h.state='deliver';task.pickupAmount=0;}else clearTask(c);return false;}
+    const result=target.resourceType?c.pickup(target):c.withdraw(target,E,amount);
     if(result===OK){
-        c.memory.withdrawnFrom=target.id;task.progress=Game.time;
-        if(delivery){delivery.pickupTick=Game.time;delivery.pickupAmount=Math.min(target.resourceType?c.store.getFreeCapacity(E):amount,energy(target));}
+        const accepted=target.resourceType?Math.min(availableCapacity(c),availableEnergy(target)):amount;
+        commitEnergy(target,c,accepted);
+        task.intent={kind:'pickup',at:Game.time,amount:accepted,before:energy(c)};task.pickupAmount=0;task.progress=Game.time;h.origin=target.id;
+        // Drop pickup has no quantity argument. Account for its full accepted
+        // amount; next tick's physical cargo reconciles engine arbitration.
+        const request=deliveryNeeds(c.room).find(n=>n.node.id===task.id);
+        task.amount=Math.min(energy(c)+accepted,request?deliveryGap(request):task.amount);
+        if(request)reclaimSoft(c,request,task.amount);
+        reclaimSource(c,target);
         return true;
     }
+    if(result===ERR_TIRED||c.fatigue){task.progress=Game.time;return true;}
     if(result===ERR_NOT_IN_RANGE&&go(c,target)!==ERR_NO_PATH)return true;
-    c.memory.haulPickupAvoid={id:task.id,until:Game.time+15};delete c.memory.haulPickup;return false;
+    c.memory.haulPickupAvoid={id:task.source,until:Game.time+15};
+    if(energy(c)){h.state='deliver';task.pickupAmount=0;}else clearTask(c);
+    return false;
 }
 function deliverHaul(c,target) {
     const id=target.id||target.name,position=c.pos.x+','+c.pos.y;
-    const task=c.memory.haulDelivery;
+    const h=haulMemory(c),task=h.task;
     if(!task||task.id!==id||task.room!==c.room.name)return false;
-    task.phase='deliver';
+    if(pending(task))return true;
+    h.state='deliver';
     if(task.position!==position||c.fatigue||range(c,target)<=1){task.position=position;task.progress=Game.time;}
     // Any adjacent tile can transfer immediately, including a courier that was
     // already in range before ports were assigned. Amount leases remain intact.
     // Reservations schedule trips; once at any destination, unload everything
     // that physically fits and record the complete accepted transfer intent.
-    const amount=Math.min(energy(c),target.store.getFreeCapacity(E));
+    const amount=Math.min(availableEnergy(c),availableCapacity(target));
+    if(!amount){clearTask(c);return false;}
     const result=c.transfer(target,E,amount);
     if(result===OK){
-        task.amount=amount;task.sent=Game.time;task.progress=Game.time;
+        commitEnergy(c,target,amount);
+        task.amount=amount;task.intent={kind:'deliver',at:Game.time,amount,before:energy(c)};task.progress=Game.time;
+        const request=deliveryNeeds(c.room).find(n=>n.node.id===target.id);if(request)reclaimSoft(c,request,0);
         delete task.port;delete task.portAvoid;delete task.portWaitSince;clearStationTraffic(c,target);return true;
     }
     if(result===ERR_TIRED||c.fatigue)return true;
@@ -228,26 +382,21 @@ function deliverHaul(c,target) {
         }
     }
     if(task.portWaitSince!==undefined&&Game.time-task.portWaitSince<8)return true;
-    c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;delete c.memory.haulDelivery;
+    c.memory.haulBlocked=c.memory.haulBlocked||{};c.memory.haulBlocked[id]=Game.time+15;clearTask(c);
     return false;
 }
 function haul(c) {
-    if(!energy(c)){c.memory.loaded=false;delete c.memory.withdrawnFrom;}
-    let target=haulTarget(c);
-    const capacity=energy(c)+c.store.getFreeCapacity(E);
-    if(energy(c)>0&&(energy(c)>=Math.ceil(capacity*.9)||c.memory.haulDelivery&&energy(c)>=c.memory.haulDelivery.amount))c.memory.loaded=true;
-    if(c.memory.loaded)delete c.memory.haulPickup;
-    if(!c.memory.loaded){
+    let target=haulTarget(c),h=haulMemory(c);
+    if(h.task&&pending(h.task))return;
+    if(h.state==='pickup'){
         if(collectHaul(c))return;
-        if(energy(c))c.memory.loaded=true;else{clearStationTraffic(c);return;}
+        if(!energy(c)){clearStationTraffic(c);return;}
+        target=haulTarget(c);h=haulMemory(c);
     }
     for(let attempt=0;attempt<2;attempt++){
-        if(!target){delete c.memory.haulDelivery;clearStationTraffic(c);return;}
+        if(!target||!energy(c)){clearStationTraffic(c);return;}
         if(deliverHaul(c,target))return;
         target=haulTarget(c);
     }
 }
-// Capacity estimates size future bodies; fueled workers keep acting every tick.
-// The ledger measures actual expenditure, not these estimated duty factors.
-
-module.exports={deliveryNeeds,validDelivery,fundedDelivery,holdsDeliveryPort,haulTarget,deliveryPorts,deliveryPort,clearStationTraffic,collectHaul,deliverHaul,haul};
+module.exports={prepare,release,deliveryNeeds,validDelivery,fundedDelivery,holdsDeliveryPort,haulTarget,deliveryPorts,deliveryPort,clearStationTraffic,collectHaul,deliverHaul,haul};

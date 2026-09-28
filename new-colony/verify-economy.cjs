@@ -6,8 +6,8 @@ const {body,spawnRoom,miningSpots,refuel,mine,haul,haulTarget,work,upgradePolicy
 for(const role of ['miner','hauler','upgrader','bootstrap','builder'])for(const budget of [200,300,400,550,800,1000,1300]){
  const b=body(role,budget);assert(b.length>0&&b.length<=50);assert(b.reduce((s,p)=>s+C.BODYPART_COST[p],0)<=budget,role+' exceeds budget');assert(b.includes(C.MOVE));
 }
-function recovery(roles,available){let requested;const roomName='W21N26';
- ctx.Game.creeps=Object.fromEntries(roles.map((role,i)=>['c'+i,{memory:{role,home:roomName},body:[C.WORK,C.CARRY,C.MOVE],ticksToLive:1000,getActiveBodyparts:()=>1}]));
+function recovery(roles,available){ctx.Game.time++;ctx.Memory.frontier={rooms:{},intel:{}};let requested;const roomName='W21N26';
+ ctx.Game.creeps=Object.fromEntries(roles.map((role,i)=>['c'+i,{name:'c'+i,memory:{role,home:roomName},body:[C.WORK,C.CARRY,C.MOVE],ticksToLive:1000,getActiveBodyparts:()=>1}]));
  const sp={spawnCreep:(body,name,options)=>{requested={body,name,...options};return C.OK;}};
  const room={name:roomName,energyAvailable:available,energyCapacityAvailable:1300,controller:{level:4},find(type){if(type===C.FIND_MY_SPAWNS)return[sp];return[];},getTerrain:()=>({get:()=>0})};
  spawnRoom(room);return requested;
@@ -58,12 +58,12 @@ function fixture(){
  function source(id,x,y){const s={id,isSource:true,pos:pos(x,y),energy:3000};room.objects.push(s);return s;}
  function structure(type,id,x,y,n=0,capacity=2000){const s={id,structureType:type,my:true,pos:pos(x,y),store:store(n,capacity),hits:250000,hitsMax:250000};room.objects.push(s);if(type===C.STRUCTURE_STORAGE)room.storage=s;return s;}
  function creep(name,role,x,y,n=0,capacity=50,parts=[C.WORK,C.CARRY,C.MOVE]){
-  const actions=[];const c={name,room,pos:pos(x,y),memory:{role,home:room.name},store:store(n,capacity),body:parts,ticksToLive:1000,actions,getActiveBodyparts(p){return parts.filter(q=>q===p).length;},
+  const actions=[];const c={name,room,pos:pos(x,y),memory:{role,home:room.name,...(role==='hauler'?{haul:{state:'idle',task:null}}:{})},store:store(n,capacity),body:parts,ticksToLive:1000,actions,getActiveBodyparts(p){return parts.filter(q=>q===p).length;},
    harvest(t){actions.push(['harvest',t.id]);return this.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;},
    moveTo(t,opt){actions.push(['move',t.x,t.y,opt.range]);return C.OK;},
    withdraw(t){actions.push(['withdraw',t.id]);return C.OK;},pickup(t){actions.push(['pickup',t.id]);return C.OK;},transfer(t){actions.push(['transfer',t.id||t.name]);return C.OK;},drop(){actions.push(['drop']);return C.OK;},
    repair(t){actions.push(['repair',t.id]);return C.OK;},build(t){actions.push(['build',t.id]);return C.OK;},upgradeController(){actions.push(['upgrade']);return C.OK;}};
-  ctx.Game.creeps[name]=c;return c;
+  ctx.Game.creeps={...ctx.Game.creeps,[name]:c};return c;
  }
  room.controller={my:true,level:2,ticksToDowngrade:10000,pos:pos(16,21)};
  ctx.Game.rooms={[room.name]:room};ctx.Game.getObjectById=id=>room.objects.find(o=>o.id===id);
@@ -129,7 +129,7 @@ function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++
 }
 {
  const f=fixture();ctx.Game.time=101;let spawned=0;const sp=f.structure(C.STRUCTURE_SPAWN,'spawn',21,28,300,300);sp.spawnCreep=()=>{spawned++;return C.OK;};
- ctx.gameModuleOverrides={planner:{run(){throw Error('expected planning failure');}},expansion:{tick(){},spawn(){}},monitor:{tick(){}}};
+ ctx.gameModuleOverrides={planner:{run(){throw Error('expected planning failure');}},expansion:{tick(){},spawnRequests(){return[];},constructionRequests(){return[];}},monitor:{tick(){}}};
  const logs=[];ctx.console={log:t=>logs.push(t)};game.loop();ctx.console=console;
  assert.equal(spawned,1);assert(logs.some(s=>s.includes('expected planning failure')),'planner error must be reported and isolated');
 }
@@ -282,30 +282,31 @@ console.log('PASS: early capacity/mining stage gates, per-source production chec
  const c=f.creep('hauler','hauler',16,25,0,200,[C.CARRY,C.MOVE]);
  const up=f.creep('upgrader','upgrader',15,24,98,100,[C.WORK,C.WORK,C.CARRY,C.CARRY,C.MOVE]);
  haul(c);assert.equal(c.actions.length,0,'no fixed demand must not cause a storage withdrawal');
- c.store[C.RESOURCE_ENERGY]=89;c.memory.loaded=true;c.memory.withdrawnFrom='storage';haul(c);
+ c.store[C.RESOURCE_ENERGY]=89;c.memory.haul.origin='storage';ctx.Game.time++;haul(c);
  assert.equal(c.actions.length,0,'an existing storage withdrawal may wait without returning energy in a loop');
 }
 console.log('PASS: no worker delivery endpoints, fixed job supply bindings, job-change/depletion recovery, construction self-harvest and controller reserve protection, no-demand storage safety');
 {
  const f=fixture();f.source('near',24,24);f.source('far',16,42);
+ f.structure(C.STRUCTURE_STORAGE,'overflow-storage',21,40,0,1000000);
  const near=f.structure(C.STRUCTURE_CONTAINER,'near-box',25,25,243),far=f.structure(C.STRUCTURE_CONTAINER,'far-box',17,41,2000);
  const drop={id:'far-drop',resourceType:C.RESOURCE_ENERGY,amount:1382,pos:f.pos(17,41)};f.room.objects.push(drop);
  const c=f.creep('hauler','hauler',21,28,0,250,[...Array(5).fill(C.CARRY),...Array(5).fill(C.MOVE)]);
  c.withdraw=c.pickup=function(t){this.actions.push(['collect',t.id]);return this.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;};
- haul(c);assert(['far-box','far-drop'].includes(c.memory.haulPickup.id),'full remote container and overflow must outrank modest nearby stock');
- const selected=c.memory.haulPickup.id;near.store[C.RESOURCE_ENERGY]=2000;ctx.Game.time++;c.pos=f.pos(20,29);haul(c);
- assert.equal(c.memory.haulPickup.id,selected,'new nearby stock must not reverse an established remote pickup trip');
- drop.amount=0;far.store[C.RESOURCE_ENERGY]=0;ctx.Game.time++;haul(c);assert.equal(c.memory.haulPickup.id,'near-box','depleted source must release its committed pickup');
+ haul(c);assert(['far-box','far-drop'].includes(c.memory.haul.task.source),'full remote container and overflow must outrank modest nearby stock');
+ const selected=c.memory.haul.task.source;near.store[C.RESOURCE_ENERGY]=2000;ctx.Game.time++;c.pos=f.pos(20,29);haul(c);
+ assert.equal(c.memory.haul.task.source,selected,'new nearby stock must not reverse an established remote pickup trip');
+ drop.amount=0;far.store[C.RESOURCE_ENERGY]=0;ctx.Game.time++;haul(c);assert.equal(c.memory.haul.task.source,'near-box','depleted source must release its committed pickup');
  const worker=f.structure(C.STRUCTURE_SPAWN,'spawn',20,30,0,300);
  c.store[C.RESOURCE_ENERGY]=247;c.memory.loaded=false;c.actions.length=0;haul(c);
- assert.equal(c.memory.loaded,true);assert.equal(c.memory.haulPickup,undefined);assert.deepEqual(c.actions[0],['transfer',worker.id],'247/250 carrier must deliver instead of chasing three energy');
+ assert.equal(c.memory.haul.state,'deliver');assert.equal(c.memory.haul?.task?.pickupAmount||0,0);assert.deepEqual(c.actions[0],['transfer',worker.id],'247/250 carrier must deliver instead of chasing three energy');
 }
 {
- const f=fixture();f.source('near',24,24);f.source('far',16,42);f.structure(C.STRUCTURE_CONTAINER,'near-box',25,25,150);f.structure(C.STRUCTURE_CONTAINER,'far-box',17,41,2000);
+ const f=fixture();f.source('near',24,24);f.source('far',16,42);f.structure(C.STRUCTURE_CONTAINER,'near-box',25,25,150);f.structure(C.STRUCTURE_CONTAINER,'far-box',17,41,2000);f.structure(C.STRUCTURE_STORAGE,'overflow-storage',21,40,0,1000000);
  const c=f.creep('hauler','hauler',21,28,0,250,[C.CARRY,C.MOVE]);c.withdraw=()=>C.ERR_NOT_IN_RANGE;const move=c.moveTo;c.moveTo=()=>C.ERR_NO_PATH;
- haul(c);assert.equal(c.memory.haulPickup,undefined);assert.equal(c.memory.haulPickupAvoid.id,'far-box');
- c.moveTo=move;ctx.Game.time++;haul(c);assert.equal(c.memory.haulPickup.id,'near-box','unreachable pickup needs a bounded retry cooldown');
- ctx.Game.time+=15;haul(c);assert.equal(c.memory.haulPickup.id,'far-box','a motionless pickup must eventually release and reconsider alternatives');
+ haul(c);assert.equal(c.memory.haul?.task?.pickupAmount||0,0);assert.equal(c.memory.haulPickupAvoid.id,'far-box');
+ c.moveTo=move;ctx.Game.time++;haul(c);assert.equal(c.memory.haul.task.source,'near-box','unreachable pickup needs a bounded retry cooldown');
+ ctx.Game.time+=15;haul(c);assert.equal(c.memory.haul.task.source,'far-box','a motionless pickup must eventually release and reconsider alternatives');
 }
 function deliveryFixture(){
  const f=fixture();f.room.controller.pos=f.pos(16,21);const box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',16,23,0);
@@ -318,24 +319,24 @@ function deliveryFixture(){
 }
 {
  const f=deliveryFixture();const start=ctx.Game.time;
- for(let i=0;i<4;i++){ctx.Game.time=start+i;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);}
+ for(let i=0;i<4;i++){ctx.Game.time=start+i;haul(f.c);assert.equal(f.c.memory.haul.task.id,f.box.id);}
  assert.equal(f.c.memory.moveAttempt,ctx.Game.time,'movement telemetry must identify a current move attempt');
  ctx.Game.time=start+4;f.c.actions.length=0;haul(f.c);
- assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.id);
+ assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haul.task.id,f.builder.id);
  const move=f.c.actions.at(-1);assert.equal(move[0],'move');assert.equal(move[3],0);assert(range({x:move[1],y:move[2]},f.builder)<=1,'blocked controller access falls through to an exact unloading tile at another live node');
  ctx.Game.time+=15;assert.equal(haulTarget(f.c),f.box);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'delivery exclusion must expire after 15 ticks');
  const previousMove=f.c.memory.moveAttempt;
- f.c.pos=f.pos(16,24);for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'successful transfer must never create a permanent blacklist');assert(f.c.actions.some(a=>a[0]==='transfer'),'successful delivery may clear the station approach while retaining access');}
+ f.c.pos=f.pos(16,24);for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haul.task.id,f.box.id);assert.equal(f.c.memory.haulBlocked[f.box.id],undefined,'successful transfer must never create a permanent blacklist');assert(f.c.actions.some(a=>a[0]==='transfer'),'successful delivery may clear the station approach while retaining access');}
 }
 {
  const f=deliveryFixture();haul(f.c);f.c.fatigue=20;
  for(let i=0;i<6;i++){ctx.Game.time++;haul(f.c);assert(!f.c.memory.haulBlocked||!f.c.memory.haulBlocked[f.box.id],'fatigue is not a blocked access failure');}
- f.c.fatigue=0;ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haulDelivery.id,f.box.id,'movement recovery gets a fresh non-fatigue progress window');
+ f.c.fatigue=0;ctx.Game.time++;haul(f.c);assert.equal(f.c.memory.haul.task.id,f.box.id,'movement recovery gets a fresh non-fatigue progress window');
 }
 {
  const f=deliveryFixture(),move=f.c.moveTo;
  f.c.moveTo=function(p,opts){const result=move.call(this,p,opts);return p.x===controllerStation(f.room).port.x&&p.y===controllerStation(f.room).port.y?C.ERR_NO_PATH:result;};
- haul(f.c);assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haulDelivery.id,f.builder.id,'explicit no-path error must fall back immediately');
+ haul(f.c);assert.equal(f.c.memory.haulBlocked[f.box.id],ctx.Game.time+15);assert.equal(f.c.memory.haul.task.id,f.builder.id,'explicit no-path error must fall back immediately');
 }
 {
  const f=fixture();const site=(id,type,x,progress=0)=>({id,structureType:type,pos:f.pos(x,28),progress});
@@ -381,12 +382,12 @@ function pipelineFixture(){
  assert.equal(f.request.memory.role,'hauler','the live one-hauler bottleneck must be repaired before spawning more consumers');
  assert.equal(f.request.body.filter(p=>p===C.CARRY).length,6);
  assert.equal(ctx.Memory.frontier.rooms[f.room.name].economy.carryTarget,14);
- const next=f.creep('second-hauler','hauler',21,28,0,300,f.request.body);next.spawning=true;
+ const next=f.creep('second-hauler','hauler',21,28,0,300,f.request.body);next.spawning=true;ctx.Game.time++;
  spawnRoom(f.room);assert.equal(f.request.body.filter(p=>p===C.CARRY).length,2,'fill only the remaining carry gap without paying for a third full-size carrier');
  ctx.Game.time+=20;f.backlog(null);assert.equal(updateEconomy(f.room).carry,14,'20-tick fluctuations cannot resize transport');
- ctx.Game.time=1100;f.backlog(null);assert.equal(updateEconomy(f.room).carry,14);
- ctx.Game.time=1300;f.backlog(null);assert.equal(updateEconomy(f.room).carry,14,'wait a full 300-tick lower-demand window');
- ctx.Game.time=1400;f.backlog(null);assert.equal(updateEconomy(f.room).carry,12,'a sustained drop in route demand can reduce future replacements');
+ ctx.Game.time=1101;f.backlog(null);assert.equal(updateEconomy(f.room).carry,14);
+ ctx.Game.time=1301;f.backlog(null);assert.equal(updateEconomy(f.room).carry,14,'wait a full 300-tick lower-demand window');
+ ctx.Game.time=1401;f.backlog(null);assert.equal(updateEconomy(f.room).carry,12,'a sustained drop in route demand can reduce future replacements');
  assert(ctx.Game.creeps.hauler&&ctx.Game.creeps['second-hauler'],'target reductions never kill existing haulers');
 }
 {
@@ -451,13 +452,13 @@ console.log('PASS: real construction duty budget, safe reductions under drawdown
  const f=pipelineFixture();f.room.sites=[];const storage=f.structure(C.STRUCTURE_STORAGE,'storage',20,20,10000,1000000);
  const initial=updateEconomy(f.room);assert.equal(initial.baseMode,'reserve');
  for(const stock of [14999,15001,17999]){ctx.Game.time+=20;storage.store[C.RESOURCE_ENERGY]=stock;const held=updateEconomy(f.room);assert.equal(held.baseMode,'reserve','reserve mode must persist below 18000');assert.equal(held.at,initial.at,'crossing 15000 must not bypass the 100-tick decision interval');}
- storage.store[C.RESOURCE_ENERGY]=18000;assert.equal(updateEconomy(f.room).baseMode,'growth','reserve mode may leave at 18000');
+ ctx.Game.time++;storage.store[C.RESOURCE_ENERGY]=18000;assert.equal(updateEconomy(f.room).baseMode,'growth','reserve mode may leave at 18000');
 }
 {
  const f=pipelineFixture();f.room.sites=[];const storage=f.structure(C.STRUCTURE_STORAGE,'storage',20,20,20000,1000000);
  const initial=updateEconomy(f.room);assert.equal(initial.baseMode,'growth');
  for(const stock of [15001,14999,12000]){ctx.Game.time+=20;storage.store[C.RESOURCE_ENERGY]=stock;const held=updateEconomy(f.room);assert.equal(held.baseMode,'growth','growth must persist until storage falls below 12000');assert.equal(held.at,initial.at,'ordinary stock movements must preserve the decision cadence');}
- storage.store[C.RESOURCE_ENERGY]=11999;assert.equal(updateEconomy(f.room).baseMode,'reserve');
+ ctx.Game.time++;storage.store[C.RESOURCE_ENERGY]=11999;assert.equal(updateEconomy(f.room).baseMode,'reserve');
 }
 {
  const f=pipelineFixture();f.room.sites=[];f.structure(C.STRUCTURE_STORAGE,'storage',20,20,40000,1000000);
@@ -497,7 +498,7 @@ console.log('PASS: in-range fueled builders keep working despite retired miner t
  builder.memory.workSupply={id:supply.id,job:'live-extension',room:f.room.name};
  const carrier=f.creep('urgent-carrier','hauler',16,30,100,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);carrier.memory.loaded=true;
  assert.equal(haulTarget(carrier),supply,'active construction uses its fixed supply building before a healthy controller reserve');
- assert.equal(carrier.memory.haulDelivery.amount,100);
+ assert.equal(carrier.memory.haul.task.amount,100);
  supply.store[C.RESOURCE_ENERGY]=200;box.store[C.RESOURCE_ENERGY]=10;
  assert.equal(haulTarget(carrier),box,'a nearly empty controller reserve retains emergency priority');
  const spawn=f.room.objects.find(o=>o.structureType===C.STRUCTURE_SPAWN);spawn.store[C.RESOURCE_ENERGY]=100;
@@ -529,13 +530,13 @@ console.log('PASS: fixed construction supply priority, controller emergency/spaw
  const c=f.creep('courier','hauler',20,20,200,200,[C.CARRY,C.MOVE]);c.memory.loaded=true;
  c.transfer=t=>c.pos.getRangeTo(t)>1?C.ERR_NOT_IN_RANGE:C.OK;
  let searches=0;const locate=c.pos.findClosestByPath;c.pos.findClosestByPath=function(a){searches++;return locate.call(this,a);};
- haul(c);assert.equal(c.memory.haulDelivery.id,first.id);assert.equal(searches,1);
+ haul(c);assert.equal(c.memory.haul.task.id,first.id);assert.equal(searches,1);
  first.store[C.RESOURCE_ENERGY]=20;second.store[C.RESOURCE_ENERGY]=0;
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,first.id,'a fluctuating equal-priority gap must not reverse a valid trip');assert.equal(searches,1,'committed delivery reuses its existing route');
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haul.task.id,first.id,'a fluctuating equal-priority gap must not reverse a valid trip');assert.equal(searches,1,'committed delivery reuses its existing route');
  const emergency=f.structure(C.STRUCTURE_SPAWN,'emergency-spawn',19,19,0,300);
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,emergency.id,'new spawn demand immediately preempts a normal delivery');
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haul.task.id,emergency.id,'new spawn demand immediately preempts a normal delivery');
  emergency.store[C.RESOURCE_ENERGY]=300;first.store[C.RESOURCE_ENERGY]=200;
- ctx.Game.time++;haul(c);assert.equal(c.memory.haulDelivery.id,second.id,'filled targets release commitments');
+ ctx.Game.time++;haul(c);assert.equal(c.memory.haul.task.id,second.id,'filled targets release commitments');
  c.memory.haulBlocked={[second.id]:ctx.Game.time+15};first.store[C.RESOURCE_ENERGY]=20;
  assert.equal(haulTarget(c),first,'blocked commitments cannot override target exclusion');
 }
@@ -548,7 +549,7 @@ console.log('PASS: fixed construction supply priority, controller emergency/spaw
  ctx.Game.time=start+2;go(c,destination);assert.equal(c.memory.stuck,2);assert.equal(calls.at(-1).hadPath,false,'two failed actual steps invalidate moveTo cache');assert.equal(calls.at(-1).ignoreCreeps,false);assert.equal(calls.at(-1).reusePath,15,'the newly generated detour remains reusable');
  c.memory._move={path:'detour'};ctx.Game.time++;c.pos=f.pos(21,20);go(c,destination);assert.equal(c.memory.stuck,0,'successful movement clears blockage');assert.equal(calls.at(-1).hadPath,true);
  ctx.Game.time+=10;go(c,destination);assert.equal(c.memory.stuck,0,'working in place between trips is not continuous blocked movement');
- const attempted=c.memory.moveAttempt,n=calls.length;ctx.Game.time++;c.fatigue=2;assert.equal(go(c,destination),C.ERR_TIRED);assert.equal(calls.length,n);assert.equal(c.memory.moveAttempt,attempted,'fatigue waiting must not pretend a movement intent occurred');
+ const attempted=c.memory.moveAttempt,n=calls.length;ctx.Game.time++;c.fatigue=2;assert.equal(go(c,destination),C.ERR_TIRED);assert.equal(calls.length,n);assert.equal(c.memory.moveAttempt,undefined,'fatigue waiting clears stale movement-attempt telemetry');
  ctx.Game.time++;c.fatigue=0;go(c,destination);assert.equal(c.memory.stuck,0,'recovering from fatigue receives a new movement progress window');
  ctx.Game.time++;go(c,f.pos(10,10));assert.equal(c.memory.stuck,0,'a changed destination does not inherit the old blockage count');
 }
@@ -617,12 +618,12 @@ console.log('PASS: retired growth builder joins active upgrade workforce on next
 // unchanged execution plan. This is an offline fixture, not live throughput.
 function stationFixture(){
  const f=fixture(),flow=JSON.parse(readSource('fixtures/fixed-logistics.json')),world=flow,plan=flow.plan;
- ctx.Game.time=flow.tick;f.room.controller.level=3;f.room.energyAvailable=f.room.energyCapacityAvailable=800;
+ ctx.Game.time=flow.tick=Math.max(ctx.Game.time+1,flow.tick);f.room.controller.level=3;f.room.energyAvailable=f.room.energyCapacityAvailable=800;
  f.room.getTerrain=()=>({get:(x,y)=>Number(world.terrain[x+50*y])});
  const a=f.source('near',24,24),b=f.source('far',16,42);
  for(const item of flow.boxes)f.structure(C.STRUCTURE_CONTAINER,item.id,...item.pos,item.energy);
  for(const item of flow.creeps){const c=f.creep(item.name,item.memory.role,...item.pos,item.energy,item.capacity,[...Array(item.work).fill(C.WORK),...Array(item.capacity/50).fill(C.CARRY),C.MOVE]);
-  c.memory.loaded=item.memory.loaded;if(item.memory.delivery)c.memory.haulDelivery={...item.memory.delivery};
+  c.memory.loaded=item.memory.loaded;if(item.memory.delivery)c.memory.haul.task={...item.memory.delivery};
   if(item.memory.role==='miner')c.memory.source=item.pos[1]===25?a.id:b.id;
  }
  ctx.Memory.frontier.rooms[f.room.name]={plan,economyControl:{at:ctx.Game.time,baseMode:'growth',mode:'growth',target:14,routes:[{roundTrip:22},{roundTrip:40}]}};
@@ -637,7 +638,7 @@ function stationFixture(){
  assert.equal(new Set(seats).size,4,'each living primary upgrader owns a unique seat');
  const saved=JSON.stringify(f.ups.map(c=>c.memory.upgradeSeat));ctx.Game.time++;for(const c of f.ups)work(c);
  assert.equal(JSON.stringify(f.ups.map(c=>c.memory.upgradeSeat)),saved,'position fluctuations cannot reshuffle persistent seats');
- for(const c of f.haulers){const target=haulTarget(c);assert(!target||target.structureType,'historical three-hauler pursuit must not survive migration');assert.notEqual(c.memory.haulDelivery?.id,f.ups[0].name);}
+ for(const c of f.haulers){const target=haulTarget(c);assert(!target||target.structureType,'historical three-hauler pursuit must not survive migration');assert.notEqual(c.memory.haul?.task?.id,f.ups[0].name);}
  // A stationary courier on the approach clears it even when no demand remains.
  f.box.store[C.RESOURCE_ENERGY]=2000;const c=f.haulers.find(c=>c.store[C.RESOURCE_ENERGY]>0);c.pos=f.pos(17,24);c.actions.length=0;c.memory.loaded=true;haul(c);
  assert(c.actions.some(a=>a[0]==='move'),'idle loaded couriers yield the delivery port');
@@ -661,17 +662,17 @@ function stationFixture(){
 }
 {
  const f=stationFixture();f.box.store[C.RESOURCE_ENERGY]=1800;
- for(const c of f.haulers){c.store[C.RESOURCE_ENERGY]=c.store[C.RESOURCE_ENERGY]+c.store.getFreeCapacity();c.memory.loaded=true;delete c.memory.haulDelivery;}
+ for(const c of f.haulers){c.store[C.RESOURCE_ENERGY]=c.store[C.RESOURCE_ENERGY]+c.store.getFreeCapacity();c.memory.loaded=true;delete c.memory.haul.task;}
  const need=deliveryNeeds(f.room).find(n=>n.node.id===f.box.id),gap=need.high-1800;
  for(const c of f.haulers)haulTarget(c);
- const promised=f.haulers.reduce((n,c)=>n+(c.memory.haulDelivery?.amount||0),0);
+ const promised=f.haulers.reduce((n,c)=>n+(c.memory.haul?.task?.amount||0),0);
  assert(promised<=gap,'carriers subtract other live commitments before reserving the same deficit');
- const selected=f.haulers.filter(c=>c.memory.haulDelivery);assert(selected.length<f.haulers.length,'the final small gap cannot attract every truck');
- const first=selected[0],amount=first.memory.haulDelivery.amount;delete ctx.Game.creeps[first.name];
- const waiting=f.haulers.find(c=>!c.memory.haulDelivery);assert.equal(haulTarget(waiting),f.box,'a dead carrier releases its amount without stale room-level reservations');
- assert(waiting.memory.haulDelivery.amount<=amount+50);
- waiting.memory.haulDelivery.expires=ctx.Game.time;const old=waiting.memory.haulDelivery;haulTarget(waiting);
- assert.notEqual(waiting.memory.haulDelivery,old,'expired commitments are released and may be reassigned');
+ const selected=f.haulers.filter(c=>c.memory.haul.task);assert(selected.length<f.haulers.length,'the final small gap cannot attract every truck');
+ const first=selected[0],amount=first.memory.haul.task.amount;delete ctx.Game.creeps[first.name];
+ const waiting=f.haulers.find(c=>!c.memory.haul.task);assert.equal(haulTarget(waiting),f.box,'a dead carrier releases its amount without stale room-level reservations');
+ assert(waiting.memory.haul.task.amount<=amount+50);
+ waiting.memory.haul.task.expires=ctx.Game.time;const old=waiting.memory.haul.task;haulTarget(waiting);
+ assert.notEqual(waiting.memory.haul.task,old,'expired commitments are released and may be reassigned');
  f.room.objects=f.room.objects.filter(s=>s.id!==f.box.id);assert.equal(haulTarget(waiting),null,'destroyed destination cannot retain a delivery commitment');
 }
 {
@@ -681,12 +682,12 @@ function stationFixture(){
  first.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};haul(first);
  assert.equal(sent,80,'transfer is capped to the promised deficit, not the full cargo');
  assert.equal(haulTarget(second),null,'a successful pending transfer stays reserved until the next Store snapshot');
- ctx.Game.time++;spawn.store[C.RESOURCE_ENERGY]=300;assert.equal(haulTarget(second),null);assert.equal(haulTarget(first),null);assert.equal(first.memory.haulDelivery,undefined);
+ ctx.Game.time++;spawn.store[C.RESOURCE_ENERGY]=300;assert.equal(haulTarget(second),null);assert.equal(haulTarget(first),null);assert.equal(first.memory.haul.task,null);
  spawn.store[C.RESOURCE_ENERGY]=0;first.store[C.RESOURCE_ENERGY]=0;first.memory.loaded=false;
  const source=f.source('source',25,25),box=f.structure(C.STRUCTURE_CONTAINER,'source-box',24,25,500);
  first.withdraw=()=>C.ERR_NOT_IN_RANGE;haul(first);
- assert.equal(first.memory.haulDelivery.phase,'pickup');assert.equal(first.memory.haulDelivery.source,box.id,'an empty delivery reserves a destination and records its fixed source during pickup');
- const reserved=first.memory.haulDelivery.amount;assert.equal(haulTarget(second),spawn);assert(first.memory.haulDelivery.amount+second.memory.haulDelivery.amount<=300);
+ assert.equal(first.memory.haul.state,'pickup');assert.equal(first.memory.haul.task.source,box.id,'an empty delivery reserves a destination and records its fixed source during pickup');
+ const reserved=first.memory.haul.task.amount;assert.equal(haulTarget(second),spawn);assert(first.memory.haul.task.amount+second.memory.haul.task.amount<=300);
 }
 {
  const f=stationFixture();for(const c of f.ups)work(c);
@@ -715,16 +716,16 @@ console.log('PASS: actual-terrain four fixed seats and open delivery/access road
  ctx.Memory.frontier.rooms[f.room.name]={plan:{structures:[{type:'link',x:21,y:26,tag:'hub-link'},{type:'link',x:16,y:40,tag:'source-link-far-source'},{type:'link',x:16,y:24,tag:'controller-link'}]}};
  const sent=[];for(const node of [hub,source])node.transferEnergy=(target,amount)=>{sent.push([node.id,target.id,amount]);return C.OK;};
  f.room.controller.level=5;links(f.room);assert.deepEqual(sent,[['source-link','hub',700]],'RCL5 source link can operate before a controller link exists');
- source.cooldown=1;sent.length=0;links(f.room);assert.equal(sent.length,0,'cooling links do not claim delivery capacity');source.cooldown=0;
- const controller=f.structure(C.STRUCTURE_LINK,'controller-link',16,24,0,800);f.room.controller.level=6;
+ ctx.Game.time++;source.cooldown=1;sent.length=0;links(f.room);assert.equal(sent.length,0,'cooling links do not claim delivery capacity');source.cooldown=0;
+ ctx.Game.time++;const controller=f.structure(C.STRUCTURE_LINK,'controller-link',16,24,0,800);f.room.controller.level=6;
  sent.length=0;links(f.room);assert.deepEqual(sent,[['source-link','controller-link',700]],'source input prefers the controller when present');
- controller.store[C.RESOURCE_ENERGY]=800;sent.length=0;links(f.room);assert.deepEqual(sent,[['source-link','hub',700]],'full controller redirects source input to hub');
- source.store[C.RESOURCE_ENERGY]=0;hub.store[C.RESOURCE_ENERGY]=500;controller.store[C.RESOURCE_ENERGY]=100;sent.length=0;links(f.room);
+ ctx.Game.time++;controller.store[C.RESOURCE_ENERGY]=800;sent.length=0;links(f.room);assert.deepEqual(sent,[['source-link','hub',700]],'full controller redirects source input to hub');
+ ctx.Game.time++;source.store[C.RESOURCE_ENERGY]=0;hub.store[C.RESOURCE_ENERGY]=500;controller.store[C.RESOURCE_ENERGY]=100;sent.length=0;links(f.room);
  assert.deepEqual(sent,[['hub','controller-link',500]],'hub can forward initial stock to the controller');
- controller.store[C.RESOURCE_ENERGY]=800;
+ ctx.Game.time++;controller.store[C.RESOURCE_ENERGY]=800;
  const spawn=f.structure(C.STRUCTURE_SPAWN,'spawn',21,28,0,300),carrier=f.creep('hub-courier','hauler',22,27,0,100,[C.CARRY,C.MOVE]);
  haul(carrier);assert.deepEqual(carrier.actions.at(-1),['withdraw',hub.id],'haulers drain received hub stock for spawn/core delivery');
- carrier.store[C.RESOURCE_ENERGY]=100;carrier.memory.loaded=true;spawn.store[C.RESOURCE_ENERGY]=300;
+ ctx.Game.time++;carrier.store[C.RESOURCE_ENERGY]=100;spawn.store[C.RESOURCE_ENERGY]=300;
  const storage=f.structure(C.STRUCTURE_STORAGE,'storage',19,28,0,1000000);assert.equal(haulTarget(carrier),storage,'received hub stock can also move into storage');
  hub.store[C.RESOURCE_ENERGY]=0;delete carrier.memory.withdrawnFrom;spawn.store[C.RESOURCE_ENERGY]=300;storage.store[C.RESOURCE_ENERGY]=1000000;
  assert.notEqual(haulTarget(carrier),hub,'haulers never refill the hub receiver');
@@ -787,7 +788,7 @@ for(const planFile of ['fixtures/layout-plan-before.json','fixtures/layout-plan-
  const saved=ctx.Memory.frontier.rooms[f.room.name].upgradeStation;
  ctx.Game.time++;controllerStation(f.room);assert.equal(ctx.Memory.frontier.rooms[f.room.name].upgradeStation,saved,'valid full-plan seats use the existing bounded cache');
  f.box.store[C.RESOURCE_ENERGY]=10;const courier=f.haulers.find(c=>c.memory.loaded);assert.equal(haulTarget(courier),f.box,'low controller box becomes a fixed supply request under full '+planFile);
- assert(ctx.Memory.frontier.rooms[f.room.name].controllerSupply.active);assert(courier.memory.haulDelivery.amount>0);
+ assert(ctx.Memory.frontier.rooms[f.room.name].controllerSupply.active);assert(courier.memory.haul.task.amount>0);
 }
 console.log('PASS: strict and official RoomPosition overloads, local coordinate normalization, cross-room Infinity, full old/reviewed plans each produce four cached seats plus physical container capacity demand');
 // Shared development budget: tests exercise actual role actions and both
@@ -846,7 +847,7 @@ for(const unavailable of ['travel','empty','spawning','yielding']){
  const f=sharingFixture([4,4,4,4],[3,3]);f.room.sites[0].progress=f.room.sites[0].progressTotal-1;
  const use=f.cycle();assert.equal(use.build,1,'all builders together can consume only the remaining site energy');
  assert(use.upgrade>=12,'the almost-complete site cannot hoard a full construction allowance');
- assert.equal(use.upgrade,16,'finishing construction does not suppress an independent upgrade intent');
+ assert.equal(use.upgrade,19,'the builder without remaining site work also upgrades while the four upgraders continue');
 }
 {
  const f=sharingFixture([4,4,4,4],[3]);Object.assign(f.control,{target:2,buildEnergyTarget:14,developmentBudget:16});
@@ -973,9 +974,9 @@ function unloadFixture(){
  for(const c of f.haulers)delete ctx.Game.creeps[c.name];
  f.box.store[C.RESOURCE_ENERGY]=27;
  f.courier=(name,x=17,y=25)=>{
-  const c=f.creep(name,'hauler',x,y,100,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);c.memory.loaded=true;
+  const c=f.creep(name,'hauler',x,y,100,100,[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);c.memory.haul.state='deliver';
   c.transfer=function(t,res,amount){const result=range(this,t)<=1?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['transfer',t.id,amount,result]);return result;};
-  c.memory.haulDelivery={id:f.box.id,room:f.room.name,amount:100,priority:2,phase:'deliver',expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
+  c.memory.haul.task={id:f.box.id,room:f.room.name,amount:100,priority:2,phase:'deliver',expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
   return c;
  };
  return f;
@@ -983,7 +984,7 @@ function unloadFixture(){
 {
  const f=unloadFixture(),blocker=f.creep('port-blocker','upgrader',17,24,50,50),c=f.courier('detour');
  assert.equal(deliverHaul(c,f.box),true);
- const port=c.memory.haulDelivery.port;assert.deepEqual([port.x,port.y],[16,24],'real reviewed terrain retains an open safe alternate unload tile');
+ const port=c.memory.haul.task.port;assert.deepEqual([port.x,port.y],[16,24],'real reviewed terrain retains an open safe alternate unload tile');
  assert(c.pos.findPathTo(f.pos(port.x,port.y),{range:0,ignoreCreeps:false}).length>0,'alternate is reachable around all four occupied worker seats');
  assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id],'one occupied preferred port cannot blacklist the node');
  assert(!f.station.seats.some(p=>range(p,port)===0));
@@ -991,60 +992,60 @@ function unloadFixture(){
  assert(!plan.structures.some(p=>C.OBSTACLE_OBJECT_TYPES.includes(p.type)&&range(p,port)===0),'future obstacle tiles are excluded even before construction');
  c.pos=f.pos(port.x,port.y);ctx.Game.time++;c.actions.length=0;assert(deliverHaul(c,f.box));
  assert.deepEqual(c.actions[0],['transfer',f.box.id,100,C.OK],'alternate adjacent position delivers the reserved100 energy');
- assert.equal(c.memory.haulDelivery.amount,100,'accepted transfer retains its amount reservation until the next snapshot');
- assert.equal(c.memory.haulDelivery.sent,ctx.Game.time);assert.equal(c.memory.haulDelivery.port,undefined,'successful transfer releases its endpoint claim immediately');
+ assert.equal(c.memory.haul.task.amount,100,'accepted transfer retains its amount reservation until the next snapshot');
+ assert.equal(c.memory.haul.task.intent.at,ctx.Game.time);assert.equal(c.memory.haul.task.port,undefined,'successful transfer releases its endpoint claim immediately');
  assert(c.actions.some(a=>a[0]==='move'),'courier leaves an alternate unload endpoint after transfer');
  assert.equal(haulTarget(c),f.box,'same-tick transfer amount remains reserved');
  ctx.Game.time++;c.store[C.RESOURCE_ENERGY]=0;f.box.store[C.RESOURCE_ENERGY]=2000;
- assert.equal(haulTarget(c),null);assert.equal(c.memory.haulDelivery,undefined,'completed task releases all port and amount state');
+ assert.equal(haulTarget(c),null);assert.equal(c.memory.haul.task,null,'completed task releases all port and amount state');
 }
 {
  const f=unloadFixture(),a=f.courier('first',17,25),b=f.courier('second',18,25);
- deliverHaul(a,f.box);const first=a.memory.haulDelivery.port;assert.deepEqual([first.x,first.y],[17,24],'a free reachable preferred port remains preferred');
- deliverHaul(b,f.box);const second=b.memory.haulDelivery.port;
+ deliverHaul(a,f.box);const first=a.memory.haul.task.port;assert.deepEqual([first.x,first.y],[17,24],'a free reachable preferred port remains preferred');
+ deliverHaul(b,f.box);const second=b.memory.haul.task.port;
  assert(second&&range(first,second)>0,'two valid delivery tasks cannot reserve the same unloading tile');
  assert.deepEqual([second.x,second.y],[16,24]);
- const stable=JSON.stringify(first);ctx.Game.time++;deliverHaul(a,f.box);assert.equal(JSON.stringify(a.memory.haulDelivery.port),stable,'a valid trip reuses its endpoint');
+ const stable=JSON.stringify(first);ctx.Game.time++;deliverHaul(a,f.box);assert.equal(JSON.stringify(a.memory.haul.task.port),stable,'a valid trip reuses its endpoint');
  // Keep position fixed: after four actual non-fatigued stalled ticks, release
  // just this endpoint and take the other one once its owner has disappeared.
  delete ctx.Game.creeps[b.name];ctx.Game.time+=4;deliverHaul(a,f.box);
- assert.deepEqual([a.memory.haulDelivery.port.x,a.memory.haulDelivery.port.y],[16,24]);
+ assert.deepEqual([a.memory.haul.task.port.x,a.memory.haul.task.port.y],[16,24]);
  assert(!a.memory.haulBlocked||!a.memory.haulBlocked[f.box.id],'stalled endpoint rotates within its live node');
 }
 for(const release of ['death','expiry','completion','other-room']){
  const f=unloadFixture(),holder=f.courier('holder',17,25),c=f.courier('waiting',18,25);
- deliverHaul(holder,f.box);const preferred={...holder.memory.haulDelivery.port};
+ deliverHaul(holder,f.box);const preferred={...holder.memory.haul.task.port};
  if(release==='death')delete ctx.Game.creeps[holder.name];
- if(release==='expiry')holder.memory.haulDelivery.expires=ctx.Game.time;
- if(release==='completion')holder.memory.haulDelivery.sent=ctx.Game.time;
+ if(release==='expiry')holder.memory.haul.task.expires=ctx.Game.time;
+ if(release==='completion')holder.memory.haul.task.intent={kind:'deliver',at:ctx.Game.time,amount:100};
  if(release==='other-room'){
-  holder.room={name:'W22N26'};holder.pos=f.pos(17,25,'W22N26');holder.memory.haulDelivery.room='W22N26';
+  holder.room={name:'W22N26'};holder.pos=f.pos(17,25,'W22N26');holder.memory.haul.task.room='W22N26';
   // The fixture's room.find is deliberately strict about physical residency.
   const find=f.room.find;f.room.find=function(type,opt){const result=find.call(this,type,opt);return type===C.FIND_MY_CREEPS?result.filter(o=>o.room.name===this.name):result;};
  }
- deliverHaul(c,f.box);assert.deepEqual([c.memory.haulDelivery.port.x,c.memory.haulDelivery.port.y],[preferred.x,preferred.y],release+' cannot retain a local endpoint reservation');
+ deliverHaul(c,f.box);assert.deepEqual([c.memory.haul.task.port.x,c.memory.haul.task.port.y],[preferred.x,preferred.y],release+' cannot retain a local endpoint reservation');
 }
 {
  const f=unloadFixture(),c=f.courier('isolated');let searches=0;
  c.pos.findPathTo=()=>{searches++;return[];};
  assert.equal(deliverHaul(c,f.box),false,'fully unreachable exact endpoints cause bounded backoff');
  assert(searches>0&&searches<=9,'one delivery attempt bounds exact path searches to neighboring candidates');
- assert.equal(c.memory.haulDelivery,undefined);assert.equal(c.memory.haulBlocked[f.box.id],ctx.Game.time+15);
+ assert.equal(c.memory.haul.task,null);assert.equal(c.memory.haulBlocked[f.box.id],ctx.Game.time+15);
  assert.notEqual(haulTarget(c),f.box,'unreachable node cannot be selected during its cooldown');
  ctx.Game.time+=15;assert.equal(haulTarget(c),f.box,'the node is eligible again after bounded cooldown');
 }
 {
  const f=unloadFixture(),c=f.courier('fatigued');deliverHaul(c,f.box);
- const port=JSON.stringify(c.memory.haulDelivery.port),moveCount=c.actions.filter(a=>a[0]==='move').length;
+ const port=JSON.stringify(c.memory.haul.task.port),moveCount=c.actions.filter(a=>a[0]==='move').length;
  c.fatigue=10;for(let i=0;i<8;i++){ctx.Game.time++;assert(deliverHaul(c,f.box));}
- assert.equal(JSON.stringify(c.memory.haulDelivery.port),port);assert.equal(c.actions.filter(a=>a[0]==='move').length,moveCount,'fatigue neither burns endpoint retries nor issues phantom movement');
+ assert.equal(JSON.stringify(c.memory.haul.task.port),port);assert.equal(c.actions.filter(a=>a[0]==='move').length,moveCount,'fatigue neither burns endpoint retries nor issues phantom movement');
  assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id]);c.fatigue=0;ctx.Game.time++;deliverHaul(c,f.box);
- assert.equal(JSON.stringify(c.memory.haulDelivery.port),port,'recovering from fatigue receives a fresh progress window');
+ assert.equal(JSON.stringify(c.memory.haul.task.port),port,'recovering from fatigue receives a fresh progress window');
 }
 {
  const f=unloadFixture(),c=f.courier('one-bad-path');const move=c.moveTo;
  c.moveTo=function(p,opts){if(p.x===17&&p.y===24)return C.ERR_NO_PATH;return move.call(this,p,opts);};
- assert(deliverHaul(c,f.box));assert.deepEqual([c.memory.haulDelivery.port.x,c.memory.haulDelivery.port.y],[16,24],'explicit no-path for preferred endpoint retries a same-node alternative immediately');
+ assert(deliverHaul(c,f.box));assert.deepEqual([c.memory.haul.task.port.x,c.memory.haul.task.port.y],[16,24],'explicit no-path for preferred endpoint retries a same-node alternative immediately');
  assert(!c.memory.haulBlocked||!c.memory.haulBlocked[f.box.id]);
 }
 console.log('PASS: real-terrain alternate unloading, exact endpoint reachability, fixed seats/future obstacles, preferred-port fallback, unique room-scoped port leases, same-node stall recovery, successful transfer/exit, death/expiry/completion release and bounded unreachable/fatigue handling');
@@ -1053,16 +1054,16 @@ function cargoLeaseFixture(){
  const f=unloadFixture();f.box.store[C.RESOURCE_ENERGY]=1469;
  Object.assign(f.control,{target:14,developmentBudget:14,routes:[{roundTrip:40}]});
  f.truck=(name,x,y,held,capacity,amount,phase='deliver')=>{
-  const c=f.creep(name,'hauler',x,y,held,capacity,[...Array(capacity/50).fill(C.CARRY),...Array(capacity/50).fill(C.MOVE)]);c.memory.loaded=phase==='deliver'&&held>0;
+  const c=f.creep(name,'hauler',x,y,held,capacity,[...Array(capacity/50).fill(C.CARRY),...Array(capacity/50).fill(C.MOVE)]);c.memory.haul.state=phase;
   c.transfer=function(t,res,n){const result=range(this,t)<=1?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['transfer',t.id,n,result]);return result;};
-  if(amount)c.memory.haulDelivery={id:f.box.id,room:f.room.name,amount,priority:4,phase,expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
+  if(amount)c.memory.haul.task={id:f.box.id,source:y>30?'6ab5b0256dd2ba3e901a74ec':'6ab589f9bb1b523b9796e6d4',room:f.room.name,amount,priority:4,expires:ctx.Game.time+200,position:x+','+y,progress:ctx.Game.time};
   return c;
  };
- f.large=f.truck('large',23,27,250,250,231);f.large.memory.haulDelivery.port={x:17,y:24};
- f.far=f.truck('far',16,40,100,100,100);f.far.memory.haulDelivery.port={x:16,y:24};
+ f.large=f.truck('large',23,27,250,250,231);f.large.memory.haul.task.port={x:17,y:24};
+ f.far=f.truck('far',16,40,100,100,100);f.far.memory.haul.task.port={x:16,y:24};
  f.emptyA=f.truck('empty-a',24,26,0,100,100,'pickup');f.emptyB=f.truck('empty-b',16,32,0,100,100,'pickup');
  f.near=f.truck('near',20,27,200,200,0);
- f.promised=()=>Object.values(ctx.Game.creeps).reduce((n,c)=>n+(c.memory.haulDelivery?.id===f.box.id?c.memory.haulDelivery.amount:0),0);
+ f.promised=()=>Object.values(ctx.Game.creeps).reduce((n,c)=>n+(c.memory.haul?.task?.id===f.box.id?c.memory.haul.task.amount:0),0);
  const request=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(request.high,2000);assert.equal(f.promised(),531);
  return f;
 }
@@ -1070,64 +1071,64 @@ for(const order of ['empty-first','loaded-first']){
  const f=cargoLeaseFixture();
  if(order==='empty-first'){haulTarget(f.emptyA);haulTarget(f.emptyB);}
  assert.equal(haulTarget(f.near),f.box,order+' ready nearby cargo can reclaim unfunded pickup promises');
- assert.equal(f.near.memory.haulDelivery.amount,200);assert.equal(f.promised(),531,'reclamation is atomic and never overbooks the531-energy gap');
- assert.equal(f.large.memory.haulDelivery.amount,231);assert.equal(f.far.memory.haulDelivery.amount,100,'existing real cargo keeps its delivery amount');
- assert.equal(f.emptyA.memory.haulDelivery,undefined);assert.equal(f.emptyB.memory.haulDelivery,undefined);
+ assert.equal(f.near.memory.haul.task.amount,200);assert.equal(f.promised(),531,'reclamation is atomic and never overbooks the531-energy gap');
+ assert.equal(f.large.memory.haul.task.amount,231);assert.equal(f.far.memory.haul.task.amount,100,'existing real cargo keeps its delivery amount');
+ assert.equal(f.emptyA.memory.haul.task,null);assert.equal(f.emptyB.memory.haul.task,null);
  assert.equal(haulTarget(f.emptyA),null);assert.equal(haulTarget(f.emptyB),null,'later empty turns cannot steal real cargo leases back');
- assert(deliverHaul(f.near,f.box));assert.deepEqual([f.near.memory.haulDelivery.port.x,f.near.memory.haulDelivery.port.y],[17,24],'distant routing hints do not lock both unloading endpoints');
+ assert(deliverHaul(f.near,f.box));assert.deepEqual([f.near.memory.haul.task.port.x,f.near.memory.haul.task.port.y],[17,24],'distant routing hints do not lock both unloading endpoints');
  assert(!f.near.memory.haulBlocked||!f.near.memory.haulBlocked[f.box.id]);
  f.far.pos=f.pos(18,25);ctx.Game.time++;deliverHaul(f.far,f.box);
- assert.notDeepEqual([f.far.memory.haulDelivery.port.x,f.far.memory.haulDelivery.port.y],[17,24],'approaching far truck rechecks the near truck endpoint instead of driving into its claim');
+ assert.notDeepEqual([f.far.memory.haul.task.port.x,f.far.memory.haul.task.port.y],[17,24],'approaching far truck rechecks the near truck endpoint instead of driving into its claim');
 }
 {
  const f=cargoLeaseFixture();f.emptyA.store[C.RESOURCE_ENERGY]=40;
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,160,'only the160 uncarried energy can be reclaimed');
- assert.equal(f.emptyA.memory.haulDelivery.amount,40,'partly loaded pickup retains all actual cargo even when loaded=false');
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,160,'only the160 uncarried energy can be reclaimed');
+ assert.equal(f.emptyA.memory.haul.task.amount,40,'partly loaded pickup retains all actual cargo even when loaded=false');
  assert.equal(f.promised(),531);
 }
 {
- const f=cargoLeaseFixture();delete f.emptyA.memory.haulDelivery;f.emptyA.store[C.RESOURCE_ENERGY]=40;
- assert.equal(haulTarget(f.emptyA),f.box);assert.equal(f.emptyA.memory.haulDelivery.phase,'pickup','partial non-ready cargo creates a pickup task rather than falsely firm whole-capacity delivery');
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,160);assert.equal(f.emptyA.memory.haulDelivery.amount,40);
+ const f=cargoLeaseFixture();delete f.emptyA.memory.haul.task;f.emptyA.store[C.RESOURCE_ENERGY]=40;
+ assert.equal(haulTarget(f.emptyA),f.box);assert.equal(f.emptyA.memory.haul.state,'deliver','partial cargo starts delivery without a mandatory full-load refill');
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,160);assert.equal(f.emptyA.memory.haul.task.amount,40);
  assert.equal(f.promised(),531);
 }
 {
- const f=cargoLeaseFixture();f.emptyA.store[C.RESOURCE_ENERGY]=100;f.emptyA.memory.haulDelivery.sent=ctx.Game.time;
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,100,'an accepted same-tick transfer is never reclaimed');
- assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.promised(),531);
+ const f=cargoLeaseFixture();f.emptyA.store[C.RESOURCE_ENERGY]=100;f.emptyA.memory.haul.task.intent={kind:'deliver',at:ctx.Game.time,amount:100};game.test.commitEnergy(f.emptyA,f.box,100);
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,100,'an accepted same-tick transfer is never reclaimed');
+ assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.promised(),531);
 }
 for(const action of ['withdraw','pickup']){
  const f=cargoLeaseFixture();
  f.emptyA.pos=f.pos(25,26);
- if(action==='pickup')f.room.objects.push({id:'protected-drop',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)});
+ if(action==='pickup'){f.room.objects.push({id:'protected-drop',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)});f.emptyA.memory.haul.task.source='protected-drop';}
  collectHaul(f.emptyA);
  assert(f.emptyA.actions.some(a=>a[0]===action),'scenario executes the real collection branch');
- assert.equal(f.emptyA.memory.haulDelivery.pickupTick,ctx.Game.time);assert.equal(f.emptyA.memory.haulDelivery.pickupAmount,100);
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,100,'accepted '+action+' intent remains firm before Store updates');
- assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.promised(),531);
+ assert.equal(f.emptyA.memory.haul.task.intent.at,ctx.Game.time);assert.equal(f.emptyA.memory.haul.task.intent.amount,100);
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,100,'accepted '+action+' intent remains firm before Store updates');
+ assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.promised(),531);
  ctx.Game.time++;f.emptyA.store[C.RESOURCE_ENERGY]=100;haulTarget(f.emptyA);
- assert.equal(f.emptyA.memory.haulDelivery.pickupTick,undefined,'one-tick intent protection is discarded after the real Store snapshot');
- assert.equal(f.emptyA.memory.haulDelivery.phase,'deliver');
+ assert.equal(f.emptyA.memory.haul.task.intent,undefined,'one-tick intent protection is discarded after the real Store snapshot');
+ assert.equal(f.emptyA.memory.haul.state,'deliver');
 }
 {
  const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=1869;
- delete f.large.memory.haulDelivery;delete f.far.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
+ delete ctx.Game.creeps[f.large.name];delete ctx.Game.creeps[f.far.name];delete ctx.Game.creeps[f.emptyB.name];
  // Exactly31 unreserved +100 soft energy: the first loaded truck takes131.
  const second=f.truck('second-near',21,27,200,200,0);
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,131);assert.equal(haulTarget(second),null);
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,131);assert.equal(haulTarget(second),null);
  assert.equal(f.promised(),131,'second loaded caller cannot revoke the first loaded caller in the same tick');
  const spawn=f.room.find(C.FIND_MY_SPAWNS)[0];spawn.store[C.RESOURCE_ENERGY]=0;
  assert.equal(haulTarget(f.near),spawn,'spawn emergency still preempts normal controller replenishment');
 }
 {
  const f=unloadFixture(),first=f.courier('at-first',17,25),second=f.courier('at-second',16,25),waiting=f.courier('waiting-near',18,25);
- deliverHaul(first,f.box);deliverHaul(second,f.box);assert(first.memory.haulDelivery.port&&second.memory.haulDelivery.port);
- assert(deliverHaul(waiting,f.box));assert(waiting.memory.haulDelivery,'short near-port contention retains the delivery amount');
+ deliverHaul(first,f.box);deliverHaul(second,f.box);assert(first.memory.haul.task.port&&second.memory.haul.task.port);
+ assert(deliverHaul(waiting,f.box));assert(waiting.memory.haul.task,'short near-port contention retains the delivery amount');
  assert(!waiting.memory.haulBlocked||!waiting.memory.haulBlocked[f.box.id],'temporary near-port leases do not immediately blacklist the node');
- delete ctx.Game.creeps[first.name];ctx.Game.time++;assert(deliverHaul(waiting,f.box));assert(waiting.memory.haulDelivery.port,'a released near port is taken on the next attempt');
+ delete ctx.Game.creeps[first.name];ctx.Game.time++;assert(deliverHaul(waiting,f.box));assert(waiting.memory.haul.task.port,'a released near port is taken on the next attempt');
  const f2=unloadFixture(),blockA=f2.creep('a','upgrader',17,24),blockB=f2.creep('b','upgrader',16,24),c=f2.courier('bounded-wait');
  assert(deliverHaul(c,f2.box));ctx.Game.time+=8;assert.equal(deliverHaul(c,f2.box),false,'persistent contention has a finite wait');
- assert.equal(c.memory.haulDelivery,undefined);assert.equal(c.memory.haulBlocked[f2.box.id],ctx.Game.time+15);
+ assert.equal(c.memory.haul.task,null);assert.equal(c.memory.haulBlocked[f2.box.id],ctx.Game.time+15);
 }
 console.log('PASS: physical531-energy gap lease conservation, loaded-first/empty-first conservation, partial cargo/new-task phase, accepted transfer/withdraw/pickup protection, two-loaded race, emergency priority, distant port hints and bounded near-port contention');
 
@@ -1137,33 +1138,33 @@ console.log('PASS: physical531-energy gap lease conservation, loaded-first/empty
  const worker=f.creep('whole-batch-worker','builder',25,31,0,100);worker.memory.workSupply={id:box.id,job:'whole-batch-job',room:f.room.name};
  const first=f.creep('whole-batch-first','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]),second=f.creep('whole-batch-second','hauler',23,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
  first.memory.loaded=second.memory.loaded=true;
- first.memory.haulDelivery={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:3,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ first.memory.haul.task={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:3,expires:ctx.Game.time+200,progress:ctx.Game.time};
  let sent;first.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
  assert(deliverHaul(first,box));assert.equal(sent,100,'100 cargo with75 scheduling lease unloads all100 into a2000-capacity container');
- assert.equal(first.memory.haulDelivery.amount,100,'pending amount records the real100 transfer, not the old75 lease');
- assert.equal(first.memory.haulDelivery.sent,ctx.Game.time);assert.equal(haulTarget(second),null,'same-tick real100 transfer reserves the entire worker buffer deficit');
+ assert.equal(first.memory.haul.task.amount,100,'pending amount records the real100 transfer, not the old75 lease');
+ assert.equal(first.memory.haul.task.intent.at,ctx.Game.time);assert.equal(haulTarget(second),null,'same-tick real100 transfer reserves the entire worker buffer deficit');
  ctx.Game.time++;first.store[C.RESOURCE_ENERGY]=0;box.store[C.RESOURCE_ENERGY]=100;
  assert.equal(haulTarget(second),null,'next snapshot confirms the filled demand without fabricating another trip');
 }
 {
  const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'almost-full-box',25,30,1960,2000),c=f.creep('physical-limit','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
- c.memory.haulDelivery={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:4,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ c.memory.haul.task={id:box.id,room:f.room.name,amount:75,phase:'deliver',priority:4,expires:ctx.Game.time+200,progress:ctx.Game.time};
  let sent;c.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
- assert(deliverHaul(c,box));assert.equal(sent,40,'only physical remaining container capacity may leave cargo aboard');assert.equal(c.memory.haulDelivery.amount,40);
+ assert(deliverHaul(c,box));assert.equal(sent,40,'only physical remaining container capacity may leave cargo aboard');assert.equal(c.memory.haul.task.amount,40);
 }
 {
  const f=fixture(),spawn=f.structure(C.STRUCTURE_SPAWN,'lease-limited-spawn',25,30,0,300),c=f.creep('spawn-courier','hauler',24,30,100,100,[C.CARRY,C.CARRY,C.MOVE]);
- c.memory.haulDelivery={id:spawn.id,room:f.room.name,amount:75,phase:'deliver',priority:0,expires:ctx.Game.time+200,progress:ctx.Game.time};
+ c.memory.haul.task={id:spawn.id,room:f.room.name,amount:75,phase:'deliver',priority:0,expires:ctx.Game.time+200,progress:ctx.Game.time};
  let sent;c.transfer=(target,resource,amount)=>{sent=amount;return C.OK;};
- assert(deliverHaul(c,spawn));assert.equal(sent,100,'spawn also unloads all cargo that physically fits');assert.equal(c.memory.haulDelivery.amount,100);
+ assert(deliverHaul(c,spawn));assert.equal(sent,100,'spawn also unloads all cargo that physically fits');assert.equal(c.memory.haul.task.amount,100);
 }
 console.log('PASS: containers unload full cargo beyond scheduling lease, respect actual remaining capacity, preserve actual same-tick transfer reservations, and use the same physical rule for spawns');
 
 {
  const f=cargoLeaseFixture();f.box.store[C.RESOURCE_ENERGY]=349;
  const need=deliveryNeeds(f.room).find(n=>n.node===f.box);assert.equal(need.high,2000,'controller container dispatches to actual capacity rather than historical880 watermark');
- assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haulDelivery.amount,200);
- assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyB.memory.haulDelivery.amount,100,'with real spare capacity, ready cargo needs no artificial reclaim');
+ assert.equal(haulTarget(f.near),f.box);assert.equal(f.near.memory.haul.task.amount,200);
+ assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.emptyB.memory.haul.task.amount,100,'with real spare capacity, ready cargo needs no artificial reclaim');
  assert.equal(f.promised(),731);assert(f.promised()<=2000-349);
  const memory=ctx.Memory.frontier.rooms[f.room.name];memory.controllerSupply.active=false;
  f.box.store[C.RESOURCE_ENERGY]=1900;

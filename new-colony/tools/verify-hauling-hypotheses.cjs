@@ -31,7 +31,7 @@ const reviewed=JSON.parse(readSource('fixtures/layout-plan-reviewed.json'));
 const world=JSON.parse(readSource('fixtures/layout-world-before.json'));
 const key=p=>p.x+','+p.y,cost=b=>b.reduce((n,p)=>n+C.BODYPART_COST[p],0);
 function fixture(){
- context.Game={time:73931363,creeps:{},rooms:{}};
+ context.Game={time:Math.max((context.Game.time||0)+1,73931363),creeps:{},rooms:{}};
  context.Memory={frontier:{rooms:{W21N26:{plan:structuredClone(reviewed)}},intel:{}}};
  const room={name:'W21N26',energyAvailable:800,energyCapacityAvailable:800,objects:[],sites:[],
   getTerrain:()=>({get:(x,y)=>Number(world.terrain[y*50+x])}),
@@ -70,7 +70,7 @@ function fixture(){
   }return null;
  }
  function creep(name,role,x,y,energy=100,capacity=100,parts=[C.CARRY,C.CARRY,C.MOVE,C.MOVE]){
-  const c={name,id:name,room,pos:pos(x,y),memory:{role,home:room.name,loaded:energy>0},store:store(energy,capacity),body:parts,
+  const c={name,id:name,room,pos:pos(x,y),memory:{role,home:room.name,...(role==='hauler'?{haul:{state:'idle',task:null}}:{loaded:energy>0})},store:store(energy,capacity),body:parts,
    ticksToLive:1000,fatigue:0,actions:[],getActiveBodyparts:p=>parts.filter(part=>part===p).length,
    transfer(t,resource,amount){const result=this.pos.getRangeTo(t)<=1?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['transfer',t.id,amount,result]);return result;},
    moveTo(t,options){this.actions.push(['move',t.x,t.y,options.range]);return C.OK;},
@@ -82,17 +82,17 @@ function fixture(){
    harvest(t){this.actions.push(['harvest',t.id]);return this.pos.getRangeTo(t)<=1?C.OK:C.ERR_NOT_IN_RANGE;},
    build(t){const result=this.pos.getRangeTo(t)<=3?C.OK:C.ERR_NOT_IN_RANGE;this.actions.push(['build',t.id,result]);return result;},
    repair(t){this.actions.push(['repair',t.id]);return this.pos.getRangeTo(t)<=3?C.OK:C.ERR_NOT_IN_RANGE;}};
-  context.Game.creeps[name]=c;return c;
+  context.Game.creeps={...context.Game.creeps,[name]:c};return c;
  }
  const box=room.objects.find(o=>o.id==='6ab59a7329a7d77d2cb18ca2');box.store.energy=27;
- function delivery(c,amount=c.store.energy){c.memory.haulDelivery={id:box.id,room:room.name,amount,priority:2,expires:context.Game.time+200,position:key(c.pos),progress:context.Game.time};}
+ function delivery(c,amount=c.store.energy){c.memory.haul={state:c.store.energy>0?'deliver':'pickup',task:{id:box.id,source:c.pos.y>30?'6ab5b0256dd2ba3e901a74ec':'6ab589f9bb1b523b9796e6d4',room:room.name,amount,priority:2,expires:context.Game.time+200,position:key(c.pos),progress:context.Game.time}};}
  return {room,pos,store,creep,box,path,occupied,delivery};
 }
 // Roles/promises are derived from public API tick73931921 evidence. Under the
 // user's new physical-capacity policy, stock1469/cap2000 keeps a tight531 gap.
 // The historical online case was stock349/cap2000/policy-high880 (see report).
 function loadedReservationFixture(options={}){
- const f=fixture();context.Game.time=73931921;f.box.store=f.store(options.stock??1469,options.capacity??2000);
+ const f=fixture();context.Game.time=Math.max(context.Game.time+1,73931921);f.box.store=f.store(options.stock??1469,options.capacity??2000);
  if(options.link){f.box.structureType=C.STRUCTURE_LINK;f.box.my=true;f.box.pos=f.pos(17,23);}
  const m=context.Memory.frontier.rooms[f.room.name];m.economyControl={at:context.Game.time,baseMode:'growth',mode:'growth',target:14,
   developmentBudget:options.rate??14,usefulTarget:14,routes:[{roundTrip:22},{roundTrip:40}]};
@@ -105,7 +105,7 @@ function loadedReservationFixture(options={}){
  const emptyA=f.creep('empty-a','hauler',24,26,0,100),emptyB=f.creep('empty-b','hauler',16,32,0,100);
  const near=f.creep('near-loaded','hauler',20,27,200,200),blocked=f.creep('blocked-loaded','hauler',17,40,100,100);
  for(const [c,amount,phase,port] of [[incumbent,231,'deliver',{x:17,y:24}],[far,100,'deliver',{x:16,y:24}],[emptyA,100,'pickup'],[emptyB,100,'pickup']]){
-  f.delivery(c,amount);Object.assign(c.memory.haulDelivery,{phase,priority:4});if(port)c.memory.haulDelivery.port=port;
+  f.delivery(c,amount);c.memory.haul.state=phase;Object.assign(c.memory.haul.task,{priority:4});if(port)c.memory.haul.task.port=port;
  }
  blocked.memory.haulBlocked={[f.box.id]:context.Game.time+6};
  const need=policy.deliveryNeeds(f.room).find(n=>n.node.id===f.box.id);if(!options.link)assert.equal(need.high,options.capacity??2000,'Container dispatch uses physical capacity');
@@ -125,7 +125,7 @@ function activeUpgradeFixture(works=[6,4,4,4],budget=15){
 }
 const report={version:policy.VERSION,checks:[],limitations:[],planning:[]},regressions=[];
 const promisedEnergy=f=>Object.values(context.Game.creeps).reduce((sum,c)=>{
- const t=c.memory.haulDelivery;return sum+(t&&t.id===f.box.id&&t.expires>context.Game.time&&t.amount>0?t.amount:0);
+ const t=c.memory.haul?.task;return sum+(t&&t.id===f.box.id&&t.expires>context.Game.time&&t.amount>0?t.amount:0);
 },0);
 {
  const f=fixture(),p=f.pos(16,21);
@@ -155,6 +155,7 @@ const promisedEnergy=f=>Object.values(context.Game.creeps).reduce((sum,c)=>{
   targetCooldown:c.memory.haulBlocked?.[f.box.id]-context.Game.time||0,
   evidence:'Actual policy intents plus terrain/occupancy BFS. Movement resolution is not simulated.'});
  for(const p of alternatives){
+  context.Game.time++; // Independent100-energy arrival snapshot for each counterfactual endpoint.
   c.pos=f.pos(p.x,p.y);c.actions=[];f.delivery(c);assert.equal(policy.deliverHaul(c,f.box),true);
   assert.equal(c.actions[0][0],'transfer');assert.equal(c.actions[0][3],C.OK);
   const truck={_id:'truck',x:p.x,y:p.y,store:{energy:100},storeCapacity:100};
@@ -167,30 +168,30 @@ const promisedEnergy=f=>Object.values(context.Game.creeps).reduce((sum,c)=>{
 {
  const f=fixture(),a=f.creep('first','hauler',17,25),b=f.creep('second','hauler',18,25);
  f.delivery(a);f.delivery(b);policy.deliverHaul(a,f.box);policy.deliverHaul(b,f.box);
- assert(a.memory.haulDelivery?.port&&b.memory.haulDelivery?.port,'two reachable endpoints produce separate spatial claims');
- assert.notEqual(key(a.memory.haulDelivery.port),key(b.memory.haulDelivery.port),'same-tick active claims must be exclusive');
- a.pos=f.pos(a.memory.haulDelivery.port.x,a.memory.haulDelivery.port.y);a.actions=[];policy.deliverHaul(a,f.box);
- assert.equal(a.memory.haulDelivery.sent,context.Game.time);assert.equal(a.memory.haulDelivery.amount,100);
- assert.equal(a.memory.haulDelivery.port,undefined,'transfer releases spatial claim while amount remains reserved until next tick');
+ assert(a.memory.haul?.task?.port&&b.memory.haul?.task?.port,'two reachable endpoints produce separate spatial claims');
+ assert.notEqual(key(a.memory.haul.task.port),key(b.memory.haul.task.port),'same-tick active claims must be exclusive');
+ a.pos=f.pos(a.memory.haul.task.port.x,a.memory.haul.task.port.y);a.actions=[];policy.deliverHaul(a,f.box);
+ assert.equal(a.memory.haul.task.intent.at,context.Game.time);assert.equal(a.memory.haul.task.amount,100);
+ assert.equal(a.memory.haul.task.port,undefined,'transfer releases spatial claim while amount remains reserved until next tick');
  report.checks.push('Same-tick couriers use distinct endpoints; delivered cargo retains amount lease but releases spatial claim.');
 }
 for(const invalidation of ['death','expiry','target-destroyed','already-sent']){
  const f=fixture(),station=policy.controllerStation(f.room),waiting=f.creep('waiting','hauler',17,25),peer=f.creep('peer','hauler',20,27);
- f.delivery(waiting);f.delivery(peer);Object.assign(peer.memory.haulDelivery,{phase:'deliver',port:{...station.port}});
+ f.delivery(waiting);f.delivery(peer);Object.assign(peer.memory.haul.task,{port:{...station.port}});
  if(invalidation==='death')delete context.Game.creeps.peer;
- if(invalidation==='expiry')peer.memory.haulDelivery.expires=context.Game.time;
- if(invalidation==='target-destroyed')peer.memory.haulDelivery.id='missing-node';
- if(invalidation==='already-sent')peer.memory.haulDelivery.sent=context.Game.time;
- policy.deliverHaul(waiting,f.box);assert.equal(key(waiting.memory.haulDelivery.port),key(station.port),invalidation+' must release preferred endpoint');
+ if(invalidation==='expiry')peer.memory.haul.task.expires=context.Game.time;
+ if(invalidation==='target-destroyed')peer.memory.haul.task.id='missing-node';
+ if(invalidation==='already-sent')peer.memory.haul.task.intent={kind:'deliver',at:context.Game.time,amount:100};
+ policy.deliverHaul(waiting,f.box);assert.equal(key(waiting.memory.haul.task.port),key(station.port),invalidation+' must release preferred endpoint');
 }
 report.checks.push('Dead, expired, destroyed-target and already-sent spatial claims do not block another courier.');
 {
  const f=fixture(),c=f.creep('fatigued','hauler',17,25);f.delivery(c);policy.deliverHaul(c,f.box);
- const saved=JSON.stringify(c.memory.haulDelivery.port),moves=c.actions.filter(a=>a[0]==='move').length;
+ const saved=JSON.stringify(c.memory.haul.task.port),moves=c.actions.filter(a=>a[0]==='move').length;
  c.fatigue=5;context.Game.time+=8;policy.deliverHaul(c,f.box);
- assert.equal(JSON.stringify(c.memory.haulDelivery.port),saved);assert.equal(c.actions.filter(a=>a[0]==='move').length,moves);
- assert(!c.memory.haulBlocked?.[f.box.id]);assert.equal(c.memory.haulDelivery.progress,context.Game.time);
- c.fatigue=0;context.Game.time++;policy.deliverHaul(c,f.box);assert(c.memory.haulDelivery);
+ assert.equal(JSON.stringify(c.memory.haul.task.port),saved);assert.equal(c.actions.filter(a=>a[0]==='move').length,moves);
+ assert(!c.memory.haulBlocked?.[f.box.id]);assert.equal(c.memory.haul.task.progress,context.Game.time);
+ c.fatigue=0;context.Game.time++;policy.deliverHaul(c,f.box);assert(c.memory.haul.task);
  report.checks.push('Fatigue retains the endpoint without movement, false failure or node cooldown; recovery receives fresh progress.');
 }
 {
@@ -198,8 +199,8 @@ report.checks.push('Dead, expired, destroyed-target and already-sent spatial cla
  f.delivery(c);peer.room={name:'W22N26'};peer.pos=new Position(20,27,'W22N26');
  const remote={id:'remote-node',structureType:C.STRUCTURE_CONTAINER,pos:new Position(16,23,'W22N26'),store:f.store(0,2000)};
  const prior=context.Game.getObjectById;context.Game.getObjectById=id=>id===remote.id?remote:prior(id);
- peer.memory.haulDelivery={id:remote.id,room:'W22N26',amount:100,phase:'deliver',expires:context.Game.time+100,port:{...station.port}};
- policy.deliverHaul(c,f.box);assert.equal(key(c.memory.haulDelivery.port),key(station.port),'a foreign-room claim must not reserve local coordinates');
+ peer.memory.haul.state='deliver';peer.memory.haul.task={id:remote.id,room:'W22N26',amount:100,expires:context.Game.time+100,port:{...station.port}};
+ policy.deliverHaul(c,f.box);assert.equal(key(c.memory.haul.task.port),key(station.port),'a foreign-room claim must not reserve local coordinates');
  report.checks.push('Spatial reservations are room scoped, even when foreign endpoints have the same x/y.');
 }
 {
@@ -208,24 +209,40 @@ report.checks.push('Dead, expired, destroyed-target and already-sent spatial cla
  const a=makeDrop('drop-a',s[0],3000),b=makeDrop('drop-b',s[1],3000);
  const c=f.creep('pickup-a','hauler',20,30,0),d=f.creep('pickup-b','hauler',21,30,0);
  assert(policy.walkable(f.room,c.pos)&&policy.walkable(f.room,d.pos));
- policy.collectHaul(c);policy.collectHaul(d);
- const selected=c.memory.haulPickup.id;
- const sameTargetForTwoPeers=d.memory.haulPickup.id===selected;
+ assert.equal(policy.collectHaul(c),false,'an idle courier cannot collect without a paired destination task');
+ policy.haulTarget(c);policy.haulTarget(d);policy.collectHaul(c);policy.collectHaul(d);
+ const selected=c.memory.haul.task.source;
+ const sameTargetForTwoPeers=d.memory.haul.task.source===selected;
+ const reserved=Object.values(context.Game.creeps).reduce((totals,peer)=>{
+  const t=peer.memory.haul?.task;if(t&&peer.memory.haul.state==='pickup')totals[t.source]=(totals[t.source]||0)+t.pickupAmount;return totals;
+ },{});
+ for(const [id,amount] of Object.entries(reserved))assert(amount<=policy.availableEnergy(context.Game.getObjectById(id)),'shared source tasks reserve no more than visible uncommitted stock');
+ const selectedStock=policy.availableEnergy(context.Game.getObjectById(selected));
  const other=selected===a.id?b:a;other.amount=99999;context.Game.time++;
- c.pos=f.pos(20,29);assert(policy.walkable(f.room,c.pos));policy.collectHaul(c);assert.equal(c.memory.haulPickup.id,selected,'valid pickup remains sticky despite other source pressure');
+ c.pos=f.pos(20,29);assert(policy.walkable(f.room,c.pos));policy.collectHaul(c);assert.equal(c.memory.haul.task.source,selected,'valid pickup remains sticky despite other source pressure');
  report.checks.push('Active pickup is sticky: global search does not mean selecting a different source every tick.');
- report.limitations.push({case:'unreserved-pickup-stock',sameTargetForTwoPeers,liveFailureConfirmed:false});
+ report.limitations.push({case:'quantity-reserved-source-sharing',sameTargetForTwoPeers,selectedStock,reserved:reserved[selected],liveFailureConfirmed:false,
+  interpretation:'Several carriers may share an abundant source while their quantities remain disjoint. Same source IDs alone do not demonstrate contention or duplicate stock promises.'});
+}
+{
+ const f=fixture();for(const node of f.room.objects)if(node.structureType===C.STRUCTURE_CONTAINER&&node!==f.box)node.store.energy=0;
+ const drop={id:'only-ten',resourceType:C.RESOURCE_ENERGY,amount:10,pos:f.pos(25,25)};f.room.objects.push(drop);
+ const peers=[f.creep('scarce-a','hauler',20,30,0),f.creep('scarce-b','hauler',21,30,0)];policy.prepare(f.room);
+ const tasks=peers.map(c=>c.memory.haul.task).filter(Boolean);
+ assert.equal(tasks.length,1,'ten visible energy cannot fund two100-capacity pickup trips');
+ assert.equal(tasks[0].source,drop.id);assert.equal(tasks[0].amount,10);assert.equal(tasks[0].pickupAmount,10,'tiny useful batches remain legal');
+ report.checks.push('With only10 visible source energy, two100-capacity carriers create exactly one10-energy task; source reservations prevent duplicate promises without a minimum batch.');
 }
 {
  const f=fixture(),c=f.creep('leased','hauler',25,26,0,200);f.delivery(c,95);assert(policy.walkable(f.room,c.pos));
  const drop={id:'spill',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)};f.room.objects.push(drop);
- c.memory.haulPickup={id:drop.id,room:f.room.name,position:key(c.pos),progress:context.Game.time};policy.collectHaul(c);
+ c.memory.haul.task.source=drop.id;policy.collectHaul(c);
  const policyAction=c.actions[0]?.[0]||null;
  const engineCreep={_id:'c',x:25,y:26,store:{energy:0},storeCapacity:200};
  const pile={_id:'spill',x:25,y:25,type:'energy',energy:200};
  pickup(engineCreep,{id:'spill'},{roomObjects:{spill:pile},bulk:{update(){},remove(){}}});assert.equal(engineCreep.store.energy,200);
  report.limitations.push({case:'pickup-exceeds-delivery-lease',lease:95,policyAction,enginePickup:200,
-  implication:'Extra 105 energy is cargo, not another guaranteed sink. Existing policy may reassign it later.'});
+  implication:'Pickup has no amount argument. The full200 accepted amount becomes a funded delivery promise where capacity permits; only the next Store snapshot establishes actual cargo.'});
 }
 {
  const rawNeed=10*22+10*40,currentCarry=17,currentCapacity=50*currentCarry;
@@ -247,24 +264,24 @@ report.checks.push('Dead, expired, destroyed-target and already-sent spatial cla
 }
 {
  const f=loadedReservationFixture(),target=policy.haulTarget(f.near),initialTarget=target?.id||null;
- const initialAmount=f.near.memory.haulDelivery?.amount||0;
+ const initialAmount=f.near.memory.haul?.task?.amount||0;
  // Counterfactual changes only the two empty carriers' future delivery promises.
- delete f.emptyA.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
- const withoutEmpty=policy.haulTarget(f.near),counterfactualAmount=f.near.memory.haulDelivery?.amount||0;
+ delete f.emptyA.memory.haul.task;delete f.emptyB.memory.haul.task;
+ const withoutEmpty=policy.haulTarget(f.near),counterfactualAmount=f.near.memory.haul?.task?.amount||0;
  assert.equal(withoutEmpty?.id,f.box.id,'the same stocked consumer and near cargo can match when empty promises are removed');
  report.limitations.push({case:'future-quantity-promises-preempt-ready-cargo',evidenceTick:73931921,fixture:'physical-capacity tight gap',boxEnergy:f.box.store.energy,high:f.high,
   priorPromises:{loaded:331,empty:200},nearCargo:200,initialTarget,initialAmount,withoutEmptyTarget:withoutEmpty?.id||null,counterfactualAmount});
  if(initialTarget!==f.box.id||initialAmount<200)regressions.push('L003: near loaded cargo must displace future empty pickup promises without exceeding the consumer high watermark.');
 }
 {
- const f=loadedReservationFixture();delete f.emptyA.memory.haulDelivery;delete f.emptyB.memory.haulDelivery;
+ const f=loadedReservationFixture();delete f.emptyA.memory.haul.task;delete f.emptyB.memory.haul.task;
  assert.equal(policy.haulTarget(f.near)?.id,f.box.id);
- const beforeTask=f.near.memory.haulDelivery,initialAccepted=policy.deliverHaul(f.near,f.box),initialMoves=f.near.actions.filter(a=>a[0]==='move');
+ const beforeTask=f.near.memory.haul.task,initialAccepted=policy.deliverHaul(f.near,f.box),initialMoves=f.near.actions.filter(a=>a[0]==='move');
  const cooldown=f.near.memory.haulBlocked?.[f.box.id]-context.Game.time||0;
  // Second counterfactual retains cargo, quantity promises and all positions;
  // remove only the far carriers' endpoint claims, then restore this task.
- delete f.incumbent.memory.haulDelivery.port;delete f.far.memory.haulDelivery.port;
- f.near.memory.haulDelivery=beforeTask;delete f.near.memory.haulBlocked;f.near.actions=[];
+ delete f.incumbent.memory.haul.task.port;delete f.far.memory.haul.task.port;
+ f.near.memory.haul.task=beforeTask;delete f.near.memory.haulBlocked;f.near.actions=[];context.Game.time++;
  const withoutRemotePorts=policy.deliverHaul(f.near,f.box),counterfactualMoves=f.near.actions.filter(a=>a[0]==='move');
  assert(withoutRemotePorts&&counterfactualMoves.length,'available exact endpoint paths exist when distant promises are removed');
  report.limitations.push({case:'distant-endpoint-promises-preempt-near-cargo',evidenceTick:73931921,initialAccepted,
@@ -273,8 +290,8 @@ report.checks.push('Dead, expired, destroyed-target and already-sent spatial cla
 }
 {
  const f=loadedReservationFixture();f.emptyA.store.energy=40;
- policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,160,'only 60+100 uncollected energy can be reclaimed');
- assert.equal(f.emptyA.memory.haulDelivery?.amount,40,'partial existing cargo keeps its exact funded amount');
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haul?.task?.amount,160,'only 60+100 uncollected energy can be reclaimed');
+ assert.equal(f.emptyA.memory.haul?.task?.amount,40,'partial existing cargo keeps its exact funded amount');
  assert.equal(promisedEnergy(f),f.high-f.box.store.energy);
  report.checks.push('Reclaim protects partial physical cargo and keeps all outstanding quantity promises within the same high watermark.');
 }
@@ -282,46 +299,46 @@ for(const action of ['withdraw','pickup']){
  const f=loadedReservationFixture(),source=f.room.objects.find(o=>o.id==='6ab589f9bb1b523b9796e6d4');
  if(action==='pickup')f.room.objects.push({id:'pending-drop',resourceType:C.RESOURCE_ENERGY,amount:200,pos:f.pos(25,25)});
  const id=action==='pickup'?'pending-drop':source.id;
- f.emptyA.memory.haulPickup={id,room:f.room.name,position:key(f.emptyA.pos),progress:context.Game.time};
+ f.emptyA.memory.haul.task.source=id;
  assert(policy.collectHaul(f.emptyA));assert.equal(f.emptyA.actions[0][0],action);assert.equal(f.emptyA.store.energy,0,'Store has not resolved the accepted intent');
- policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,100,'ready courier may reclaim only the other empty promise');
- assert.equal(f.emptyA.memory.haulDelivery?.amount,100,'same-tick accepted collection remains funded');
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haul?.task?.amount,100,'ready courier may reclaim only the other empty promise');
+ assert.equal(f.emptyA.memory.haul?.task?.amount,100,'same-tick accepted collection remains funded');
  assert(promisedEnergy(f)<=f.high-f.box.store.energy);
  // Next tick, accepted energy is visible in Store; the intent annotation must
  // not be needed to preserve cargo, or be counted for a second collection.
  context.Game.time++;f.emptyA.store.energy=100;policy.haulTarget(f.emptyA);
- assert.equal(f.emptyA.memory.haulDelivery?.amount,100);assert(promisedEnergy(f)<=f.high-f.box.store.energy);
+ assert.equal(f.emptyA.memory.haul?.task?.amount,100);assert(promisedEnergy(f)<=f.high-f.box.store.energy);
 }
 report.checks.push('Accepted withdraw and pickup are protected before Store resolves, then transition to physical cargo without double reservation.');
 {
- const f=loadedReservationFixture();f.emptyA.memory.haulDelivery.phase='deliver';f.emptyA.memory.haulDelivery.sent=context.Game.time;
- policy.haulTarget(f.near);assert.equal(f.near.memory.haulDelivery?.amount,100);
- assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyA.memory.haulDelivery.sent,context.Game.time);
+ const f=loadedReservationFixture();f.emptyA.store.energy=100;f.emptyA.memory.haul.state='deliver';f.emptyA.memory.haul.task.intent={kind:'deliver',at:context.Game.time,amount:100};policy.commitEnergy(f.emptyA,f.box,100);
+ policy.haulTarget(f.near);assert.equal(f.near.memory.haul?.task?.amount,100);
+ assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.emptyA.memory.haul.task.intent.at,context.Game.time);
  assert(promisedEnergy(f)<=f.high-f.box.store.energy);
  report.checks.push('Same-tick sent transfers remain firm and cannot be reclaimed as empty cargo.');
 }
 for(const order of [['near','emptyA','emptyB','incumbent','far'],['emptyB','emptyA','far','incumbent','near']]){
  const f=loadedReservationFixture();
  for(const name of order){policy.haulTarget(f[name]);assert(promisedEnergy(f)<=f.high-f.box.store.energy,'role order cannot overbook quantity');}
- assert.equal(f.near.memory.haulDelivery?.amount,200,'merely running empty planners first must not defeat ready cargo');
+ assert.equal(f.near.memory.haul?.task?.amount,200,'merely running empty planners first must not defeat ready cargo');
 }
 for(const order of [['near','second'],['second','near']]){
  const f=loadedReservationFixture();f.second=f.creep('second-ready','hauler',19,27,100,100);policy.allCreeps(true);
  for(const name of order){policy.haulTarget(f[name]);assert(promisedEnergy(f)<=f.high-f.box.store.energy,'multiple ready claimants reclaim atomically');}
- assert.equal((f.near.memory.haulDelivery?.amount||0)+(f.second.memory.haulDelivery?.amount||0),200);
- assert.equal(f.incumbent.memory.haulDelivery.amount,231);assert.equal(f.far.memory.haulDelivery.amount,100);
+ assert.equal((f.near.memory.haul?.task?.amount||0)+(f.second.memory.haul?.task?.amount||0),200);
+ assert.equal(f.incumbent.memory.haul.task.amount,231);assert.equal(f.far.memory.haul.task.amount,100);
 }
 report.checks.push('Both planner orders and both ready-courier orders preserve funded deliveries and never multiply the 200 reclaimable energy.');
 {
- const f=loadedReservationFixture();f.near.store.energy=0;f.near.memory.loaded=false;
- assert.equal(policy.haulTarget(f.near),null);assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyB.memory.haulDelivery.amount,100);
+ const f=loadedReservationFixture();f.near.store.energy=0;f.near.memory.haul.state='idle';
+ assert.equal(policy.haulTarget(f.near),null);assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.emptyB.memory.haul.task.amount,100);
  report.checks.push('An empty planner cannot steal another future pickup promise.');
 }
 {
  const f=fixture(),c=f.creep('waiting-near','hauler',20,27);f.delivery(c);
  f.creep('occupant-a','hauler',17,24);f.creep('occupant-b','hauler',16,24);
  assert(policy.deliverHaul(c,f.box),'temporarily occupied endpoints wait before classifying the node as failed');
- assert(c.memory.haulDelivery);assert(!c.memory.haulBlocked?.[f.box.id]);
+ assert(c.memory.haul.task);assert(!c.memory.haulBlocked?.[f.box.id]);
  delete context.Game.creeps['occupant-a'];context.Game.time++;c.actions=[];
  assert(policy.deliverHaul(c,f.box));assert(c.actions.some(a=>a[0]==='move'&&a[1]===17&&a[2]===24));
  report.checks.push('Temporary endpoint contention retains the amount task and resumes when a tile clears.');
@@ -331,21 +348,21 @@ report.checks.push('Both planner orders and both ready-courier orders preserve f
  const high=policy.deliveryNeeds(f.room).find(n=>n.node.id===f.box.id).high,gap=Math.floor(high-f.box.store.energy);
  assert(!Number.isInteger(high),'fixture deliberately exercises a fractional consumption-derived high watermark');
  policy.haulTarget(f.near);
- const amounts=Object.values(context.Game.creeps).map(c=>c.memory.haulDelivery).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
+ const amounts=Object.values(context.Game.creeps).map(c=>c.memory.haul?.task).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
  report.limitations.push({case:'fractional-high-watermark',high,integerGap:gap,amounts,total:promisedEnergy(f)});
  if(!amounts.every(n=>Number.isInteger(n)&&n>=1)||promisedEnergy(f)>gap)
   regressions.push('L003 integer boundary: fractional high watermarks must leave only positive integer tasks within floor(high-stock).');
  // Repeated callers must preserve this invariant; no residual fraction may be
  // recreated when soft promises shrink, disappear, or are requested again.
  for(const c of [f.emptyA,f.emptyB,f.far,f.incumbent,f.near])policy.haulTarget(c);
- const after=Object.values(context.Game.creeps).map(c=>c.memory.haulDelivery).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
+ const after=Object.values(context.Game.creeps).map(c=>c.memory.haul?.task).filter(t=>t&&t.id===f.box.id).map(t=>t.amount);
  if(!after.every(n=>Number.isInteger(n)&&n>=1)||promisedEnergy(f)>gap)
   regressions.push('L003 integer boundary: repeated role planning must preserve integer quantities and the floored high watermark.');
 }
 for(const previousAmount of [0.14999999999997726,60.14999999999998]){
- const f=loadedReservationFixture();f.emptyA.memory.haulDelivery.amount=previousAmount;
- const legacy=f.emptyA.memory.haulDelivery;policy.haulTarget(f.emptyA);
- const current=f.emptyA.memory.haulDelivery;
+ const f=loadedReservationFixture();f.emptyA.memory.haul.task.amount=previousAmount;
+ const legacy=f.emptyA.memory.haul.task;policy.haulTarget(f.emptyA);
+ const current=f.emptyA.memory.haul.task;
  if(current===legacy||current&&(!Number.isInteger(current.amount)||current.amount<1))
   regressions.push('L003 integer boundary: a legacy fractional delivery task must be discarded or replaced by a valid integer task.');
  report.limitations.push({case:'legacy-fractional-task',before:previousAmount,after:current?.amount??null,replaced:current!==legacy});
@@ -354,7 +371,7 @@ for(const free of [200,40]){
  const f=fixture();f.box.store.energy=2000-free;const c=f.creep('full-unload','hauler',17,24,100,100);f.delivery(c,75);
  assert(policy.deliverHaul(c,f.box));const intent=c.actions.find(a=>a[0]==='transfer'),requested=Math.min(100,free);
  assert.equal(intent[2],requested,'Container delivery ignores the smaller scheduling lease');
- assert.equal(c.memory.haulDelivery.amount,requested);assert.equal(c.memory.haulDelivery.sent,context.Game.time);
+ assert.equal(c.memory.haul.task.amount,requested);assert.equal(c.memory.haul.task.intent.at,context.Game.time);
  assert.equal(c.store.energy,100,'accepted intent must not masquerade as an already-mutated Store');
  const truck={_id:'truck',x:17,y:24,store:{energy:100},storeCapacity:100};
  const box={_id:'box',type:'container',x:16,y:23,store:{energy:2000-free},storeCapacity:2000},events=[];
@@ -367,40 +384,40 @@ report.checks.push('Container lease75/cargo100 unloads100 when space permits, or
  for(const kind of [C.STRUCTURE_SPAWN,C.STRUCTURE_EXTENSION,C.STRUCTURE_STORAGE,C.STRUCTURE_LINK,C.STRUCTURE_TOWER,'creep']){
   const f=fixture(),target=kind==='creep'?f.creep('receiving-builder','builder',16,24,0,200):f.box;
   if(kind!=='creep'){target.structureType=kind;target.my=true;target.store=f.store(0,kind===C.STRUCTURE_EXTENSION?50:200);}
-  const c=f.creep('unload-'+kind,'hauler',17,24,100,100);f.delivery(c,25);c.memory.haulDelivery.id=target.id;
+  const c=f.creep('unload-'+kind,'hauler',17,24,100,100);f.delivery(c,25);c.memory.haul.task.id=target.id;
   assert(policy.deliverHaul(c,target));const amount=c.actions.find(a=>a[0]==='transfer')[2],expected=Math.min(100,target.store.getFreeCapacity());
   observations.push({target:kind,lease:25,requested:amount,expected});
   if(amount!==expected)regressions.push('Full unloading applies to '+kind+' too; trip reservations must not truncate physically accepted cargo.');
-  assert.equal(c.memory.haulDelivery.amount,amount);assert.equal(c.memory.haulDelivery.sent,context.Game.time);
+  assert.equal(c.memory.haul.task.amount,amount);assert.equal(c.memory.haul.task.intent.at,context.Game.time);
  }
- report.limitations.push({case:'all-target-full-unload',observations});
+ report.limitations.push({case:'all-target-full-unload',observations,interpretation:'Direct action-helper capacity compatibility only; normal dispatch still excludes moving creep endpoints.'});
 }
 {
  const f=loadedReservationFixture({stock:1000});
  context.Memory.frontier.rooms[f.room.name].controllerSupply={id:f.box.id,active:false};
  const request=policy.deliveryNeeds(f.room).find(n=>n.node.id===f.box.id);assert.equal(request.high,2000);
- assert.equal(policy.haulTarget(f.near)?.id,f.box.id);assert.equal(f.near.memory.haulDelivery.amount,200);
- assert.equal(f.emptyA.memory.haulDelivery.amount,100);assert.equal(f.emptyB.memory.haulDelivery.amount,100);
+ assert.equal(policy.haulTarget(f.near)?.id,f.box.id);assert.equal(f.near.memory.haul.task.amount,200);
+ assert.equal(f.emptyA.memory.haul.task.amount,100);assert.equal(f.emptyB.memory.haul.task.amount,100);
  report.checks.push('Controller Container above the old880 watermark still requests physical capacity2000, overriding a stale inactive latch.');
 }
 {
  const f=fixture();f.box.store.energy=1850;
  const a=f.creep('simultaneous-a','hauler',17,24,100,100),b=f.creep('simultaneous-b','hauler',16,24,100,100);
  f.delivery(a,75);f.delivery(b,75);assert(policy.deliverHaul(a,f.box));
- assert.equal(a.memory.haulDelivery.amount,100,'later planners see the full accepted first intent');
- assert.equal(policy.haulTarget(b)?.id,f.box.id);assert.equal(b.memory.haulDelivery.amount,50,'dispatch subtracts the already accepted100 from remaining physical150');
+ assert.equal(a.memory.haul.task.amount,100,'later planners see the full accepted first intent');
+ assert.equal(policy.haulTarget(b)?.id,f.box.id);assert.equal(b.memory.haul.task.amount,50,'dispatch subtracts the already accepted100 from remaining physical150');
  assert(policy.deliverHaul(b,f.box));
  const intentA=a.actions.find(x=>x[0]==='transfer')[2],intentB=b.actions.find(x=>x[0]==='transfer')[2];
- assert.equal(intentA,100);assert.equal(intentB,100,'each arrival requests the full cargo allowed by its unchanged physical Store snapshot');
+ assert.equal(intentA,100);assert.equal(intentB,50,'later arrivals subtract accepted same-tick incoming before unloading all remaining physical space');
  const box={_id:'box',type:'container',x:16,y:23,store:{energy:1850},storeCapacity:2000},events=[];
  const trucks=[{_id:'a',x:17,y:24,store:{energy:100},storeCapacity:100},{_id:'b',x:16,y:24,store:{energy:100},storeCapacity:100}];
  for(const [i,truck] of trucks.entries())transfer(truck,{id:'box',resourceType:C.RESOURCE_ENERGY,amount:[intentA,intentB][i]},
   {roomObjects:{box},bulk:{update(){}},eventLog:events});
  assert.deepEqual(events.map(e=>e.data.amount),[100,50]);assert.equal(box.store.energy,2000);assert.equal(trucks[1].store.energy,50);
  context.Game.time++;f.box.store.energy=box.store.energy;a.store.energy=trucks[0].store.energy;b.store.energy=trucks[1].store.energy;
- assert.equal(policy.haulTarget(a),null);assert.equal(policy.haulTarget(b),null);assert.equal(a.memory.haulDelivery,undefined);assert.equal(b.memory.haulDelivery,undefined);
+ assert.equal(policy.haulTarget(a),null);assert.equal(policy.haulTarget(b),null);assert.equal(a.memory.haul.task,null);assert.equal(b.memory.haul.task,null);
  report.limitations.push({case:'simultaneous-container-unload',snapshotFree:150,intents:[intentA,intentB],engineReceived:[100,50],
-  nextTickTasksCleared:true,interpretation:'Both API intents can be OK. Engine capacity clips the later actual transfer; pending sent amounts are conservative claims, not measured throughput.'});
+  nextTickTasksCleared:true,interpretation:'The shared accepted-intent book schedules100 then50 without double-promising the initial150 space. Official engine events confirm actual receipt; commands alone remain unmeasured throughput.'});
 }
 {
  const f=activeUpgradeFixture(),observations=[];

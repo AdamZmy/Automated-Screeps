@@ -15,7 +15,7 @@ const readSource = name => fs.readFileSync(path.join(sourceDirectory, name), 'ut
 const localModules = new Set([
   'main', 'runtime', 'development', 'logistics', 'workforce',
   'infrastructure', 'metrics', 'planner', 'plans', 'expansion',
-  'monitor', 'ledger',
+  'monitor', 'ledger', 'colony', 'mining', 'movement', 'defense', 'links',
 ]);
 
 // Load Screeps-style modules inside one VM context. Overrides keep integration

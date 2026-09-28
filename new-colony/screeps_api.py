@@ -40,7 +40,7 @@ DEFAULT_TOKEN_FILE = Path("/Users/zmy/.config/screepsworld/auth-token")
 MODULES = (
     "main", "runtime", "development", "logistics", "workforce",
     "infrastructure", "metrics", "planner", "expansion", "monitor",
-    "ledger", "plans",
+    "ledger", "plans", "colony", "mining", "movement", "defense", "links",
 )
 DEPLOY_BRANCH = "frontier24"
 DEPLOY_USERNAME = "AdamZmy"
@@ -338,6 +338,10 @@ def status_summary(frontier, shard):
         summary = {key: room[key] for key in fields if key in room}
         summary.update({
             "economy": room.get("economy", state.get("economy", {})),
+            "policy": state.get("colonyPolicy", {}),
+            "workforce": state.get("workforce", {}),
+            "logistics": state.get("logistics", {}),
+            "security": state.get("security", {}),
             "mining": room.get("mining", []), "roads": room.get("roads", {}),
             "hauling": room.get("hauling", {}),
             "construction": room.get("constructionByType", {}),
@@ -350,6 +354,7 @@ def status_summary(frontier, shard):
             "telemetry": {key: telemetry[key] for key in ("tick", "version", "cpuEMA", "bucket", "capturedAt") if key in telemetry},
             "performance": {k: (v[-6:] if k == "history" and isinstance(v, list) else v) for k, v in (frontier.get("performance") or {}).items() if not k.startswith("_")},
             "rooms": rooms, "alerts": telemetry.get("alerts", {}),
+            "modules": frontier.get("modules", {}),
             "candidates": frontier.get("candidates", {}), "expansion": frontier.get("expansion")}
 
 

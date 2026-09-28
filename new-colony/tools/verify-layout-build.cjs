@@ -5,6 +5,7 @@
 // this verifies staging and construction reachability, not economic timing.
 const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path'), assert = require('node:assert/strict');
 const C = require('@screeps/common/lib/constants');
+const {loadGameModule}=require('../test-support/runtime.cjs');
 const root = path.resolve(__dirname, '..');
 const clone = p => JSON.parse(JSON.stringify(p));
 const id = p => `${p.type}:${p.x}:${p.y}`;
@@ -45,20 +46,19 @@ function simulateConstruction(plan, world, { existing = true, plannerFile = path
   };
   const context = { ...C, console, module: { exports: {} }, RoomPosition: Position,
     Memory: { frontier: { rooms: { [name]: { plan: clone(input) } }, intel: {} } },
-    Game: { time: 100000, rooms: { [name]: room }, constructionSites: {}, cpu: { limit: 20, bucket: 10000, getUsed: () => 0 } },
+    Game: { time: 100000, creeps:{}, rooms: { [name]: room }, constructionSites: {}, cpu: { limit: 20, bucket: 10000, getUsed: () => 0 } },
     require(request) { if (request === 'plans') return { has: () => false, load: () => clone(input), identify: () => null }; throw new Error('Unexpected module: ' + request); },
     PathFinder: { search() { throw new Error('Reviewed plan must not invoke runtime replanning'); } }
   };
   vm.createContext(context); vm.runInContext(fs.readFileSync(plannerFile, 'utf8'), context, { filename: plannerFile });
-  const scheduler = context.module.exports;
+  const scheduler = context.module.exports,development=loadGameModule(context,'development');
   for (let level = controller.level; level <= 8; level++) {
     controller.level = level;
     let ticks = 0;
     for (; ticks < 300; ticks++) {
       const previous = created.length; context.Game.time += 10;
-      scheduler.run(room);
-      assert(sites.length <= 5, 'Scheduler exceeded per-tick construction batch');
-      assert(sites.filter(s => s.structureType === C.STRUCTURE_ROAD).length <= 3, 'Scheduler exceeded road construction batch');
+      scheduler.run(room);development.runConstruction(room,scheduler.constructionRequests(room));
+      assert(sites.length<=C.MAX_CONSTRUCTION_SITES,'Physical global site limit');
       buildings.push(...sites.splice(0)); context.Game.constructionSites = {};
       if (created.length === previous) break;
     }

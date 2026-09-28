@@ -29,7 +29,7 @@
 - GitHub 工作管理的唯一规范见父目录 `OPERATIONS.md`，长期阶段见 `ROADMAP.md`。巡检读取真实 Issue/checkpoint 与实际任务状态，按 planned/ready/in-progress/verifying/blocked/done 推进；已有运行任务不重复派工，代码完成后的等待窗口保持 verifying，失去工作者的未完成任务从检查点恢复。父仓库保留所有版本，只有有验收证据才关闭 Issue。
 
 - root是唯一凭据持有、API采样、Console提交、整合和部署者。子代理默认只读root提供的脱敏state工件，注明fetchedAt和tick；不重复调用API或自行部署。
-- 代码修改按 README 的职责表定位文件：调度归 `main.js`，经济/角色动作归 `development.js`，运输归 `logistics.js`，出生归 `workforce.js`，防御/Link归 `infrastructure.js`，共享移动归 `runtime.js`，CPU归 `metrics.js`。布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
+- 代码修改按 README 的职责表定位文件：调度归 `main.js`，经济政策归 `colony.js`，矿工归 `mining.js`，施工/升级及唯一工地创建归 `development.js`，运输归 `logistics.js`，唯一本地/任务出生归 `workforce.js`，防御归 `defense.js`，Link归 `links.js`，移动归 `movement.js`，共享查询/意图预约归 `runtime.js`，CPU归 `metrics.js`。布局代理负责planner.js及布局测试；监控/战略代理分析工件并反馈证据，文档改动需明确文件所有权。监控模块改动单独指定所有者。
 - 每次启动有限、独立的小任务，约定文件归属，交付发现/测试/待验证点并释放。不要把子代理当永久运行进程；游戏代码逐tick工作，独立定时任务每1小时新开对话复查（用户2026-09-26调整）。不给子代理复制整段历史，仅传对应Issue及必要证据。
 - 跨轮当前状态写父目录CURRENT_STATE.md，工作检查点写GitHub Issue，重要历史才追加LIVE_STATUS.md，不依赖代理永久保留context。每轮另按OPERATIONS的日志步骤创建并发布独立批次，记录问题/待办/进度/动作/验证和下一步；无变化/受阻/跳过也留日志，页面为 `/logs`。先核验上轮父任务及文件负责者，避免并行重复修改或部署；新协调树没有旧代理不等于它已退出。只在重要进展、故障、干预结果或需用户处理时通知。
 

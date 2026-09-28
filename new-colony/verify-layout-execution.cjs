@@ -1,7 +1,7 @@
 'use strict';
 // Replays the real construction runner through all eight RCLs, without API.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const {constants:C}=require('./test-support/runtime.cjs');
+const {constants:C,loadGameModule}=require('./test-support/runtime.cjs');
 const {compile,geometry}=require('./tools/compile-reviewed-plan.cjs');
 const root=__dirname,read=p=>JSON.parse(fs.readFileSync(path.join(root,p),'utf8'));
 const design=read('fixtures/layout-design-reviewed.json'),plan=read('fixtures/layout-plan-reviewed.json');
@@ -16,11 +16,11 @@ const natural=new Set([...world.objects.sources,world.objects.controller,world.o
 let tick=100,requests=0;
 const placements=new Map(plan.structures.map(s=>[s.type+':'+K(s),s]));
 const buildings=[],sites=[],memory={frontier:{rooms:{[world.name]:{plan:JSON.parse(JSON.stringify(plan))}}}};
-const ctx={...C,console,module:{exports:{}},Memory:memory,Game:{time:tick,constructionSites:{},rooms:{}},
+const ctx={...C,console,module:{exports:{}},Memory:memory,Game:{time:tick,constructionSites:{},rooms:{},creeps:{}},
     require(){return {has(){return false;},load(){return JSON.parse(JSON.stringify(plan));}};},
     PathFinder:{search(){throw Error('Executing reviewed coordinates must not run pathfinding');}}};
-const room={name:world.name,controller:{my:true,level:1},storage:{store:{[C.RESOURCE_ENERGY]:100000}},
-    find(type){return type===C.FIND_STRUCTURES?buildings:type===C.FIND_MY_CONSTRUCTION_SITES?sites:[];},
+const room={name:world.name,controller:{my:true,level:1,pos:{x:world.objects.controller.x,y:world.objects.controller.y,roomName:world.name}},getTerrain(){return{get:(x,y)=>Number(world.terrain[x+50*y])};},storage:{store:{[C.RESOURCE_ENERGY]:100000}},
+    find(type){return type===C.FIND_STRUCTURES?buildings:type===C.FIND_MY_CONSTRUCTION_SITES?sites:type===C.FIND_MINERALS?[{id:'mineral',pos:{x:world.objects.mineral.x,y:world.objects.mineral.y}}]:[];},
     createConstructionSite(x,y,type){
         const k=K({x,y}),item=placements.get(type+':'+k),level=this.controller.level;
         assert(item&&item.rcl<=level,'Wrong coordinate or premature construction');
@@ -36,12 +36,12 @@ const room={name:world.name,controller:{my:true,level:1},storage:{store:{[C.RESO
     }};
 ctx.Game.rooms[world.name]=room;
 vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(root,process.argv[2]||'planner.js'),'utf8'),ctx);
+const development=loadGameModule(ctx,'development');
 for(let level=1;level<=8;level++){
     room.controller.level=level;
     for(let batch=0;batch<200;batch++){
-        ctx.Game.time=(tick+=10);const before=requests;ctx.module.exports.run(room);
-        assert(sites.length<=5,'Construction batch cap');
-        assert(sites.filter(s=>s.structureType===C.STRUCTURE_ROAD).length<=3,'Road batch cap');
+        ctx.Game.time=(tick+=10);const before=requests;ctx.module.exports.run(room);development.runConstruction(room,ctx.module.exports.constructionRequests(room));
+        assert(sites.length<=C.MAX_CONSTRUCTION_SITES,'Physical global construction site cap');
         buildings.push(...sites.splice(0));ctx.Game.constructionSites={};if(requests===before)break;
     }
     for(const item of plan.structures.filter(s=>s.rcl<=level&&s.type!==C.STRUCTURE_RAMPART))assert(buildings.some(s=>s.structureType===item.type&&K(s.pos)===K(item)),`RCL${level} omitted ${item.tag}`);

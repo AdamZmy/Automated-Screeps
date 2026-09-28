@@ -17,12 +17,12 @@ function fixture(){
   controller:{my:true,level:4,ticksToDowngrade:20000,pos:{x:20,y:20,roomName:'audit'}},
   getTerrain:()=>({get:()=>0}),lookForAt(type,x,y){return this.objects.filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
   find(type,opt){const a=type===C.FIND_SOURCES?this.objects.filter(o=>o.source):type===C.FIND_STRUCTURES||type===C.FIND_MY_STRUCTURES?this.objects.filter(o=>o.structureType):type===C.FIND_MY_SPAWNS?this.objects.filter(o=>o.structureType===C.STRUCTURE_SPAWN):type===C.FIND_MY_CONSTRUCTION_SITES?this.sites:type===C.FIND_MY_CREEPS?Object.values(ctx.Game.creeps):[];return opt&&opt.filter?a.filter(opt.filter):a;}};
- const pos=(x,y)=>({x,y,roomName:room.name,findClosestByPath:a=>a[0]||null}),store=(n,capacity)=>({energy:n,getFreeCapacity(){return capacity-this.energy;}});
+ const pos=(x,y)=>({x,y,roomName:room.name,findClosestByPath:a=>a[0]||null,findPathTo(target,options={}){target=target.pos||target;const steps=[];let at={x,y};while(Math.max(Math.abs(at.x-target.x),Math.abs(at.y-target.y))>(options.range||0)){at={x:at.x+Math.sign(target.x-at.x),y:at.y+Math.sign(target.y-at.y)};steps.push(at);}return steps;}}),store=(n,capacity)=>({energy:n,getFreeCapacity(){return capacity-this.energy;}});
  function structure(type,id,x,y,n=0,capacity=2000){const o={id,structureType:type,my:true,pos:pos(x,y),hits:1000,hitsMax:1000,store:store(n,capacity)};room.objects.push(o);return o;}
  room.storage=structure(C.STRUCTURE_STORAGE,'store',24,24,10000,100000);
  const spawn=structure(C.STRUCTURE_SPAWN,'spawn',25,25,300,300);spawn.spawnCreep=(body,name,options)=>{room.spawned={body,name,...options};return C.OK;};
  function creep(name,role,body,n=0){const actions=[],c={name,pos:pos(21,21),room,memory:{role,home:room.name,loaded:n>0},body,ticksToLive:1400,store:store(n,100),actions,getActiveBodyparts:p=>parts(body,p),build:t=>{actions.push('build');return C.OK;},repair:t=>{actions.push('repair');return C.OK;},upgradeController:()=>{actions.push('upgrade');return C.OK;},transfer:()=>{actions.push('transfer');return C.OK;},withdraw:()=>{actions.push('withdraw');return C.OK;},moveTo:()=>{actions.push('move');return C.OK;}};ctx.Game.creeps[name]=c;return c;}
- ctx.Game.rooms={[room.name]:room};ctx.Game.getObjectById=id=>room.objects.find(o=>o.id===id);
+ ctx.RoomPosition=class{constructor(x,y,roomName){Object.assign(this,pos(x,y),{roomName});}};ctx.Game.rooms={[room.name]:room};ctx.Game.getObjectById=id=>room.objects.find(o=>o.id===id);
  return {room,pos,store,structure,creep};
 }
 {
@@ -46,7 +46,7 @@ for(const job of ['site','repair']){
  f.creep('hauler','hauler',[C.CARRY,C.CARRY,C.MOVE,C.MOVE]);f.creep('upgrader','upgrader',[C.WORK,C.CARRY,C.MOVE]);
  const control=policy.updateEconomy(f.room);assert(control.rawCarry>36&&control.carry>36,'long route room demand is not clipped to 36 total CARRY');
  policy.spawnRoom(f.room);assert.equal(f.room.spawned.memory.role,'hauler');assert(cost(f.room.spawned.body)>1000,'spawn budget follows room capacity and genuine CARRY shortage');assert(f.room.spawned.body.length<=50);
- m.economyControl.carry=3;policy.spawnRoom(f.room);assert.equal(f.room.spawned.memory.role,'hauler');assert(cost(f.room.spawned.body)<=200,'one-part CARRY shortage does not trigger a room-sized body');
+ m.economyControl.carry=3;ctx.Game.time++;policy.spawnRoom(f.room);assert.equal(f.room.spawned.memory.role,'hauler');assert(cost(f.room.spawned.body)<=200,'one-part CARRY shortage does not trigger a room-sized body');
  const demand=policy.workforceDemand(f.room,{usefulTarget:20,developmentBudget:20,target:20,buildEnergyTarget:0},Object.values(ctx.Game.creeps));assert(cost(demand.upgradeBody)>1000,'workforce body budget also follows room capacity');
 }
 {
@@ -56,12 +56,12 @@ for(const job of ['site','repair']){
  const c=f.creep('small-worker','builder',[C.WORK,C.CARRY,C.MOVE]);c.pos=f.pos(28,30);
  assert(policy.refuel(c,false),'worker can use sole 19 energy stock');assert(c.actions.includes('withdraw'));
  const h=f.creep('small-hauler','hauler',[C.CARRY,C.MOVE]);h.pos=f.pos(28,30);
- assert(policy.collectHaul(h),'hauler can collect sole 19 energy source stock');assert(h.actions.includes('withdraw'));
+ ctx.Game.time++;policy.haulTarget(h);assert(policy.collectHaul(h),'hauler can collect sole 19 energy source stock');assert(h.actions.includes('withdraw'));
 }
 {
  const f=fixture(),box=f.structure(C.STRUCTURE_CONTAINER,'controller-box',22,22,1981,2000);
  const h=f.creep('small-gap','hauler',[C.CARRY,C.CARRY,C.MOVE,C.MOVE],100);
- assert.equal(policy.haulTarget(h).id,box.id,'19 energy controller gap receives a delivery without arbitrary batch floor');assert.equal(h.memory.haulDelivery.amount,19);
+ assert.equal(policy.haulTarget(h).id,box.id,'19 energy controller gap receives a delivery without arbitrary batch floor');assert.equal(h.memory.haul.task.amount,19);
 }
 for(const n of [1,50]){
  const f=fixture(),from=f.structure(C.STRUCTURE_LINK,'from',30,30,n,800),to=f.structure(C.STRUCTURE_LINK,'to',22,22,0,800);

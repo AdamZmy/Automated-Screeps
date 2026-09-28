@@ -19,7 +19,7 @@ const room={name:'R',controller:{level:2,progress:1000,progressTotal:45000,ticks
 function unit(name,role,x,y,work=0,spawning=false){const u={id:name,name,my:true,memory:{home:'R',role,source:'s',loaded:true,stuck:0},pos:pos(x,y),spawning,ticksToLive:1000,fatigue:0,store:store(250,250),body:Array(work).fill(null).map(()=>({type:C.WORK,hits:100})).concat({type:C.CARRY,hits:100},{type:C.MOVE,hits:100}),getActiveBodyparts:t=>t===C.WORK?work:1};ctx.Game.creeps[name]=u;return u;}
 unit('working','miner',21,20,4);unit('replacement','miner',10,10,4);unit('spawning','miner',21,20,4,true);
 const hauler=unit('haul','hauler',22,24);
-const tick=t=>{ctx.Game.time=t;ctx.module.exports.tick([room]);return ctx.Memory.frontier.telemetry.rooms.R;};
+const tick=t=>{ctx.Game.time=t;ctx.ledgerModule.exports.observe([room]);ctx.module.exports.tick([room]);return ctx.Memory.frontier.telemetry.rooms.R;};
 let m=tick(20);
 assert.equal(m.mining[0].work,4,'only non-spawning miners at source count as effective WORK');
 assert.equal(m.mining[0].assignedWork,12);assert.equal(m.harvestPotential,8);
@@ -27,7 +27,7 @@ assert.equal(m.sourceTheoreticalRate,10,'theoretical source rate is independent 
 assert.equal(ctx.Memory.frontier.energy.tick,20);assert.equal(ctx.Memory.frontier.energy.rooms.R.latest.harvest,null,'missing event data never claims zero harvesting');
 assert.equal(ctx.Memory.frontier.energy.rooms.R.windows[300].eta,null);
 assert(ctx.Memory.frontier.telemetry.capturedAt>0);
-ctx.Game.time=21;ctx.module.exports.tick([room]);assert.equal(ctx.Memory.frontier.energy.tick,21,'ledger observes before 20-tick monitor sampling return');
+ctx.Game.time=21;ctx.ledgerModule.exports.observe([room]);ctx.module.exports.tick([room]);assert.equal(ctx.Memory.frontier.energy.tick,21,'ledger independently observes outside 20-tick monitor sampling');
 assert.equal(m.mining[0].stock,3200);assert.equal(m.mining[0].stockDelta,null);assert.equal(m.mining[0].backlogSince,20);
 assert.equal(m.roads.planned,2);assert.equal(m.roads.built,1);assert.equal(m.roads.sites,1);assert.equal(m.roads.swampRemaining,0);
 assert.equal(m.roads.routes[0].built,1);assert.equal(m.roads.routes[0].sites,1);

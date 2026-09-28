@@ -1,7 +1,6 @@
 'use strict';
 // Observes and reports. Economy and expansion modules remain the only decision owners.
 const E=RESOURCE_ENERGY;
-const ledger=require('ledger');
 const {allCreeps,structures,sources,constructionSites,drops}=require('runtime');
 const value=o=>o.store?o.store[E]||0:0;
 const range=(a,b)=>Math.max(Math.abs(a.pos.x-b.pos.x),Math.abs(a.pos.y-b.pos.y));
@@ -16,7 +15,6 @@ function roadTelemetry(plan,structures,sites){
         routes:(plan&&plan.roadRoutes||[]).map(r=>({id:r.id,planned:r.tiles.length,built:r.tiles.filter(k=>built.has(k)).length,sites:r.tiles.filter(k=>building.has(k)).length,complete:r.complete}))};
 }
 function tick(owned){
-    ledger.observe(owned);
     if(Game.time%20!==0)return;
     const root=Memory.frontier;
     const telemetry=root.telemetry=root.telemetry||{rooms:{},alerts:{},started:Game.time};
@@ -72,15 +70,17 @@ function tick(owned){
         const haulers=all.filter(u=>u.memory.role==='hauler'&&!u.spawning&&u.pos.roomName===room.name);
         const hauling={count:haulers.length,energy:haulers.reduce((n,u)=>n+value(u),0),capacity:haulers.reduce((n,u)=>n+u.store.getCapacity(E),0),loaded:0,fatigued:0,stalled:0,units:[]};
         for(const u of haulers){
-            const loaded=value(u)>0&&(u.memory.loaded||u.store.getFreeCapacity(E)<=u.store.getCapacity(E)*.1);
+            const haul=u.memory.haul;
+            const loaded=value(u)>0&&(haul?haul.state==='deliver':!!u.memory.loaded);
+            const task=haul&&haul.task;
             const last=previous&&previous.hauling&&(previous.hauling.units||[]).find(p=>p.name===u.name);
             if(loaded)hauling.loaded++;if(loaded&&u.fatigue>0)hauling.fatigued++;
             if(loaded&&u.fatigue===0&&(u.memory.stuck||0)>=4&&u.memory.moveAttempt>=Game.time-1&&last&&last.x===u.pos.x&&last.y===u.pos.y)hauling.stalled++;
-            hauling.units.push({name:u.name,x:u.pos.x,y:u.pos.y,energy:value(u),loaded:!!loaded,fatigue:u.fatigue,stuck:u.memory.stuck||0,pickup:u.memory.haulPickup||null});
+            hauling.units.push({name:u.name,x:u.pos.x,y:u.pos.y,energy:value(u),loaded:!!loaded,fatigue:u.fatigue,stuck:u.memory.stuck||0,state:haul&&haul.state||'idle',task:task?{source:task.source||null,destination:task.id,amount:task.amount,reason:task.reason||null}:null,pickup:task&&task.source?{id:task.source,room:room.name}:null});
         }
         const roads=roadTelemetry(plan,roomStructures,sites);
         const entry={tick:Game.time,capturedAt:telemetry.capturedAt,rcl:c.level,progress:c.progress||0,total:c.progressTotal||0,upgradeRate,upgradeEMA,stagnant,roleCounts,mining,hauling,roads,energy:room.energyAvailable,capacity:room.energyCapacityAvailable,storage,buffers,dropped:droppedEnergy,upkeep,harvestPotential:mining.reduce((n,s)=>n+s.potential,0),sourceTheoreticalRate:roomSources.reduce((n,s)=>n+s.energyCapacity/ENERGY_REGEN_TIME,0),constructionSites:sites.length,planComplete:!!(plan&&plan.complete),oldestCreep:Math.min(...all.filter(c=>!c.spawning).map(c=>c.ticksToLive),1500)};
-        const measured=root.energy.rooms[room.name];
+        const measured=root.energy&&root.energy.rooms&&root.energy.rooms[room.name];
         const hasSpawn=roomStructures.some(s=>s.my&&s.structureType===STRUCTURE_SPAWN);
         const residents=creeps.filter(u=>u.pos.roomName===room.name&&!u.spawning);
         const residentWork=residents.reduce((n,u)=>n+u.getActiveBodyparts(WORK),0);
@@ -88,7 +88,9 @@ function tick(owned){
             u.pos.roomName!==room.name&&(u.spawning||u.ticksToLive>100));
         entry.bootstrap={active:!hasSpawn,residents:residents.length,residentWork,
             supportPioneers:residents.filter(u=>u.memory.role==='pioneer').length,incomingPioneers:incoming.length};
-        entry.energyLedger={tick:measured.tick,inventory:measured.inventory.total,windows:measured.windows,indicator:measured.indicator,utilizationIndicator:measured.utilizationIndicator};
+        entry.energyLedger=measured?{tick:measured.tick,inventory:measured.inventory.total,windows:measured.windows,indicator:measured.indicator,utilizationIndicator:measured.utilizationIndicator}:null;
+        entry.policy=root.rooms[room.name]&&root.rooms[room.name].colonyPolicy||null;
+        entry.workforce=root.rooms[room.name]&&root.rooms[room.name].workforce||null;
         entry.economy=root.rooms[room.name]&&root.rooms[room.name].economy;
         entry.constructionByType=constructionByType;
         entry.builtExtensions=roomStructures.filter(s=>s.my&&s.structureType===STRUCTURE_EXTENSION).length;
@@ -104,11 +106,11 @@ function tick(owned){
         alert(room.name,'road-disconnected','Economic routes missing: '+roads.missing.join(', '),roads.missing.length>0,100);
         alert(room.name,'spawn-starved','Spawn energy remains below recovery body cost',hasSpawn&&room.energyAvailable<100&&all.length<2,200);
         alert(room.name,'bootstrap-unassisted','Room has no spawn, working residents or incoming pioneers; inspect colony support',
-            !hasSpawn&&!residentWork&&!incoming.length&&stagnant>=200&&!(measured.windows[300].G>0),100);
+            !hasSpawn&&!residentWork&&!incoming.length&&stagnant>=200&&!(measured&&measured.windows[300].G>0),100);
         alert(room.name,'layout-incomplete',plan&&plan.missing||'Full room layout is not ready',!entry.planComplete,100);
         alert(room.name,'downgrade-risk','Controller downgrade timer '+c.ticksToDowngrade,c.ticksToDowngrade<2500,0);
-        alert(room.name,'useful-energy-low','Measured useful-energy efficiency '+Math.round((measured.windows[1500].eta||0)*100)+'% over 1500 observed ticks',measured.indicator.status==='active',0);
-        alert(room.name,'energy-utilization-low','Measured total energy utilization '+Math.round((measured.windows[1500].utilization||0)*100)+'% below 90% over 1500 eligible ticks; inspect growth, necessary operations, inventory and losses',!!measured.utilizationIndicator&&measured.utilizationIndicator.status==='active',0);
+        alert(room.name,'useful-energy-low','Measured useful-energy efficiency '+Math.round((measured&&measured.windows[1500].eta||0)*100)+'% over 1500 observed ticks',!!measured&&measured.indicator.status==='active',0);
+        alert(room.name,'energy-utilization-low','Measured total energy utilization '+Math.round((measured&&measured.windows[1500].utilization||0)*100)+'% below 90% over 1500 eligible ticks; inspect growth, necessary operations, inventory and losses',!!measured&&!!measured.utilizationIndicator&&measured.utilizationIndicator.status==='active',0);
     }
     alert('empire','cpu-headroom','CPU average '+telemetry.cpuEMA.toFixed(2)+' / '+Game.cpu.limit,telemetry.cpuEMA>Game.cpu.limit*.8||Game.cpu.bucket<500,100);
     const e=root.expansion;alert('empire','expansion-blocked',e&&e.reason||'Expansion requires review',e&&e.state==='blocked',0);

@@ -5,10 +5,11 @@ const Module=require('node:module'),originalLoad=Module._load;
 let archiveModule=require('./plans');
 Module._load=function(request,parent,isMain){
  if(request==='plans'){if(!archiveModule)throw Error('Archive module unavailable');return archiveModule;}
+ if(['runtime','development','colony','mining','movement','metrics','logistics','workforce'].includes(request))return require('./'+request);
  return originalLoad.call(this,request,parent,isMain);
 };
 Object.assign(global,require('./test-support/runtime.cjs').constants);
-global.Game={time:1,constructionSites:{}};global.Memory={frontier:{rooms:{}}};
+global.Game={time:1,constructionSites:{},creeps:{}};global.Memory={frontier:{rooms:{}}};
 class Pos{constructor(x,y,roomName){Object.assign(this,{x,y,roomName});}getRangeTo(p){p=p.pos||p;return Math.max(Math.abs(this.x-p.x),Math.abs(this.y-p.y));}}
 global.RoomPosition=Pos;
 class Matrix{constructor(){this.a=new Uint8Array(2500);}set(x,y,v){this.a[x+y*50]=v;}get(x,y){return this.a[x+y*50];}}
@@ -30,7 +31,8 @@ global.PathFinder={CostMatrix:Matrix,search(start,goal,opts){
  const path=[];if(found>=0)for(let i=found;i!==k&&i>=0;i=prev[i])path.push(new Pos(i%50,Math.floor(i/50),start.roomName));
  return {path:path.reverse(),incomplete:found<0};
 }};
-const planner=require('./planner');
+const planner=require('./planner'),development=require('./development');
+function constructionCycle(room){const requests=planner.run(room);return development.runConstruction(room,requests);}
 const K=p=>p.x+p.y*50;
 const D=(a,b)=>Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
 const name='W21N26';
@@ -130,9 +132,8 @@ f.room.createConstructionSite=(x,y,type)=>{
 for(let level=1;level<=8;level++){
  f.controller.level=level;
  for(let t=0;t<150;t++){
-  const before=calls;Game.time+=10;Game.time-=Game.time%10;planner.run(f.room);
-  assert(f.room.sites.length<=5,'Per-tick site budget exceeded');
-  assert(f.room.sites.filter(s=>s.structureType===STRUCTURE_ROAD).length<=3,'Road site budget exceeded');
+  const before=calls;Game.time+=10;Game.time-=Game.time%10;constructionCycle(f.room);
+  assert(f.room.sites.length<=MAX_CONSTRUCTION_SITES,'Physical global site capacity exceeded');
   f.room.buildings.push(...f.room.sites.splice(0));Game.constructionSites={};if(before===calls)break;
  }
  for(const p of base.structures.filter(p=>p.rcl<=level&&p.type!==STRUCTURE_RAMPART))assert(f.room.buildings.some(s=>s.structureType===p.type&&K(s.pos)===K(p)),`RCL${level} never built ${p.tag}`);
@@ -151,18 +152,18 @@ function roadFixture(level,extra=[],sites=[]){
  state.room.createConstructionSite=(x,y,type)=>{const s=object([x,y],'road-test-'+state.room.sites.length,type);state.room.sites.push(s);Game.constructionSites[s.id]=s;return OK;};
  return state;
 }
-function buildOnce(state){Game.time+=10;Game.time-=Game.time%10;planner.run(state.room);}
+function buildOnce(state){Game.time+=10;Game.time-=Game.time%10;constructionCycle(state.room);}
 f=roadFixture(1);buildOnce(f);assert.equal(f.room.sites.length,0,'Roads must not preempt RCL1 recovery');
-f=roadFixture(2);buildOnce(f);assert.equal(f.room.sites.length,3);
+f=roadFixture(2);buildOnce(f);assert.equal(f.room.sites.length,economyRoads.length);
 for(const site of f.room.sites)assert(economyRoads.some(p=>K(p)===K(site.pos)),'RCL2 road was not economic');
 assert(terrain.get(f.room.sites[0].pos.x,f.room.sites[0].pos.y)&TERRAIN_MASK_SWAMP,'Swamp bottleneck should be paved first');
-buildOnce(f);assert.equal(f.room.sites.length,3,'Unfinished road sites must cap subsequent batches');
+buildOnce(f);assert.equal(f.room.sites.length,economyRoads.length,'Existing unfinished sites must not be duplicated');
 const queued=base.structures.filter(p=>p.rcl===3&&[STRUCTURE_EXTENSION,STRUCTURE_TOWER].includes(p.type)).map(fromPlan).concat([fromPlan(economyRoads[0])]);
-f=roadFixture(2,[],queued);f.controller.level=3;buildOnce(f);assert.equal(f.room.sites.length,8,'Construction should use at most one remaining room slot');
-f=roadFixture(2);Game.constructionSites=Object.fromEntries(Array.from({length:90},(_,i)=>[i,{}]));buildOnce(f);assert.equal(f.room.sites.length,0,'Global site reserve must be respected');
+const expectedQueued=queued.length+economyRoads.length-1;f=roadFixture(2,[],queued);f.controller.level=3;buildOnce(f);assert.equal(f.room.sites.length,expectedQueued,'All eligible sites may be submitted without arbitrary room caps');assert(f.room.sites.length>8);
+f=roadFixture(2);Game.constructionSites=Object.fromEntries(Array.from({length:MAX_CONSTRUCTION_SITES},(_,i)=>[i,{pos:{x:i%50,y:Math.floor(i/50),roomName:'W0N0'},structureType:STRUCTURE_ROAD}]));buildOnce(f);assert.equal(f.room.sites.length,0,'Physical global site capacity must be respected');
 f=roadFixture(4,economyRoads.map(fromPlan));f.room.storage={store:{[RESOURCE_ENERGY]:19999}};buildOnce(f);assert.equal(f.room.sites.length,0,'Access roads should wait for surplus');
-f.room.storage.store[RESOURCE_ENERGY]=20000;buildOnce(f);assert.equal(f.room.sites.length,3);for(const site of f.room.sites)assert(base.structures.some(p=>p.type===STRUCTURE_ROAD&&p.roadClass==='access'&&K(p)===K(site.pos)));
-console.log('Road policy: metadata-only v3 migration; RCL2 economic roads; swamp priority; 3 road / 8 room / 90 global site limits; ordinary roads wait for RCL4 and surplus');
+f.room.storage.store[RESOURCE_ENERGY]=20000;buildOnce(f);assert.equal(f.room.sites.length,base.structures.filter(p=>p.type===STRUCTURE_ROAD&&p.roadClass==='access'&&p.rcl<=4).length);for(const site of f.room.sites)assert(base.structures.some(p=>p.type===STRUCTURE_ROAD&&p.roadClass==='access'&&K(p)===K(site.pos)));
+console.log('Road policy: metadata-only v3 migration; RCL2 economic roads; swamp priority; central physical100 site limit without arbitrary batch caps; ordinary roads wait for RCL4 and surplus');
 
 // The static archive retains every executable field from acknowledged API data.
 // Cold Memory only retains candidate metadata, and readers do not decode plans.
@@ -249,20 +250,20 @@ Memory.frontier={rooms:clone(summaries),intel:{}};Game.rooms={[name]:home};
 const resetPlanner=freshPlanner();const resetRoom={name:coldName,controller:{my:true}};
 assert.deepEqual(resetPlanner.ensure(resetRoom),snapshots[coldName].plan);
 
-// Missing module/ID or incompatible plan versions rebuild only an activated
-// room once. Subsequent normal ticks reuse its newly persisted plan.
+// Missing module/ID or incompatible archive payloads retain the receipt and
+// expose recovery errors instead of inventing replacement geometry.
 for(const missing of [null,realArchive]){
  const fallback=freshPlanner(missing),state=fixture();
  Memory.frontier={rooms:{[name]:{plan:{version:3,created:Game.time,complete:true,archiveId:'missing'}}},intel:{}};
- beforeRestore=searchCalls;const rebuilt=fallback.ensure(state.room);
- assert(rebuilt.complete&&rebuilt.structures);assert(searchCalls>beforeRestore);
- const afterRebuild=searchCalls;assert.equal(fallback.ensure(state.room),rebuilt);assert.equal(searchCalls,afterRebuild);
+ beforeRestore=searchCalls;const original=Memory.frontier.rooms[name].plan,retained=fallback.ensure(state.room);
+ assert.equal(retained,original);assert.equal(retained.structures,undefined);assert.equal(searchCalls,beforeRestore);
+ assert.equal(Memory.frontier.rooms[name].planRecovery.status,'blocked');assert.equal(fallback.ensure(state.room),retained);assert.equal(searchCalls,beforeRestore);
 }
 function archiveOf(room,plan){return {has:n=>n===room,identify:(n,p)=>n===room&&JSON.stringify(p)===JSON.stringify(plan)?'test-id':null,load:(n,id)=>n===room&&id==='test-id'?clone(plan):null};}
 const outdated=clone(base);outdated.version=2;
 let special=freshPlanner(archiveOf(name,outdated));
 Memory.frontier={rooms:{[name]:{plan:{version:2,created:Game.time,complete:true,archiveId:'test-id'}}},intel:{}};
-beforeRestore=searchCalls;let result=special.ensure(fixture().room);assert.equal(result.version,3);assert(searchCalls>beforeRestore);
+beforeRestore=searchCalls;let result=special.ensure(fixture().room);assert.equal(result.version,2);assert.equal(result.structures,undefined);assert.equal(searchCalls,beforeRestore);assert.equal(Memory.frontier.rooms[name].planRecovery.status,'blocked');
 const afterVersion=searchCalls;assert.equal(special.ensure(fixture().room),result);assert.equal(searchCalls,afterVersion);
 // A road metadata upgrade preserves the archived building geometry.
 const oldRoad=clone(base);delete oldRoad.roadVersion;
@@ -276,7 +277,7 @@ special=freshPlanner(archiveOf(name,blocked));Memory.frontier.rooms[name].plan={
 const incomplete=special.ensure(f.room);assert.equal(incomplete.complete,false);
 beforeRestore=searchCalls;Game.time+=100;assert.equal(special.ensure(f.room),incomplete);assert.equal(searchCalls,beforeRestore);
 f.room.buildings.splice(0);Game.time=blocked.created+500;assert.equal(special.ensure(f.room).complete,true);assert(searchCalls>beforeRestore);
-console.log('Global reset, missing archive/module, version upgrade, road metadata migration and active 500-tick failure retry all recover safely');
+console.log('Global reset restores exactly; missing/incompatible archives retain receipts; road metadata and active 500-tick failure retry recover safely');
 
 // Incremental offline generation must preserve old payloads when fresh game
 // snapshots contain summaries, and retain IDs that still exist in live Memory.
