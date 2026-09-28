@@ -10,6 +10,30 @@ const range = (a,b) => {
     return p.roomName&&q.roomName&&p.roomName!==q.roomName?Infinity:Math.max(Math.abs(p.x-q.x),Math.abs(p.y-q.y));
 };
 const energy = o => o.store ? o.store[E] || 0 : o.amount || 0;
+let objectCacheTick=-1,objectCache=null;
+function tickCache(){
+    if(objectCacheTick!==Game.time){objectCacheTick=Game.time;objectCache={creeps:null,creepRoot:null,rooms:{}};}
+    return objectCache;
+}
+function allCreeps(refresh=false){const cache=tickCache();if(refresh||cache.creepRoot!==Game.creeps){cache.creepRoot=Game.creeps;cache.creeps=vals(Game.creeps);}return cache.creeps;}
+function roomObjects(room){
+    const cache=tickCache(),old=cache.rooms[room.name];
+    // `objects`/`sites` exist only in the deterministic fixtures; the live
+    // engine rebuilds room collections once per tick and needs no mutation check.
+    const fixtureMarker=room.objects?room.objects.length+':'+(room.sites?room.sites.length:0)+':'+Object.keys(Game.creeps).length:null;
+    if(old&&old.room===room&&old.fixtureMarker===fixtureMarker&&old.fixtureRoot===room.objects)return old;
+    return cache.rooms[room.name]={room,fixtureMarker,fixtureRoot:room.objects};
+}
+function cachedFind(room,key,type){const cache=roomObjects(room);return cache[key]||(cache[key]=room.find(type));}
+function roomCreeps(room){return cachedFind(room,'creeps',FIND_MY_CREEPS);}
+function hostiles(room){return cachedFind(room,'hostiles',FIND_HOSTILE_CREEPS);}
+function structures(room){return cachedFind(room,'structures',FIND_STRUCTURES);}
+function myStructures(room){return cachedFind(room,'myStructures',FIND_MY_STRUCTURES);}
+function spawns(room){return cachedFind(room,'spawns',FIND_MY_SPAWNS);}
+function constructionSites(room){return cachedFind(room,'sites',FIND_MY_CONSTRUCTION_SITES);}
+function drops(room){return cachedFind(room,'drops',FIND_DROPPED_RESOURCES);}
+function tombstones(room){return cachedFind(room,'tombstones',FIND_TOMBSTONES);}
+function ruins(room){return cachedFind(room,'ruins',FIND_RUINS);}
 function near(c,arr) {
     if(!arr.length){movementCount('emptyChoices');return null;}
     // An adjacent target already satisfies the action range. All other new
@@ -39,8 +63,8 @@ function go(c,t,r=1,options={}) {
 function take(c,t) { const r=t.resourceType?c.pickup(t):c.withdraw(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
 function give(c,t) { const r=c.transfer(t,E); if(r===ERR_NOT_IN_RANGE)go(c,t); return r; }
 function alive(c) {return c.spawning || (c.ticksToLive||0)>c.body.length*3+35;}
-function sources(room) { return room.find(FIND_SOURCES); }
-function stores(room) { return room.find(FIND_STRUCTURES,{filter:s=>s.store}); }
+function sources(room) { return cachedFind(room,'sources',FIND_SOURCES); }
+function stores(room) { return structures(room).filter(s=>s.store); }
 let miningCacheTick=-1,miningCache={};
 function miningSpots(room,source) {
     if(miningCacheTick!==Game.time){miningCacheTick=Game.time;miningCache={};}
@@ -54,4 +78,4 @@ function miningSpots(room,source) {
     return miningCache[key]=spots;
 }
 
-module.exports={E,vals,range,energy,near,go,take,give,alive,sources,stores,miningSpots};
+module.exports={E,vals,range,energy,near,go,take,give,alive,allCreeps,roomCreeps,hostiles,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots};

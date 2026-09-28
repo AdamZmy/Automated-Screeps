@@ -4,7 +4,10 @@ const logs=[],ctx={...C,module:{exports:{}},console:{log:s=>logs.push(s)},Memory
 vm.createContext(ctx);
 ctx.ledgerModule={exports:{}};
 vm.runInContext('(function(module){'+readSource('ledger.js')+'})(ledgerModule);',ctx);
-ctx.require=name=>{assert.equal(name,'ledger');return ctx.ledgerModule.exports;};
+ctx.metricsModule={exports:{movementCount(){}}};ctx.runtimeModule={exports:{}};
+ctx.require=name=>{assert.equal(name,'metrics');return ctx.metricsModule.exports;};
+vm.runInContext('(function(require,module,exports){'+readSource('runtime.js')+'})(require,runtimeModule,runtimeModule.exports);',ctx);
+ctx.require=name=>{assert(['ledger','runtime'].includes(name));return name==='ledger'?ctx.ledgerModule.exports:ctx.runtimeModule.exports;};
 vm.runInContext(readSource('monitor.js'),ctx);
 const pos=(x,y)=>({x,y,roomName:'R'}),store=(energy,capacity)=>({energy,getCapacity:()=>capacity,getFreeCapacity(){return capacity-this.energy;}});
 const source={id:'s',pos:pos(20,20),energy:3000,energyCapacity:3000,ticksToRegeneration:280};

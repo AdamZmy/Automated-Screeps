@@ -1,5 +1,5 @@
 'use strict';
-const {E,vals,range,energy,near,go,sources,stores}=require('runtime');
+const {E,vals,range,energy,near,go,allCreeps,roomCreeps,hostiles,drops,tombstones,ruins,sources,stores}=require('runtime');
 const {controllerStation,upgraderAssignment,economyMemory,routeTravel,constructionJobs,walkable}=require('development');
 const {linkNetwork}=require('infrastructure');
 const movementCount=name=>require('metrics').movementCount(name);
@@ -7,14 +7,14 @@ function deliveryNeeds(room,includeStorage=true) {
     const stock=stores(room),ss=sources(room),ctrl=room.controller,needs=[];
     const add=(node,high,priority)=>{if(node&&node.store.getFreeCapacity(E)>0)needs.push({node,high:Math.min(high,energy(node)+node.store.getFreeCapacity(E)),priority});};
     for(const s of stock)if(s.my&&[STRUCTURE_SPAWN,STRUCTURE_EXTENSION].includes(s.structureType))add(s,energy(s)+s.store.getFreeCapacity(E),0);
-    const threatened=room.find(FIND_HOSTILE_CREEPS).length>0;
+    const threatened=hostiles(room).length>0;
     for(const s of stock)if(s.my&&s.structureType===STRUCTURE_TOWER)add(s,threatened?900:400,1);
     const station=controllerStation(room),assignment=upgraderAssignment(room),m=economyMemory(room);
     // A borrower must also receive fuel: size the controller buffer for the
     // maximum useful share its existing WORK can consume, not just its floor.
     const control=m.economyControl,ceiling=control&&Game.time-control.at<200?(control.developmentBudget??(control.target+(control.buildEnergyTarget||0))):assignment.policy.target;
     const rate=Math.min(ceiling,room.controller.level===8?15:Infinity,assignment.primary.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0));
-    const carriers=vals(Game.creeps).filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='hauler');
+    const carriers=allCreeps().filter(c=>!c.spawning&&c.room.name===room.name&&c.memory.role==='hauler');
     const batch=Math.max(100,...carriers.map(c=>energy(c)+c.store.getFreeCapacity(E)));
     // Existing round trips include empty return, pickup, delivery and terrain.
     // They are conservative planning estimates, not measured travel times.
@@ -32,7 +32,7 @@ function deliveryNeeds(room,includeStorage=true) {
         if(request.active)add(node,high,energy(node)<Math.max(25,rate*10)?2:4);
     }else delete m.controllerSupply;
     const jobIds=new Set(constructionJobs(room).map(s=>s.id)),workNodes=new Map();
-    for(const c of vals(Game.creeps)){
+    for(const c of allCreeps()){
         const binding=c.memory.workSupply;
         if(c.room.name!==room.name||!binding||!jobIds.has(binding.job))continue;
         const node=Game.getObjectById(binding.id);
@@ -71,7 +71,7 @@ function haulTarget(c,includeStorage=true) {
     const ready=energy(c)>0&&(c.memory.loaded||energy(c)>=Math.ceil(capacity*.9)||task&&energy(c)>=task.amount);
     const load=ready?energy(c):capacity;
     if(task&&task.sent===undefined)task.phase=ready?'deliver':'pickup';
-    const commitments=id=>vals(Game.creeps).filter(peer=>peer.name!==c.name&&peer.memory.haulDelivery&&peer.memory.haulDelivery.id===id&&validDelivery(peer,peer.memory.haulDelivery));
+    const commitments=id=>allCreeps().filter(peer=>Game.creeps[peer.name]===peer&&peer.name!==c.name&&peer.memory.haulDelivery&&peer.memory.haulDelivery.id===id&&validDelivery(peer,peer.memory.haulDelivery));
     const reserved=id=>commitments(id).reduce((n,peer)=>n+(ready?fundedDelivery(peer,peer.memory.haulDelivery):peer.memory.haulDelivery.amount),0);
     const needs=deliveryNeeds(room,includeStorage).filter(n=>!blocked[n.node.id]&&n.node.id!==c.memory.withdrawnFrom)
         .map(n=>({...n,gap:Math.max(0,Math.floor(n.high-energy(n.node))),amount:Math.max(0,Math.floor(n.high-energy(n.node)-reserved(n.node.id)))})).filter(n=>n.amount>0);
@@ -113,8 +113,8 @@ function deliveryPorts(room,target) {
     return {ports,preferred:station&&station.node.id===target.id?station.port:null,seats};
 }
 function deliveryPort(c,target,task,layout) {
-    const peers=c.room.find(FIND_MY_CREEPS).concat(c.room.find(FIND_HOSTILE_CREEPS)).filter(o=>o.name!==c.name);
-    const promised=vals(Game.creeps).filter(o=>o.name!==c.name).map(o=>({creep:o,task:o.memory.haulDelivery}))
+    const peers=roomCreeps(c.room).concat(hostiles(c.room)).filter(o=>(!o.my||Game.creeps[o.name]===o)&&o.name!==c.name);
+    const promised=allCreeps().filter(o=>Game.creeps[o.name]===o&&o.name!==c.name).map(o=>({creep:o,task:o.memory.haulDelivery}))
         .filter(o=>o.task&&o.task.room===c.room.name&&holdsDeliveryPort(o.creep,o.task)).map(o=>o.task.port);
     const avoid=task.portAvoid||{};
     for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
@@ -146,7 +146,7 @@ function clearStationTraffic(c,target=null) {
     const roads=(plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD&&range(s,node)<=2);
     const reserved=[...endpoints,...roads];
     if(!reserved.some(p=>range(c,p)===0))return;
-    const peers=c.room.find(FIND_MY_CREEPS).concat(c.room.find(FIND_HOSTILE_CREEPS)).filter(o=>o.name!==c.name);
+    const peers=roomCreeps(c.room).concat(hostiles(c.room)).filter(o=>(!o.my||Game.creeps[o.name]===o)&&o.name!==c.name);
     const options=[];
     for(let y=c.pos.y-1;y<=c.pos.y+1;y++)for(let x=c.pos.x-1;x<=c.pos.x+1;x++){
         const p={x,y};if(walkable(c.room,p)&&!future.has(x+50*y)&&!endpoints.some(s=>range(s,p)===0)&&
@@ -169,14 +169,14 @@ function collectHaul(c) {
     if(!task){
         const ss=sources(c.room),stock=stores(c.room),avoid=c.memory.haulPickupAvoid;
         const allowed=t=>(!avoid||avoid.until<=Game.time||avoid.id!==t.id)&&t.id!==c.memory.haulDelivery?.id;
-        const allDrops=c.room.find(FIND_DROPPED_RESOURCES,{filter:d=>d.resourceType===E&&d.amount>0}),drops=allDrops;
+        const allDrops=drops(c.room).filter(d=>d.resourceType===E&&d.amount>0);
         const boxes=stock.filter(s=>energy(s)>0&&s.structureType===STRUCTURE_CONTAINER&&ss.some(src=>range(src,s)<=1));
-        const loot=c.room.find(FIND_TOMBSTONES).concat(c.room.find(FIND_RUINS)).filter(s=>energy(s)>0);
+        const loot=tombstones(c.room).concat(ruins(c.room)).filter(s=>energy(s)>0);
         const pressure=new Map(ss.map(src=>[src.id,stock.filter(s=>s.structureType===STRUCTURE_CONTAINER&&range(src,s)<=1).reduce((n,s)=>n+energy(s),0)+allDrops.filter(d=>range(src,d)<=2).reduce((n,d)=>n+energy(d),0)]));
         const free=c.store.getFreeCapacity(E);
         const score=t=>{const src=ss.find(s=>range(s,t)<=2);return Math.min(energy(t),free)/(range(c,t)+3)*(1+(src?pressure.get(src.id):energy(t))/500);};
         const hub=linkNetwork(c.room).hub,receivers=hub&&energy(hub)>0?[hub]:[];
-        const choices=drops.concat(boxes,loot,receivers).filter(allowed).sort((a,b)=>score(b)-score(a));
+        const choices=allDrops.concat(boxes,loot,receivers).filter(allowed).sort((a,b)=>score(b)-score(a));
         target=choices[0]||(!energy(c)&&c.memory.haulDelivery&&c.room.storage&&energy(c.room.storage)>0&&allowed(c.room.storage)?c.room.storage:null);
         if(!target)return false;
         task=c.memory.haulPickup={id:target.id,room:c.room.name,position,progress:Game.time};
@@ -242,8 +242,9 @@ function haul(c) {
         if(energy(c))c.memory.loaded=true;else{clearStationTraffic(c);return;}
     }
     for(let attempt=0;attempt<2;attempt++){
-        target=haulTarget(c);if(!target){delete c.memory.haulDelivery;clearStationTraffic(c);return;}
+        if(!target){delete c.memory.haulDelivery;clearStationTraffic(c);return;}
         if(deliverHaul(c,target))return;
+        target=haulTarget(c);
     }
 }
 // Capacity estimates size future bodies; fueled workers keep acting every tick.

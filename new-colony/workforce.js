@@ -1,12 +1,12 @@
 'use strict';
-const {vals,range,energy,alive,sources,stores,miningSpots}=require('runtime');
+const {vals,range,energy,alive,allCreeps,spawns,sources,stores,miningSpots}=require('runtime');
 const {controllerStation,constructionJobs,upgradePolicy,upgraderAssignment,economyMemory,updateEconomy,routeTravel}=require('development');
 function workerDuty(room,parts,job,stationary=false,nodes=null) {
     const count=type=>parts.filter(p=>(p.type||p)===type).length;
     const work=count(WORK),carry=count(CARRY),move=count(MOVE);
     if(!work||!carry||!move)return 0;
     const step=Math.max(1,Math.ceil((work+carry)/move));
-    const spawn=room.find(FIND_MY_SPAWNS)[0],travel=spawn&&spawn.pos?Math.max(0,range(spawn,job)-3)*step:10;
+    const spawn=spawns(room)[0],travel=spawn&&spawn.pos?Math.max(0,range(spawn,job)-3)*step:10;
     const lifetime=Math.max(.5,(1500-travel)/1500);
     if(stationary)return lifetime; // prefuel and upgrade are concurrent intents
     nodes=nodes||stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType));
@@ -64,7 +64,7 @@ function workforceDemand(room,control,all) {
     const nextBuild=job?select('builder',Math.min(budget,Math.max(300,remaining)),effectiveBuild,job,false,
         price=>Math.max(0,Math.min(control.buildEnergyTarget,pool-price/1500))):{body:null,duty:1,rate:0};
     const {body:builderBody,duty:buildDuty,rate:buildRate}=nextBuild;
-    const spawn=room.find(FIND_MY_SPAWNS)[0];
+    const spawn=spawns(room)[0];
     const buildLead=builderBody?builderBody.length*CREEP_SPAWN_TIME+(job&&spawn&&spawn.pos?range(spawn,job)*2:0)+20:0;
     return {upgrade,upgradeBody,builderBody,upgradeWork:Math.ceil(upgradeRate/Math.max(.2,upgradeDuty)),
         builderWork:job?Math.ceil(buildRate/(BUILD_POWER*Math.max(.2,buildDuty))):0,
@@ -109,7 +109,7 @@ function minerReplacement(room,all,spawn) {
 function minerRenewal(room,roster,spawn) {
     const next=body('miner',room.energyCapacityAvailable);
     if(!next)return null;
-    const queue=room.find(FIND_MY_SPAWNS).reduce((n,s)=>Math.max(n,s.spawning&&s.spawning.remainingTime||0),0);
+    const queue=spawns(room).reduce((n,s)=>Math.max(n,s.spawning&&s.spawning.remainingTime||0),0);
     const requests=[];
     for(const source of sources(room)){
         const assigned=roster.filter(c=>c.memory.role==='miner'&&c.memory.source===source.id);
@@ -129,13 +129,13 @@ function minerRenewal(room,roster,spawn) {
     return requests[0]||null;
 }
 function spawnRoom(room) {
-    const roster=vals(Game.creeps).filter(c=>c.memory.home===room.name);
+    const roster=allCreeps(true).filter(c=>c.memory.home===room.name);
     const all=roster.filter(alive);
     const control=updateEconomy(room);
     const upWork=all.filter(c=>c.memory.role==='upgrader').reduce((s,c)=>s+c.getActiveBodyparts(WORK),0);
     const policy=upgradePolicy(room),demand=workforceDemand(room,control,all),desiredUp=demand.upgradeWork;
     if(Memory.frontier&&Memory.frontier.rooms){const m=Memory.frontier.rooms[room.name]||(Memory.frontier.rooms[room.name]={});m.economy={upgradeWorkTarget:desiredUp,upgradeWork:upWork,mode:policy.mode,reason:control.reason,carryTarget:control.carry,builderWorkTarget:demand.builderWork,upgradeEffectiveRate:demand.effectiveUp,upgradeEnergyTarget:demand.upgradeRate,stationSeats:demand.stationSeats,builderEffectiveRate:demand.effectiveBuild,harvestPotential:control.harvestPotential,usefulEnergyTarget:control.usefulTarget,buildEnergyTarget:control.buildEnergyTarget,reserveRate:control.reserveRate,upkeep:control.upkeep,feedbackTicks:control.feedbackTicks,incomeBasis:control.incomeBasis,decisionTick:control.at,routes:control.routes};}
-    const sp=room.find(FIND_MY_SPAWNS).find(s=>!s.spawning);if(!sp)return;
+    const sp=spawns(room).find(s=>!s.spawning);if(!sp)return;
     const count=role=>all.filter(c=>c.memory.role===role).length;
     const workers=count('bootstrap')+count('builder');
     let role,extra={};

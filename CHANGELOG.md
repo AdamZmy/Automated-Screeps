@@ -6,6 +6,17 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.5.1 — 2026-09-28
+
+- Game build `2026-09-27.3` shares per-tick room object snapshots across role,
+  workforce, infrastructure and monitoring code instead of repeating the same
+  `room.find` and global-creep scans for every creep.
+- Cache Controller station geometry, upgrader groups, construction priority and
+  Link classification for one tick while retaining target-destruction and
+  construction-change validation.
+- Remove the second unchanged delivery-plan calculation from each Hauler action.
+  Energy thresholds, staffing policy and action priority remain unchanged.
+
 ## 0.5.0 — 2026-09-28
 
 - Game build `2026-09-27.2` turns `main.js` into a 39-line composition root.

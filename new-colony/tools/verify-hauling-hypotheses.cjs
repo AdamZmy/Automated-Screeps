@@ -114,12 +114,14 @@ function loadedReservationFixture(options={}){
 function activeUpgradeFixture(works=[6,4,4,4],budget=15){
  const f=loadedReservationFixture({stock:1000});
  for(const [name,c] of Object.entries(context.Game.creeps))if(c.memory.role!=='miner')delete context.Game.creeps[name];
+ context.Game.time++;
  const m=context.Memory.frontier.rooms[f.room.name];Object.assign(m.economyControl,{target:budget,developmentBudget:budget,buildEnergyTarget:0});
  const station=policy.controllerStation(f.room),workers=works.map((n,i)=>{
   const p=station.seats[i]||{x:14,y:21},c=f.creep('active-worker'+i,'upgrader',p.x,p.y,100,100,[...Array(n).fill(C.WORK),C.CARRY,C.CARRY,C.MOVE]);
   if(station.seats[i])c.memory.upgradeSeat={id:f.box.id,...p};return c;
  });
- return {...f,workers,m,step(){for(const c of workers)c.actions=[];policy.developmentPlan(f.room);for(const c of workers)policy.work(c);policy.finishDevelopment(f.room);}};
+ policy.allCreeps(true);
+ return {...f,workers,m,step(){policy.allCreeps(true);for(const c of workers)c.actions=[];policy.developmentPlan(f.room);for(const c of workers)policy.work(c);policy.finishDevelopment(f.room);}};
 }
 const report={version:policy.VERSION,checks:[],limitations:[],planning:[]},regressions=[];
 const promisedEnergy=f=>Object.values(context.Game.creeps).reduce((sum,c)=>{
@@ -304,7 +306,7 @@ for(const order of [['near','emptyA','emptyB','incumbent','far'],['emptyB','empt
  assert.equal(f.near.memory.haulDelivery?.amount,200,'merely running empty planners first must not defeat ready cargo');
 }
 for(const order of [['near','second'],['second','near']]){
- const f=loadedReservationFixture();f.second=f.creep('second-ready','hauler',19,27,100,100);
+ const f=loadedReservationFixture();f.second=f.creep('second-ready','hauler',19,27,100,100);policy.allCreeps(true);
  for(const name of order){policy.haulTarget(f[name]);assert(promisedEnergy(f)<=f.high-f.box.store.energy,'multiple ready claimants reclaim atomically');}
  assert.equal((f.near.memory.haulDelivery?.amount||0)+(f.second.memory.haulDelivery?.amount||0),200);
  assert.equal(f.incumbent.memory.haulDelivery.amount,231);assert.equal(f.far.memory.haulDelivery.amount,100);
@@ -444,6 +446,7 @@ report.checks.push('Initial zero energy, travel outside range3, zero active WORK
  f.m.developmentCredit={tick:context.Game.time-1,credit:-100,build:-100,upgrade:-100};
  const site={id:'planned-service-road',structureType:C.STRUCTURE_ROAD,pos:f.pos(16,24),progress:0,progressTotal:1000};f.room.sites.push(site);
  const b=f.creep('regular-builder','builder',17,25,100,100,[C.WORK,C.CARRY,C.CARRY,C.MOVE]);
+ context.Game.time++;
  for(let i=0;i<3;i++){
   for(const c of [...f.workers,b])c.actions=[];policy.developmentPlan(f.room);
   for(const c of i%2?[b,...f.workers]:[...f.workers,b])policy.work(c);policy.finishDevelopment(f.room);
@@ -479,7 +482,7 @@ report.checks.push('Initial zero energy, travel outside range3, zero active WORK
   if(!test.noSite)f.room.sites.push({id:'useful-planned-road',structureType:C.STRUCTURE_ROAD,pos:f.pos(16,24),progress:test.completed?1000:0,progressTotal:1000});
   const b=f.creep('useful-builder','builder',test.far?23:17,test.far?28:25,test.energy??100,100,[...Array(test.work??4).fill(C.WORK),C.CARRY,C.CARRY,C.MOVE]);
   if(test.loaded!==undefined)b.memory.loaded=test.loaded;
-  policy.developmentPlan(f.room);for(const c of [...f.workers,b])policy.work(c);policy.finishDevelopment(f.room);
+  policy.allCreeps(true);policy.developmentPlan(f.room);for(const c of [...f.workers,b])policy.work(c);policy.finishDevelopment(f.room);
   const calls=b.actions.filter(a=>a[0]==='build'&&a[2]===C.OK).length;
   observations.push({case:test.name,calls,buildBudget:f.m.development.buildBudget,buildIntentEnergy:f.m.development.buildIntentEnergy,
    surplusBuild:f.m.development.surplusBuild});
@@ -497,7 +500,7 @@ report.checks.push('Initial zero energy, travel outside range3, zero active WORK
  f.room.sites.push({id:'nearly-complete-road',structureType:C.STRUCTURE_ROAD,pos:f.pos(16,24),progress:995,progressTotal:1000});
  const builders=[f.creep('completion-a','builder',17,25,100,100,[C.WORK,C.WORK,C.CARRY,C.MOVE]),
   f.creep('completion-b','builder',16,25,100,100,[C.WORK,C.WORK,C.CARRY,C.MOVE])];
- policy.developmentPlan(f.room);for(const c of [...f.workers,...builders])policy.work(c);policy.finishDevelopment(f.room);
+ policy.allCreeps(true);policy.developmentPlan(f.room);for(const c of [...f.workers,...builders])policy.work(c);policy.finishDevelopment(f.room);
  const calls=builders.reduce((n,c)=>n+c.actions.filter(a=>a[0]==='build'&&a[2]===C.OK).length,0);
  if(calls!==1)regressions.push('Useful construction must allocate the final5 progress once, independently of the smaller planning budget.');
  if(calls)assert.equal(f.m.development.buildIntentEnergy,5);

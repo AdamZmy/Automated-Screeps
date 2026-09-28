@@ -1,6 +1,9 @@
 'use strict';
-const {E,vals,range,energy,near,go,take,give,alive,sources,stores,miningSpots}=require('runtime');
+const {E,vals,range,energy,near,go,take,give,alive,allCreeps,roomCreeps,structures,myStructures,spawns,constructionSites,drops,tombstones,ruins,sources,stores,miningSpots}=require('runtime');
 let upgradeIntentTick=-1,upgradeActors=new Set();
+let upgraderCacheTick=-1,upgraderCache={};
+let stationCacheTick=-1,stationCache={};
+let constructionCacheTick=-1,constructionCache={};
 function upgrade(c) {
     const t=c.room.controller;if(!t||!t.my)return;
     if(upgradeIntentTick!==Game.time){upgradeIntentTick=Game.time;upgradeActors=new Set();}
@@ -118,12 +121,14 @@ function upgradePolicy(room) {
     return control&&control.baseMode===base.mode&&Game.time-control.at<200?{target:control.target,mode:control.mode}:base;
 }
 function upgraderAssignment(room) {
+    if(upgraderCacheTick!==Game.time){upgraderCacheTick=Game.time;upgraderCache={};}
+    if(upgraderCache[room.name]&&upgraderCache[room.name].room===room)return upgraderCache[room.name].value;
     const policy=upgradePolicy(room),primary=[],support=[];
-    const peers=vals(Game.creeps).filter(o=>!o.spawning&&o.room.name===room.name&&o.memory.role==='upgrader').sort((a,b)=>a.name.localeCompare(b.name));
+    const peers=allCreeps().filter(o=>!o.spawning&&o.room.name===room.name&&o.memory.role==='upgrader').sort((a,b)=>a.name.localeCompare(b.name));
     let work=0;
     // Stable names keep the same workers at the controller throughout this stage.
     for(const c of peers){if(policy.mode==='infrastructure'&&work>=policy.target)support.push(c);else{primary.push(c);work+=c.getActiveBodyparts(WORK);}}
-    return {policy,primary,support};
+    const value={policy,primary,support};upgraderCache[room.name]={room,value};return value;
 }
 function upgradeAllowed(c,assignment=upgraderAssignment(c.room)) {
     // Staffing and supply use the economic plan. A fueled primary upgrader
@@ -136,31 +141,37 @@ function walkable(room,p) {
         !sources(room).some(s=>range(s,p)===0)&&(!room.controller||range(room.controller,p)!==0);
 }
 function controllerStation(room) {
+    if(stationCacheTick!==Game.time){stationCacheTick=Game.time;stationCache={};}
+    if(stationCache[room.name]&&stationCache[room.name].room===room){
+        const cached=stationCache[room.name].value;
+        if(cached&&Game.getObjectById(cached.node.id)===cached.node)return cached;
+        delete stationCache[room.name];
+    }
     const ctrl=room.controller;if(!ctrl||!ctrl.my)return null;
     const m=economyMemory(room),plan=m.plan,ss=sources(room);
     const nodes=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_LINK].includes(s.structureType)&&range(s,ctrl)<=3&&!ss.some(src=>range(src,s)<=1));
     // Keep the container's four seats while it exists. A later link can feed
     // adjacent seats; losing the container rebuilds the station around the link.
     nodes.sort((a,b)=>Number(a.structureType===STRUCTURE_LINK)-Number(b.structureType===STRUCTURE_LINK)||range(a,ctrl)-range(b,ctrl));
-    const node=nodes[0];if(!node){delete m.upgradeStation;return null;}
+    const node=nodes[0];if(!node){delete m.upgradeStation;stationCache[room.name]={room,value:null};return null;}
     const key=nodes.map(s=>s.id).join(',')+':'+ctrl.level+':'+(plan&&plan.version||0)+':'+(plan&&plan.structures||[]).length;
     let station=m.upgradeStation;
     if(!station||station.key!==key||station.until<=Game.time||station.until>Game.time+25||
         ![station.port,...station.seats].every(p=>walkable(room,p))){
         const future=new Set((plan&&plan.structures||[]).filter(s=>OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
         const roads=new Set((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD).map(s=>s.x+50*s.y));
-        const core=plan&&(plan.roadCore||plan.anchor)||room.find(FIND_MY_SPAWNS)[0]?.pos||{x:25,y:25};
+        const core=plan&&(plan.roadCore||plan.anchor)||spawns(room)[0]?.pos||{x:25,y:25};
         const options=[];
         for(let y=node.pos.y-1;y<=node.pos.y+1;y++)for(let x=node.pos.x-1;x<=node.pos.x+1;x++){
             const p={x,y};if(walkable(room,p)&&!future.has(x+50*y)&&range(ctrl,p)<=3)options.push(p);
         }
         options.sort((a,b)=>Number(roads.has(b.x+50*b.y))-Number(roads.has(a.x+50*a.y))||range(a,core)-range(b,core)||range(ctrl,b)-range(ctrl,a));
-        const port=options.shift();if(!port){delete m.upgradeStation;return null;}
+        const port=options.shift();if(!port){delete m.upgradeStation;stationCache[room.name]={room,value:null};return null;}
         // Planned approach roads stay open, including the second access route.
         const seats=options.filter(p=>!roads.has(p.x+50*p.y));
         station=m.upgradeStation={key,node:node.id,port,seats,until:Game.time+25};
     }
-    return {...station,node,nodes};
+    const value={...station,node,nodes};stationCache[room.name]={room,value};return value;
 }
 function stationUpgrade(c,assignment) {
     const station=controllerStation(c.room),avoid=c.memory.stationAvoid;
@@ -204,7 +215,7 @@ function overflowUpgrade(c,assignment) {
     const station=controllerStation(c.room);
     if(!station||c.memory.upgradeSeat||c.memory.stationAvoid&&c.memory.stationAvoid.until>Game.time)return false;
     const plan=economyMemory(c.room).plan,roads=new Set((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD||OBSTACLE_OBJECT_TYPES.includes(s.type)).map(s=>s.x+50*s.y));
-    const peers=c.room.find(FIND_MY_CREEPS).filter(o=>o!==c);
+    const peers=roomCreeps(c.room).filter(o=>o!==c);
     const allowed=p=>range(c.room.controller,p)<=3&&walkable(c.room,p)&&!roads.has(p.x+50*p.y)&&
         ![station.port,...station.seats].some(s=>range(s,p)===0)&&
         !peers.some(o=>range(o,p)===0||o.memory.upgradeParking&&range(o.memory.upgradeParking,p)===0);
@@ -274,7 +285,7 @@ function developmentPlan(room) {
     delete m.developmentCredit;
     const control=m.economyControl,assignment=upgraderAssignment(room),job=constructionJobs(room)[0],supportJob=assignment.support.length?constructionJobs(room,true)[0]:null;
     const requests=[];let upgradeReady=0;
-    for(const c of vals(Game.creeps)){
+    for(const c of allCreeps()){
         if(c.spawning||c.room.name!==room.name||!energy(c))continue;
         const work=c.getActiveBodyparts(WORK);if(!work)continue;
         const yielding=c.memory.yieldSource&&Game.getObjectById(c.memory.yieldSource);
@@ -325,7 +336,7 @@ function build(c,target) {
 function refuel(c,harvest=true,protectController=false) {
     const station=controllerStation(c.room),dedicated=station&&(protectController||!(c.memory.role==='upgrader'&&upgraderAssignment(c.room).primary.includes(c)));
     const protectedStock=t=>dedicated&&station.nodes.some(n=>n.id===t.id);
-    const peers=c.room.find(FIND_MY_CREEPS).filter(o=>o.name!==c.name);
+    const peers=roomCreeps(c.room).filter(o=>o.name!==c.name);
     const free=p=>!peers.some(o=>{
         const reserved=o.memory.refuelTarget;
         return o.pos.x===p.x&&o.pos.y===p.y||o.memory.role==='miner'&&o.memory.spot&&o.memory.spot.x===p.x&&o.memory.spot.y===p.y||
@@ -341,9 +352,9 @@ function refuel(c,harvest=true,protectController=false) {
     }
     if(!task){
         const avoid=c.memory.refuelAvoid,allowed=t=>!avoid||avoid.until<=Game.time||avoid.id!==t.id;
-        const dropped=c.room.find(FIND_DROPPED_RESOURCES,{filter:d=>d.resourceType===E&&d.amount>0&&allowed(d)});
+        const dropped=drops(c.room).filter(d=>d.resourceType===E&&d.amount>0&&allowed(d));
         const stock=stores(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)&&energy(s)>0&&allowed(s)&&!protectedStock(s));
-        const loot=c.room.find(FIND_TOMBSTONES).concat(c.room.find(FIND_RUINS)).filter(s=>energy(s)>0&&allowed(s));
+        const loot=tombstones(c.room).concat(ruins(c.room)).filter(s=>energy(s)>0&&allowed(s));
         target=near(c,dropped.concat(stock,loot));
         if(target)task={id:target.id,kind:'take'};
         else if(harvest){
@@ -368,28 +379,30 @@ function urgentFill(c) {
     if(t){give(c,t);return true;}return false;
 }
 function constructionJobs(room,supportOnly=false) {
+    if(constructionCacheTick!==Game.time){constructionCacheTick=Game.time;constructionCache={};}
+    const roomSites=constructionSites(room),cacheKey=room.name+':'+Number(supportOnly),cached=constructionCache[cacheKey];if(cached&&cached.room===room&&cached.sites===roomSites)return cached.value;
     const plan=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[room.name]&&Memory.frontier.rooms[room.name].plan;
     const roads=new Map((plan&&plan.structures||[]).filter(s=>s.type===STRUCTURE_ROAD).map(s=>[s.x+50*s.y,s]));
     const priority={spawn:110,tower:100,container:96,extension:90,storage:80,link:70,road:40,rampart:30};
-    const jobs=room.find(FIND_MY_CONSTRUCTION_SITES).map(site=>{
+    const jobs=roomSites.map(site=>{
         const road=site.structureType===STRUCTURE_ROAD&&roads.get(site.pos.x+50*site.pos.y);
         const economy=!!(road&&road.roadClass==='economy');
         return {site,road,economy,priority:economy?94:priority[site.structureType]||10};
     }).filter(j=>!supportOnly||j.economy||[STRUCTURE_SPAWN,STRUCTURE_TOWER,STRUCTURE_EXTENSION,STRUCTURE_CONTAINER].includes(j.site.structureType));
     jobs.sort((a,b)=>b.priority-a.priority||Number(!!(b.economy&&b.road.roadSwamp))-Number(!!(a.economy&&a.road.roadSwamp))||(b.site.progress||0)-(a.site.progress||0)||(a.economy&&b.economy?(a.road.roadOrder||0)-(b.road.roadOrder||0):0));
-    return jobs.map(j=>j.site);
+    const value=jobs.map(j=>j.site);constructionCache[cacheKey]={room,sites:roomSites,value};return value;
 }
 function work(c) {
     const ctrl=c.room.controller;
     if(c.memory.yieldSource){
         const source=Game.getObjectById(c.memory.yieldSource);
-        if(source&&range(c,source)<=1){const home=c.room.find(FIND_MY_SPAWNS)[0]||ctrl;if(home)go(c,home);return;}
+        if(source&&range(c,source)<=1){const home=spawns(c.room)[0]||ctrl;if(home)go(c,home);return;}
         delete c.memory.yieldSource;
     }
     delete c.memory.haulSupply;
     if(c.memory.role==='builder'&&c.getActiveBodyparts(WORK)>0&&ctrl&&ctrl.my&&ctrl.level>1&&
-        !c.room.find(FIND_MY_CONSTRUCTION_SITES).length&&
-        !c.room.find(FIND_STRUCTURES,{filter:s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55}).length){
+        !constructionSites(c.room).length&&
+        !structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55)){
         c.memory.role='upgrader';delete c.memory.workSupply;
     }
     const assignment=c.memory.role==='upgrader'?upgraderAssignment(c.room):null;
@@ -404,9 +417,9 @@ function work(c) {
     // Retired construction workers can distribute surplus without withdrawing and
     // returning it to storage as an endless idle job.
     if(c.room.storage&&c.memory.role!=='upgrader'&&ctrl&&ctrl.my&&ctrl.ticksToDowngrade>=4000&&
-        !c.room.find(FIND_MY_CONSTRUCTION_SITES).length&&
-        !c.room.find(FIND_STRUCTURES,{filter:s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55}).length&&
-        (energy(c.room.storage)>0||vals(Game.creeps).some(o=>o.room.name===c.room.name&&o.memory.role==='miner'&&o.getActiveBodyparts(WORK)))){require('logistics').haul(c);return;}
+        !constructionSites(c.room).length&&
+        !structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55)&&
+        (energy(c.room.storage)>0||allCreeps().some(o=>o.room.name===c.room.name&&o.memory.role==='miner'&&o.getActiveBodyparts(WORK)))){require('logistics').haul(c);return;}
     if(!energy(c)) c.memory.loaded=false;
     // Any carried energy can fund useful work; refill only after it runs out.
     if(workReady(c))c.memory.loaded=true;
@@ -435,7 +448,7 @@ function work(c) {
         if(buildAllowed(c))build(c,t);
         return;
     }
-    const broken=c.room.find(FIND_STRUCTURES,{filter:s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55});
+    const broken=structures(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
     const b=near(c,broken);if(b){if(c.repair(b)===ERR_NOT_IN_RANGE)go(c,b,3);return;}
     if(c.room.storage&&c.room.storage.store.getFreeCapacity(E)>0){give(c,c.room.storage);return;}
     upgrade(c);
@@ -454,8 +467,8 @@ function mine(c) {
         }
         delete c.memory.replaces;
     }
-    const others=vals(Game.creeps).filter(o=>o.name!==c.name&&o.memory.role==='miner'&&o.memory.source===s.id);
-    const containers=s.pos.findInRange(FIND_STRUCTURES,1,{filter:t=>t.structureType===STRUCTURE_CONTAINER});
+    const others=allCreeps().filter(o=>o.name!==c.name&&o.memory.role==='miner'&&o.memory.source===s.id);
+    const containers=structures(c.room).filter(t=>t.structureType===STRUCTURE_CONTAINER&&range(s,t)<=1);
     const plan=Memory.frontier&&Memory.frontier.rooms&&Memory.frontier.rooms[c.room.name]&&Memory.frontier.rooms[c.room.name].plan;
     const planned=plan&&plan.sourcePlans&&plan.sourcePlans.find(p=>p.id===s.id);
     const opts=miningSpots(c.room,s).filter(p=>!others.some(o=>o.memory.spot&&o.memory.spot.x===p.x&&o.memory.spot.y===p.y));
@@ -466,12 +479,12 @@ function mine(c) {
     if(!spot)return;
     if(c.pos.x!==spot.x||c.pos.y!==spot.y){
         if(!c.fatigue&&range(c,spot)<=1){
-            const blocker=c.room.find(FIND_MY_CREEPS).find(o=>o.room.name===c.room.name&&!o.spawning&&o.pos.x===spot.x&&o.pos.y===spot.y&&['bootstrap','builder','upgrader'].includes(o.memory.role));
+            const blocker=roomCreeps(c.room).find(o=>o.room.name===c.room.name&&!o.spawning&&o.pos.x===spot.x&&o.pos.y===spot.y&&['bootstrap','builder','upgrader'].includes(o.memory.role));
             if(blocker){blocker.memory.yieldSource=s.id;delete blocker.memory.refuelTarget;}
         }
         go(c,new RoomPosition(spot.x,spot.y,c.room.name),0);return;
     }
-    const link=c.pos.findInRange(FIND_MY_STRUCTURES,1,{filter:t=>t.structureType===STRUCTURE_LINK&&t.store.getFreeCapacity(E)>0})[0];
+    const link=myStructures(c.room).find(t=>t.structureType===STRUCTURE_LINK&&t.store.getFreeCapacity(E)>0&&range(c,t)<=1);
     const box=containers.find(t=>range(c,t)<=1);
     if(energy(c)){
         if(box&&box.hits<box.hitsMax*.7){c.repair(box);return;}
