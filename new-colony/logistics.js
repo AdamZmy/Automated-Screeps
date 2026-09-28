@@ -31,7 +31,8 @@ function getBoard(room,extra=null,refresh=false) {
     const fixture=room.walls&&typeof room.walls.has==='function'&&(room.objects||room.snapshotObjects);
     const stamp=refresh&&fixture&&!board?.active?fixtureStamp(room):undefined;
     if(!board||board.room!==room||board.root!==Game.creeps||stamp!==undefined&&stamp!==board.stamp){
-        board={room,root:Game.creeps,stamp:stamp===undefined?(fixture?fixtureStamp(room):null):stamp,active:0,prepared:!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps),members:[],names:new Set(),
+        const retainPrepared=!!(board&&board.prepared&&board.room===room&&board.root===Game.creeps&&(stamp===undefined||stamp===board.stamp));
+        board={room,root:Game.creeps,stamp:stamp===undefined?(fixture?fixtureStamp(room):null):stamp,active:0,prepared:retainPrepared,members:[],names:new Set(),
             entries:new Map(),destinations:new Map(),sourceMembers:new Map(),destinationTotals:new Map(),sourceTotals:new Map(),layouts:new Map()};
         boards.set(room.name,board);
         for(const c of allCreeps())if(Game.creeps[c.name]===c&&!c.spawning&&c.room&&c.room.name===room.name&&ownsHauling(c)){
@@ -498,7 +499,13 @@ function deliverHaul(c,target) {
     try{return deliverTask(c,target);}finally{indexCreep(c,board);board.active--;finishBoard(board);}
 }
 function haul(c) {
-    let target=haulTarget(c),h=haulMemory(c);
+    let h=haulMemory(c),board=getBoard(c.room,null,true);
+    // prepare() has already assigned every real Hauler for this tick. An empty
+    // idle carrier with no task has no action to submit; avoid repeating the
+    // room lookup for the common W23 idle-carrier case. Direct helper calls
+    // without prepare still take the normal path for compatibility/tests.
+    if(c.memory.role==='hauler'&&board&&board.prepared&&h.state==='idle'&&!h.task&&!availableEnergy(c))return;
+    let target=haulTarget(c);
     if(h.task&&pending(h.task))return;
     if(h.state==='pickup'){
         if(collectHaul(c))return;
