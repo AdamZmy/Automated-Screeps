@@ -279,3 +279,11 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - 两房1500窗coverage0.2707，主房U88.93%、目标62.25%，均不合格。观察断档与库存口径不能用高短窗值掩盖；下一轮优先CPU、容器完工、真实交付及积压。
 - 历史RCL4有界180tick样本获得27次交付3210能源、21个完整周期，近/远/混合中位26.5/43/48tick；不外推到当前Link路径。诊断清理回读73989543。
 - 新RCL5地图73983666及导出/UI/API回归已完成，但Vercel返回Not authorized，未发布新网站。保留原项目/域名，恢复授权后发布；日志仍通过GitHub动态发布。
+
+## 2026-09-28T01:57:28Z — v0.5.0 模块化重构上线
+
+- `b7b96b1` / game build `2026-09-27.2` 将1056行 `main.js` 缩为39行装配入口；原有行为按 runtime、development、logistics、workforce、infrastructure、metrics 六个模块拆分，planner、plans、expansion、monitor、ledger 保持独立。
+- README 新增文件职责、调用关系和“问题→首读文件→直接依赖”表；AGENTS、ARCHITECTURE、能源与物流文档及本机 API skill 已同步，后续无需先通读所有逻辑。
+- 完整 `npm test` 通过，API manifest 扩为12个受管模块；dry-run仅发现预期的入口与六个新模块变化。实际上传后12模块远端回读一致，备份为 `backups/api-deploy-20260928T015525.881056Z/remote-code.json`。
+- 初次状态读取仍落在旧采样点73989980；随后73990020报告版本`2026-09-27.2`，确认新模块已由实际主循环加载。该窗CPU mean24.6509/max29.9906、EMA25.3856/20、bucket1，不能宣称CPU恢复。
+- 本版只改组织和加载边界，不修改策略。W23N26积压、Upgrader不足、能源堆积及主房Controller Container历史原因留待后续独立处理。用户暂停的`screeps-world`巡检继续保持PAUSED。
