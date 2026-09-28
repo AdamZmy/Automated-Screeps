@@ -4,7 +4,7 @@ const {constants:C,loadGameModule}=require('./test-support/runtime.cjs');
 // Quantities settle only at the next tick, with optional rejected intents.
 // This separates accepted commands from measured cargo and destination stores.
 function fixture(){
- const probes={allCreeps:0,stores:0,objectLookups:0,demandReads:0,walkable:0};
+ const probes={allCreeps:0,stores:0,objectLookups:0,demandReads:0,walkable:0,movement:{}};
  const room={name:'W21N26',objects:[],walls:new Set(),sites:[],station:null,memory:{plan:{structures:[]}},controller:{my:true,level:4},
   getTerrain(){return{get:(x,y)=>this.walls.has(x+50*y)?C.TERRAIN_MASK_WALL:0};},
   lookForAt(type,x,y){return objects().filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
@@ -36,7 +36,7 @@ function fixture(){
  }
  ctx.RoomPosition=Position;room.controller.pos=new Position(45,45);
  ctx.Game.getObjectById=id=>{probes.objectLookups++;return objects().find(o=>o.id===id)||Object.values(ctx.Game.creeps).find(c=>c.id===id);};
- ctx.gameModuleOverrides={metrics:{movementCount(){}},infrastructure:{linkNetwork:()=>({hub:room.hub})},
+ ctx.gameModuleOverrides={metrics:{movementCount(name){probes.movement[name]=(probes.movement[name]||0)+1;}},infrastructure:{linkNetwork:()=>({hub:room.hub})},
   movement:{go(c,target,r=1,options={}){if(c.fatigue)return C.ERR_TIRED;return c.moveTo(target.pos||target,{range:r,...options});}},
   development:{controllerStation:()=>room.station,upgraderAssignment:()=>{probes.demandReads++;return{primary:[],policy:{target:0}};},economyMemory:()=>room.memory,
    routeTravel:()=>10,constructionJobs:()=>room.sites,walkable(r,p){probes.walkable++;return p.x>=1&&p.x<=48&&p.y>=1&&p.y<=48&&!room.walls.has(p.x+50*p.y)&&
@@ -195,6 +195,17 @@ function fixture(){
  assert.equal(first.memory.haul.task.amount,100);assert.equal(peer.memory.haul.task.amount,50,'unfunded source and destination promises shrink after uncapped pickup');
  assert.equal(peer.memory.haul.task.pickupAmount,50);f.logistics.collectHaul(peer);f.settle();
  assert.equal(f.value(first)+f.value(peer),150,'source content is never counted more than once');
+}
+{
+ const f=fixture(),dest=f.station('shared-route-destination',12,12),src=f.box('shared-route-source',5,5,2000);
+ const carriers=[f.creep('route-a',6,5),f.creep('route-b',7,5),f.creep('route-c',8,5)];
+ f.logistics.prepare(f.room);
+ const misses=f.probes.movement.haulRouteCacheMisses||0,hits=f.probes.movement.haulRouteCacheHits||0,searches=f.probes.movement.pathSearches||0;
+ assert.equal(misses,1,'one static source-to-destination route is built for the room');
+ assert(hits>=2,'other carriers reuse the shared static route');
+ f.settle();f.logistics.prepare(f.room);
+ assert.equal(f.probes.movement.pathSearches||0,searches,'stable haul tasks do not repeat route searches on the next tick');
+ assert(carriers.every(c=>c.memory.haul.task&&c.memory.haul.task.routeKey),'assigned haul tasks retain a route key');
 }
 {
  const f=fixture();f.node(C.STRUCTURE_SPAWN,'demand',7,5,0,300);const trapped=f.node(C.STRUCTURE_STORAGE,'trapped',5,8,1000,1000000),reachable=f.box('reachable',13,5,100),c=f.creep('routes',6,5);

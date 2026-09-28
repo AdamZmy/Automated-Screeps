@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e",
+  "kind": "scheduled",
+  "startedAt": "2026-09-28T18:36:20.692Z",
+  "updatedAt": "2026-09-28T18:44:20.524Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "Hauler 路线缓存与 CPU 优化",
+  "summary": "CPU investigation identified repeated Hauler route feasibility checks and short local path reuse as optimization targets; user requested route/port caching and reusePath extension, while deferring empty-pickup waiting.",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-28.6",
+    "tick": 74003300,
+    "fetchedAt": "2026-09-28T18:19:19Z"
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "Hauler route feasibility was recomputed repeatedly",
+      "detail": "At the observed tick, creeps used 9.4459 CPU/tick and Hauler role used 4.5739. W23N26 contributed 7.0892 CPU/tick with 10 Haulers. Existing movement reused engine paths for 15 ticks, but logistics route feasibility and delivery-port searches remained repeated on new assignments and blocked ports.",
+      "evidence": [
+        "Observed CPU window: mean 16.4973, max 22.8805, bucket 36.",
+        "Independent review found repeated findPathTo calls in logistics route assignment; movement already used engine reusePath."
+      ],
+      "issue": null
+    },
+    {
+      "severity": "info",
+      "title": "Empty-pickup waiting remains deferred",
+      "detail": "The user explicitly deferred empty-pickup waiting and backoff, so no idle wait state was added in this change.",
+      "evidence": [
+        "Scope decision from the current task."
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [
+    {
+      "issue": null,
+      "title": "Add bounded static Hauler route cache",
+      "status": "done",
+      "progress": "Implemented heap-only source-to-destination route caching with TTL and size bounds, plus per-task routeKey.",
+      "next": "Verify fresh live CPU window after deployment.",
+      "owner": "main coordinator"
+    },
+    {
+      "issue": null,
+      "title": "Retain delivery-port cache during contention",
+      "status": "done",
+      "progress": "Implemented short port lease retention with hit, wait and miss counters.",
+      "next": "Verify live delivery behavior after deployment.",
+      "owner": "main coordinator"
+    },
+    {
+      "issue": null,
+      "title": "Extend local movement path reuse",
+      "status": "done",
+      "progress": "Raised stable local move reusePath from 15 to 50 ticks while retaining per-tick moveTo calls.",
+      "next": "Observe path search and blocked-step counters.",
+      "owner": "main coordinator"
+    },
+    {
+      "issue": null,
+      "title": "Keep empty-pickup waiting unchanged",
+      "status": "done",
+      "progress": "No empty-pickup waiting/backoff logic was added, per user instruction.",
+      "next": "Revisit only if live CPU remains high after route caching.",
+      "owner": "main coordinator"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-28T18:36:21Z",
+      "description": "Read repository operations guidance and started independent route review.",
+      "status": "done",
+      "result": "Review identified repeated static route searches and confirmed engine path reuse is already active."
+    },
+    {
+      "at": "2026-09-28T18:42:30Z",
+      "description": "Updated logistics, movement and regression fixtures; bumped project and game build versions.",
+      "status": "done",
+      "result": "Targeted checks and full test suite passed."
+    }
+  ],
+  "checks": [
+    {
+      "name": "Node syntax",
+      "result": "passed",
+      "detail": "movement.js and logistics.js pass node --check."
+    },
+    {
+      "name": "Targeted game regressions",
+      "result": "passed",
+      "detail": "verify-logistics.cjs and verify-economy.cjs pass, including shared-route cache regression."
+    },
+    {
+      "name": "Full test suite",
+      "result": "passed",
+      "detail": "npm test exits 0 across game, layout, API, operations, diagnostics and policy checks."
+    }
+  ],
+  "next": [
+    "Deploy build 2026-09-28.7 through the HTTP API, verify all modules, and observe a fresh CPU window."
+  ],
+  "references": [
+    {
+      "label": "logistics implementation",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/new-colony/logistics.js"
+    },
+    {
+      "label": "movement implementation",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/new-colony/movement.js"
+    },
+    {
+      "label": "logistics regression fixture",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/new-colony/verify-logistics.cjs"
+    },
+    {
+      "label": "economy regression fixture",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/new-colony/verify-economy.cjs"
+    }
+  ]
+}

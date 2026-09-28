@@ -3,6 +3,7 @@
 // ordinary roles; no late queue can erase a necessary move or lose it to CPU.
 const movementCount=name=>require('metrics').movementCount(name);
 let decisionTick=-1,decisions=new Map();
+const LOCAL_PATH_REUSE=50;
 function tickDecisions(){if(decisionTick!==Game.time){decisionTick=Game.time;decisions=new Map();}return decisions;}
 function remember(c,owner,target,result,state){
     const decision={at:Game.time,owner,target,result,state};
@@ -36,7 +37,11 @@ function go(c,t,r=1,options={}){
     movementCount('moveCalls');if(c.memory.stuck)movementCount('blockedSteps');
     if(c.memory.stuck>=2&&c.memory.stuck%3===2){delete c.memory._move;movementCount('pathResets');}
     const {owner:ignoredOwner,routeVersion:ignoredVersion,...moveOptions}=options;
-    const result=c.moveTo(p,{range:r,reusePath:15,maxRooms:roomName===c.room.name?1:16,ignoreCreeps:c.memory.stuck<2,...moveOptions});
+    // The command still needs to be submitted on each tick so the creep can
+    // take its next step, but the engine can reuse the cached path for a much
+    // longer stable haul leg.  Explicit target/route changes and stuck
+    // recovery above still invalidate the engine cache.
+    const result=c.moveTo(p,{range:r,reusePath:LOCAL_PATH_REUSE,maxRooms:roomName===c.room.name?1:16,ignoreCreeps:c.memory.stuck<2,...moveOptions});
     return remember(c,owner,target,result,result===OK?'submitted':result===ERR_NO_PATH?'no-path':'rejected');
 }
 function keeper(name){const n=name.match(/\d+/g).map(Number);return n.every(x=>x%10>=4&&x%10<=6);}

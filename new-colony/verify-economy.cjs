@@ -546,7 +546,7 @@ console.log('PASS: fixed construction supply priority, controller emergency/spaw
  c.memory._move={path:'cached'};const start=ctx.Game.time;
  go(c,destination);assert.equal(c.memory.stuck,0);assert.equal(calls.at(-1).hadPath,true);
  ctx.Game.time=start+1;go(c,destination);assert.equal(c.memory.stuck,1);assert.equal(calls.at(-1).hadPath,true);
- ctx.Game.time=start+2;go(c,destination);assert.equal(c.memory.stuck,2);assert.equal(calls.at(-1).hadPath,false,'two failed actual steps invalidate moveTo cache');assert.equal(calls.at(-1).ignoreCreeps,false);assert.equal(calls.at(-1).reusePath,15,'the newly generated detour remains reusable');
+ ctx.Game.time=start+2;go(c,destination);assert.equal(c.memory.stuck,2);assert.equal(calls.at(-1).hadPath,false,'two failed actual steps invalidate moveTo cache');assert.equal(calls.at(-1).ignoreCreeps,false);assert.equal(calls.at(-1).reusePath,50,'the newly generated detour remains reusable for a stable haul leg');
  c.memory._move={path:'detour'};ctx.Game.time++;c.pos=f.pos(21,20);go(c,destination);assert.equal(c.memory.stuck,0,'successful movement clears blockage');assert.equal(calls.at(-1).hadPath,true);
  ctx.Game.time+=10;go(c,destination);assert.equal(c.memory.stuck,0,'working in place between trips is not continuous blocked movement');
  const attempted=c.memory.moveAttempt,n=calls.length;ctx.Game.time++;c.fatigue=2;assert.equal(go(c,destination),C.ERR_TIRED);assert.equal(calls.length,n);assert.equal(c.memory.moveAttempt,undefined,'fatigue waiting clears stale movement-attempt telemetry');

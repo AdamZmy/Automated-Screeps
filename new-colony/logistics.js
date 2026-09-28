@@ -7,7 +7,19 @@ const movementCount=name=>require('metrics').movementCount(name);
 // Only accepted actions mutate the intent book; changes to owned task promises
 // update the indexes below immediately rather than rebuilding them per request.
 let boardTick=-1,boards=new Map();
+// Static source-to-destination routes are shared by all Haulers in the room.
+// Keep them on the heap rather than in Memory: the route is derived from the
+// room plan and should not inflate the serialized per-tick game state.
+const haulRouteCache=new Map(),HAUL_ROUTE_TTL=500,HAUL_ROUTE_LIMIT=256;
 const ownsHauling=c=>c.memory.role==='hauler'||c.memory.haul&&c.memory.haul.executorTick===Game.time;
+function haulRouteVersion(room){
+    const plan=economyMemory(room).plan||{};
+    return [plan.version||0,plan.roadVersion||0,room.controller&&room.controller.level||0].join(':');
+}
+function haulRouteKey(room,source,destination){
+    const sid=source&&(source.id||source.structureType+':'+source.pos.x+':'+source.pos.y),did=destination&&(destination.id||destination.structureType+':'+destination.pos.x+':'+destination.pos.y);
+    return room.name+'|'+sid+'>'+did+'|'+haulRouteVersion(room);
+}
 function fixtureStamp(room) {
     // Deterministic fixtures can replace objects/stores/tasks inside one tick;
     // real Room objects have no `objects` collection and skip this test adapter.
@@ -181,13 +193,30 @@ function sourceAllowed(c,node,destination) {
 }
 function pathLeg(from,to) {
     if(range(from,to)<=1)return {end:from.pos||from,length:0};
-    const pos=from.pos||from,path=pos.findPathTo(to.pos||to,{range:1,ignoreCreeps:true,maxRooms:1,maxOps:2000});
+    const pos=from.pos||from;
+    movementCount('pathSearches');
+    const path=pos.findPathTo(to.pos||to,{range:1,ignoreCreeps:true,maxRooms:1,maxOps:2000});
     const end=path[path.length-1];
-    return end&&range(end,to)<=1?{end:new RoomPosition(end.x,end.y,pos.roomName),length:path.length}:null;
+    return end&&range(end,to)<=1?{end:new RoomPosition(end.x,end.y,pos.roomName),length:path.length,path}:null;
 }
 function routePossible(c,source,destination) {
-    const first=pathLeg(c,source);if(!first)return false;
-    return !!pathLeg(first.end,destination);
+    // The current creep still needs one reachability check to its source when
+    // a new assignment is created.  The second leg is static for every
+    // carrier using this source/destination pair and is shared from the heap
+    // cache, so new carriers no longer repeat that expensive search.
+    const key=haulRouteKey(c.room,source,destination),version=haulRouteVersion(c.room),old=haulRouteCache.get(key);
+    let route=old&&old.version===version&&Game.time-old.at<HAUL_ROUTE_TTL?old:null;
+    if(route){movementCount('haulRouteCacheHits');}
+    else{
+        movementCount('haulRouteCacheMisses');
+        const staticLeg=pathLeg(source,destination);
+        route={key,version,at:Game.time,reachable:!!staticLeg,length:staticLeg&&staticLeg.length||0,path:staticLeg&&staticLeg.path||null};
+        haulRouteCache.delete(key);
+        if(haulRouteCache.size>=HAUL_ROUTE_LIMIT)haulRouteCache.delete(haulRouteCache.keys().next().value);
+        haulRouteCache.set(key,route);
+    }
+    if(!route.reachable)return false;
+    return !!pathLeg(c,source);
 }
 function reconcileTask(c,requests) {
     const h=haulMemory(c),task=h.task,position=c.pos.x+','+c.pos.y;
@@ -287,7 +316,7 @@ function assignTask(c,requests) {
         for(const route of routes){
             if(!routePossible(c,route.node,route.destination.node))continue;
             movementCount(old?'deliverySwitches':'deliveryStarts');
-            h.state='pickup';h.task={id:route.destination.node.id,source:route.node.id,room:c.room.name,amount:route.amount,
+            h.state='pickup';h.task={id:route.destination.node.id,source:route.node.id,room:c.room.name,routeKey:haulRouteKey(c.room,route.node,route.destination.node),amount:route.amount,
                 pickupAmount:Math.min(capacity,route.free,route.node.resourceType?capacity:route.amount),priority:route.destination.priority,
                 expires:Game.time+200,position:c.pos.x+','+c.pos.y,progress:Game.time,routeEstimate:route.estimate};
             return route.destination.node;
@@ -383,8 +412,14 @@ function deliveryPort(c,target,task,layout) {
     const avoid=task.portAvoid||{};
     for(const key in avoid)if(avoid[key]<=Game.time)delete avoid[key];
     const free=p=>!avoid[p.x+50*p.y]&&!peers.some(o=>range(o,p)===0)&&!promised.some(q=>range(q,p)===0);
-    if(task.port&&layout.ports.some(p=>range(p,task.port)===0)&&free(task.port))return task.port;
-    delete task.port;
+    if(task.port&&layout.ports.some(p=>range(p,task.port)===0)){
+        if(free(task.port)){movementCount('portCacheHits');return task.port;}
+        // A cached port can be temporarily occupied by another carrier. Keep
+        // it through a short lease before paying for another path search.
+        if(task.portWaitSince===undefined)task.portWaitSince=Game.time;
+        if(Game.time-task.portWaitSince<8){movementCount('portCacheWaits');return null;}
+        delete task.port;movementCount('portCacheMisses');
+    }else delete task.port;
     const candidates=layout.ports.filter(free).sort((a,b)=>Number(!!layout.preferred&&range(b,layout.preferred)===0)-Number(!!layout.preferred&&range(a,layout.preferred)===0)||range(c,a)-range(c,b));
     if(!candidates.length&&layout.ports.some(p=>!avoid[p.x+50*p.y])){
         // An occupied or near-term leased port is transient contention, not an
@@ -394,6 +429,7 @@ function deliveryPort(c,target,task,layout) {
     for(const p of candidates){
         // Exact range zero matters: reaching a neighboring tile does not prove
         // that this unloading tile itself is reachable. Bound each path search.
+        movementCount('pathSearches');
         const path=c.pos.findPathTo(new RoomPosition(p.x,p.y,c.room.name),{range:0,ignoreCreeps:false,maxRooms:1,maxOps:1000,
             costCallback(name,matrix){if(name===c.room.name)for(const seat of layout.seats)matrix.set(seat.x,seat.y,255);}});
         const end=path[path.length-1];

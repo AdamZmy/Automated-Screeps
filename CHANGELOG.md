@@ -6,6 +6,13 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.6.1 — 2026-09-28
+
+- Game build `2026-09-28.7` shares static Hauler source-to-destination route
+  checks across carriers, retains delivery-port leases through short contention,
+  and extends stable local path reuse to 50 ticks. Add bounded movement counters
+  for route/path cache hits and searches; empty pickup waiting is unchanged.
+
 ## 0.6.0 — 2026-09-28
 
 - Game build `2026-09-28.6` implements the reviewed Colony module boundaries:
