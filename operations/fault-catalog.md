@@ -119,3 +119,24 @@
 - 关联：Issue #12。没有游戏代码/Memory/部署改动；根治执行边界依赖每轮遵守唯一写入者与失败即停止发布，不声称新增了跨任务事务锁。
 
 独立回归：`python3 -B tools/verify-inspection-recovery.py`，3项临时目录实验覆盖过期摘要、漏索引、多非法时间互相阻塞及保留证据恢复。
+
+
+## R001 - Critical controller buffer maintenance can starve behind construction
+
+- Trigger: controller container needs repair while any planned construction queue remains. Game build2026-09-27.1 retains this mechanism; no repair applied during the paused retrospective.
+- Confirmed code: main.js work() returns from construction before checking damaged containers; controller upgraders do not repair, tower repairs ramparts only, source miners protect only source containers.
+- Observe: per-container hits/ticksToDecay, persistent sites, fueled builders and actual repair actions. Room-wide repair totals cannot establish controller-buffer maintenance.
+- Reproduce: `node new-colony/tools/verify-retrospective-causes.cjs` RETRO PASS1. Container1000/250000 with persistent sites produces10build/0repair; removing sites permits repair.
+- Exclude or narrow: verified regular repairs to this specific buffer, or confirmed attack/destruction events explaining loss. The Sep28 historical disappearance lacks a pre-loss hit-point sequence; its direct cause remains unproven.
+- Safe next treatment: deadline-aware repair priority for critical infrastructure; do not blindly reconstruct repeatedly or assume RCL5 links replace the container. Regression should change to require timely repair after a fix.
+- Evidence: Issue1 and `diagnostics/2026-09-28-controller-expansion-retrospective.md`; last direct present73983666, rebuilding73989480/73989655.
+
+## W005 - CPU recovery merges distinct consumer roles
+
+- Trigger: sustained CPU mean above limit with bucket below limit*50; one WORK role exists but another essential consumer role is absent.
+- Confirmed code: missingWork merges upgrader/builder/bootstrap/pioneer. CPU birth hold can block missing upgrader while builder exists, and does not protect missing construction capacity while an upgrader remains. Transport demand is considered earlier than builder and additional upgrader demand.
+- Observe: spawnHold, CPU mean/bucket, role-specific active/expiring/spawning WORK, unfinished sites and stored/dropped energy. Do not infer recovery from total WORK alone.
+- Reproduce: `node new-colony/tools/verify-retrospective-causes.cjs` RETRO PASS3. CPU hold plus no upgrader and one builder prevents birth; removing all WORK permits recovery. Existing ready-worker actions remain enabled.
+- Exclude or narrow: CPU hold inactive, no missing consumer capacity, or safe role-specific replacement already spawning. The .1 guard cannot explain faults before its deployment.
+- Safe next treatment: protect independently necessary consumer-role replacement while reducing measured CPU overhead; avoid unrestricted population growth or deliberate waste.
+- Evidence: Issue4, build2026-09-27.1;73989640 target1upgrader/2WORK,0builder,13hauler,7miner,drop2529;mean25.7112/limit20,bucket1. No gameplay fix applied.

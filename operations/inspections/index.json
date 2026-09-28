@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T01:33:15.365Z",
+  "updatedAt": "2026-09-28T01:36:09.597Z",
   "days": [
     "2026-09-28",
     "2026-09-27",
@@ -12,13 +12,17 @@
       "id": "2026-09-28T01-31-00Z-run-3854251ff902",
       "kind": "manual",
       "startedAt": "2026-09-28T01:31:00.651Z",
-      "updatedAt": "2026-09-28T01:31:00.651Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-28T01:36:09.597Z",
+      "completedAt": "2026-09-28T01:34:43Z",
+      "status": "completed",
       "title": "暂停巡检并回顾控制器容器、首次扩张与升级积压",
-      "summary": "",
-      "tick": null,
-      "issueNumbers": []
+      "summary": "Schedule paused. Historical and fresh API review plus independent sandbox checks completed without game-code changes or deployment. Expansion predates controller-container loss. Maintenance starvation and incomplete consumer-role recovery are confirmed mechanisms; historical destruction cause remains unproven.",
+      "tick": 73989655,
+      "issueNumbers": [
+        1,
+        4,
+        7
+      ]
     },
     {
       "id": "2026-09-28T01-16-06Z-run-74f3b9e45d01",
