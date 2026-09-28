@@ -1,8 +1,88 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-27T14:27:43.104Z",
+  "updatedAt": "2026-09-28T01:19:46.219Z",
   "day": "2026-09-27",
   "runs": [
+    {
+      "id": "2026-09-27T19-48-37Z-run-e89ef739fbfa",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T19:48:37.113Z",
+      "updatedAt": "2026-09-28T01:19:45.407Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态核验与周期巡检",
+      "summary": "即时任务状态确认现任协调者仍在运行，本轮让行并仅记录跳过原因。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "id": "2026-09-27T19-18-41Z-run-e90981a592c5",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T19:18:41.214Z",
+      "updatedAt": "2026-09-28T01:19:46.097Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调状态核验",
+      "summary": "即时任务状态确认既有协调者仍active/inProgress，本轮仅记录让行；不接管游戏、代码、Issue或共享Git发布。",
+      "tick": null,
+      "issueNumbers": [
+        4,
+        5,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "2026-09-27T19-02-52Z-hourly-ownership-check-bc14bc79a821",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T19:02:52.156Z",
+      "updatedAt": "2026-09-28T01:19:45.517Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hourly inspection: active coordinator owns repairs",
+      "summary": "Immediate task status confirms the existing coordinator is active. This run preserves ownership and prepares a skipped-run journal; no new game observation.",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "id": "2026-09-27T15-36-40Z-run-f8edca64df08",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T15:36:40.955Z",
+      "updatedAt": "2026-09-28T01:19:46.219Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "每小时巡检：核验任务所有权",
+      "summary": "本轮协调者 01a0e37d-7092-7bc2-9787-c7221c5c298b 已取得即时任务状态：上轮协调者仍 active/inProgress，保留所有权；本轮仅隔离记录日志。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
     {
       "id": "2026-09-27T14-23-35Z-run-81b7cb226ce6",
       "kind": "scheduled",

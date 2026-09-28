@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-28T01:19:45.980Z",
+  "day": "2026-09-28",
+  "runs": [
+    {
+      "id": "2026-09-28T01-16-06Z-run-74f3b9e45d01",
+      "kind": "scheduled",
+      "startedAt": "2026-09-28T01:16:06.011Z",
+      "updatedAt": "2026-09-28T01:19:45.299Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "每小时巡检：等待负责人状态核验",
+      "summary": "已读取规则及活动Issue；跨任务即时状态查询工具不可用，负责人状态未知。保留归属，准备本轮隔离日志。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "id": "2026-09-28T01-15-50Z-run-4a1db77c62cc",
+      "kind": "scheduled",
+      "startedAt": "2026-09-28T01:15:50.516Z",
+      "updatedAt": "2026-09-28T01:19:45.631Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "任务状态不可核验，保留现有归属",
+      "summary": "本轮已读取操作规则及活动Issue；跨任务即时状态工具不可用，协调者和旧工作者父任务状态未知。遵循接管门禁，仅记录本轮；共享发布待唯一发布者核验。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "id": "2026-09-28T01-15-39Z-run-49b6ea2740bc",
+      "kind": "scheduled",
+      "startedAt": "2026-09-28T01:15:39.651Z",
+      "updatedAt": "2026-09-28T01:19:45.980Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "每小时巡检：核验任务归属",
+      "summary": "已读操作规则和活动Issue；当前工具缺少跨任务即时状态查询，正在保存本轮隔离记录，尚未接管。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-28T01-15-13Z-run-38ed4fc27eac",
+      "kind": "scheduled",
+      "startedAt": "2026-09-28T01:15:13.102Z",
+      "updatedAt": "2026-09-28T01:19:45.863Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "每小时巡检与协调者核验",
+      "summary": "核验已有协调者仍在运行；本轮让行，游戏观测未知，日志待唯一发布者串行同步。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "id": "2026-09-28T01-14-49Z-run-ee797a92cd04",
+      "kind": "scheduled",
+      "startedAt": "2026-09-28T01:14:49.563Z",
+      "updatedAt": "2026-09-28T01:19:45.748Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "小时巡检：协调者仍运行，保留当前归属",
+      "summary": "本轮先核验任务归属，确认现有协调者仍 active/inProgress；保留其 API、文件与 Git 发布权限，准备独立跳过记录。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    }
+  ]
+}

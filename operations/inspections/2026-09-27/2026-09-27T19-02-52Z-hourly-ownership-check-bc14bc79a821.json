@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-27T19-02-52Z-hourly-ownership-check-bc14bc79a821",
+  "kind": "scheduled",
+  "startedAt": "2026-09-27T19:02:52.156Z",
+  "updatedAt": "2026-09-28T01:19:45.517Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "Hourly inspection: active coordinator owns repairs",
+  "summary": "Immediate task status confirms the existing coordinator is active. This run preserves ownership and prepares a skipped-run journal; no new game observation.",
+  "game": null,
+  "findings": [
+    {
+      "severity": "info",
+      "title": "Existing coordinator remains active",
+      "detail": "CURRENT_STATE coordinator and Issues 4, 5, 7 and 9 resolve to the same active parent. Existing workforce and expansion reviews are already assigned; no duplicate review or repair is started.",
+      "evidence": [
+        "Codex immediate status: coordinator 01a0dd13-1434-7c73-b6c1-69d67742d963 active; latest turn inProgress.",
+        "Previous verification owner 01a0dcda-c46c-74c1-9a5e-6b933c0d6856 notLoaded; latest turn completed.",
+        "Live GitHub Issue checkpoints supersede stale short-state rows: Issues 4 and 7 are now in-progress."
+      ],
+      "issue": 4
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 1,
+      "title": "Fixed-node transport acceptance",
+      "status": "verifying",
+      "progress": "Complete observed delivery cycles remain pending.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 4,
+      "title": "Workforce sizing and expansion telemetry",
+      "status": "in-progress",
+      "progress": "Assigned root and independent reviewers are integrating fixes.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 5,
+      "title": "Transport cycle observations",
+      "status": "in-progress",
+      "progress": "Existing coordinator owns bounded probe readback.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 6,
+      "title": "Storage transition acceptance",
+      "status": "verifying",
+      "progress": "Acceptance checkpoint remains open.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "01a0dcda-c46c-74c1-9a5e-6b933c0d6856"
+    },
+    {
+      "issue": 7,
+      "title": "First expansion bootstrap",
+      "status": "in-progress",
+      "progress": "Existing coordinator tracks first spawn and support.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 8,
+      "title": "Link network",
+      "status": "planned",
+      "progress": "Retain current state; this run does not evaluate activation gates.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "unassigned"
+    },
+    {
+      "issue": 9,
+      "title": "Neighbor layout review",
+      "status": "in-progress",
+      "progress": "neighbor_review retains ownership under the active coordinator.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "neighbor_review; parent=01a0dd13-1434-7c73-b6c1-69d67742d963"
+    },
+    {
+      "issue": 10,
+      "title": "Mature-base facilities",
+      "status": "planned",
+      "progress": "Retain current state; this run does not evaluate activation gates.",
+      "next": "Current owner continues the existing checkpoint; next scheduled run must verify owner status before takeover.",
+      "owner": "unassigned"
+    }
+  ],
+  "actions": [],
+  "checks": [
+    {
+      "name": "Immediate coordinator and verification-owner status",
+      "result": "passed",
+      "detail": "Checked each parent via an individual returned immediate task snapshot; active owner retains shared Git/API/source ownership."
+    },
+    {
+      "name": "Fresh game health and efficiency",
+      "result": "pending",
+      "detail": "No game API called in this skipped run; tick, version and runtime measurements remain unknown."
+    },
+    {
+      "name": "Public journal publication",
+      "result": "pending",
+      "detail": "Prepare independent local start and final revisions for the sole active publisher; no shared Git mutation or push by this run."
+    }
+  ],
+  "next": [
+    "Hand original-ID start and final journal revisions to the active sole publisher for separate serial commits and pushes.",
+    "Next inspection checks CURRENT_STATE, live Issue owners and worker parents before takeover; do not restore old chat or duplicate reviewers."
+  ],
+  "references": [
+    {
+      "label": "Active energy work",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "Expansion checkpoint",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
+    }
+  ]
+}
