@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-28T03-15-24Z-hauler-d79b92fba8c0",
+  "kind": "manual",
+  "startedAt": "2026-09-28T03:15:24.694Z",
+  "updatedAt": "2026-09-28T03:15:45.300Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "落实房间模块重构与 Hauler 状态机",
+  "summary": "用户已批准完整模块重构和游戏部署。旧协调者均已停止并释放代码归属，本轮由 root 统筹三个有限实现子任务。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-27.5",
+    "tick": 73991080,
+    "fetchedAt": "2026-09-28T03:14:13Z"
+  },
+  "findings": [],
+  "tasks": [],
+  "actions": [],
+  "checks": [
+    {
+      "name": "源码与归属基线",
+      "result": "passed",
+      "detail": "12个受管模块本地/远端hash一致；先前任务idle或completed。"
+    },
+    {
+      "name": "重构及真实tick验收",
+      "result": "pending",
+      "detail": "实现后运行完整回归、API部署回读及在线行为检查。"
+    }
+  ],
+  "next": [
+    "单一Hauler状态机、双端预约、统一出生/施工入口；迁移模块并执行回归。"
+  ],
+  "references": []
+}

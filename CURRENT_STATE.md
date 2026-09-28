@@ -45,3 +45,7 @@
 - API 受管模块共 12 个：`main/runtime/development/logistics/workforce/infrastructure/metrics/planner/plans/expansion/monitor/ledger`。
 - `screeps_api.py deploy` 默认只预览；`deploy --apply` 才上传，上传后必须 `code-check` 并等待 Memory 中版本和 tick 推进。
 - 不因代码发布自动恢复巡检 automation；只有用户明确要求时再启用。
+
+## 当前负责者
+
+- 本轮重构由 root `01a0e5d9-dc86-7f83-883c-af5c434fcefe` 独占整合/API/Git/部署；三个有限代理分别负责物流、经济人口、任务规划移动。用户已明确授权重构与部署。
