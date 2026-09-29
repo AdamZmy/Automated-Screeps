@@ -3,36 +3,90 @@
   "id": "2026-09-29T21-48-32Z-hauler-cpu-b61a8e5a6624",
   "kind": "manual",
   "startedAt": "2026-09-29T21:48:32.413Z",
-  "updatedAt": "2026-09-29T21:53:21.808Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-29T22:11:41.673Z",
+  "completedAt": "2026-09-29T22:10:10Z",
+  "status": "completed",
   "title": "Hauler CPU 修复与线上验证",
-  "summary": "用户授权修复 Hauler CPU。本轮 root 独占 logistics、metrics、API 与部署；独立审视者只读，workforce 续代由有限实现者负责。新鲜基线 tick74026120/.7：8只Hauler，角色2.5757CPU/t，logistics准备0.7883/t，主循环16.1732/t。已实现稳定任务复用、精确起点来源缓存、端口索引，并回归 idle让路、同tick到货阻止无效取货、占口立即备用。尚未部署。",
+  "summary": "Hauler已知代码缺陷修复并部署.2：稳定任务/一次核对/精确缓存/端口索引/标准续代/实际卸空结束旧趟/分项CPU。回归、独立复核、17模块匹配及真实新tick74026440通过，运输升级继续。最新19样本mean18.2340、Hauler2.7885/prepare0.8936/bucket1，尚未低于基线且缺测，不能称CPU问题全部解决。自动审批拒绝GitHub公开推送，本地保留待授权；Issue5继续verifying。",
   "game": {
     "shard": "shard1",
     "rooms": [
       "W21N26",
       "W23N26"
     ],
-    "version": "2026-09-28.7",
-    "tick": 74026120,
-    "fetchedAt": "2026-09-29T21:48:07Z"
+    "version": "2026-09-29.2",
+    "tick": 74026440,
+    "fetchedAt": "2026-09-29T22:09:46Z"
   },
-  "findings": [],
+  "findings": [
+    {
+      "severity": "info",
+      "title": "L008跨完整趟次继承小订单已修复",
+      "detail": "450容量/来源1000车送完9会重复只取9；.2确认下一tick实际卸空后重派450。失败/部分交付和同tickaccepted不误清。",
+      "evidence": [
+        "root回归new-trip与独立5边界通过，线上新标准车真实携450。"
+      ],
+      "issue": 5
+    },
+    {
+      "severity": "warning",
+      "title": "CPU恢复尚未验收",
+      "detail": ".1同8车首窗开销上升；.2最新仍19样本/低bucket。upgrader5.7329高于Hauler2.7885，不能沿用Hauler永久最高的猜测。",
+      "evidence": [
+        "74026422–440 samples19、mean18.2340、bucket1；W21/W23升级19/14.4、stalled0。"
+      ],
+      "issue": 5
+    }
+  ],
   "tasks": [
     {
       "issue": 5,
       "title": "Hauler CPU 优化",
-      "status": "in-progress",
-      "progress": "稳定任务/缓存/端口优化及回归已完成；标准身体续代与独立审视在整合中。",
-      "next": "完成复核、API备份部署与可比20tick窗口验证。",
+      "status": "verifying",
+      "progress": "所有有限实现者和独立审视已交付释放。.1/.2回归和API回读通过，线上CPU收益尚未证实。",
+      "next": "纯新完整无诊断CPU与实际交付周期验收；按新鲜角色/Memory归因决定后续范围，不把缺测当稳定收益。",
       "owner": "root 01a0eb3c-2aea-77b0-b28c-69f63e2cc893；reviewer 01a0ef23-5507-7c93-a6ac-7e6dc172cd59；workforce 01a0ef23-e4ba-77e0-9629-6c2198f74fb3，二者parent为root"
     }
   ],
-  "actions": [],
-  "checks": [],
+  "actions": [
+    {
+      "at": "2026-09-29T21:56:30.861Z",
+      "description": "API备份部署.1",
+      "status": "done",
+      "result": "改main/logistics/workforce/metrics，17模块回读一致。"
+    },
+    {
+      "at": "2026-09-29T22:05:50.818Z",
+      "description": "API备份部署.2完整趟次修复",
+      "status": "done",
+      "result": "只改main/logistics，verified；备份api-deploy-20260929T220550.817883Z。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "专项回归与独立审视",
+      "result": "passed",
+      "detail": "test:hauler七组、missions/movement/planning、API23项，.2五个结算边界通过。"
+    },
+    {
+      "name": "CPU效果",
+      "result": "pending",
+      "detail": ".1同8车首窗开销上升；.2最新Hauler2.7885/prepare0.8936，19样本/bucket1未低于基线，不能记为优化验收。"
+    },
+    {
+      "name": "线上运行与清理",
+      "result": "passed",
+      "detail": ".2真实74026440、17模块匹配、无模块报错；W21/W23升级19/14.4、stalled0；三个临时诊断快照回读null。"
+    },
+    {
+      "name": "公开GitHub同步",
+      "result": "pending",
+      "detail": "自动审批拒绝公开诊断内容推送，未绕过；本地已commit。"
+    }
+  ],
   "next": [
-    "部署前确认所有有限实现者释放文件，保留用户worker池与标准Hauler半容量规则。"
+    ".2纯新完整CPU/运输周期与自然续代继续verifying，不声称所有CPU问题已解决；保留暂停automation。",
+    "用户确认公开代码和脱敏诊断记录后再推送现有GitHub并更新Issue5，不绕过自动审批拒绝。"
   ],
   "references": [
     {

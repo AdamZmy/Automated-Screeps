@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-29T21:54:54.990Z",
+  "updatedAt": "2026-09-29T22:11:41.673Z",
   "days": [
     "2026-09-29",
     "2026-09-28",
@@ -27,12 +27,12 @@
       "id": "2026-09-29T21-48-32Z-hauler-cpu-b61a8e5a6624",
       "kind": "manual",
       "startedAt": "2026-09-29T21:48:32.413Z",
-      "updatedAt": "2026-09-29T21:53:21.808Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-29T22:11:41.673Z",
+      "completedAt": "2026-09-29T22:10:10Z",
+      "status": "completed",
       "title": "Hauler CPU 修复与线上验证",
-      "summary": "用户授权修复 Hauler CPU。本轮 root 独占 logistics、metrics、API 与部署；独立审视者只读，workforce 续代由有限实现者负责。新鲜基线 tick74026120/.7：8只Hauler，角色2.5757CPU/t，logistics准备0.7883/t，主循环16.1732/t。已实现稳定任务复用、精确起点来源缓存、端口索引，并回归 idle让路、同tick到货阻止无效取货、占口立即备用。尚未部署。",
-      "tick": 74026120,
+      "summary": "Hauler已知代码缺陷修复并部署.2：稳定任务/一次核对/精确缓存/端口索引/标准续代/实际卸空结束旧趟/分项CPU。回归、独立复核、17模块匹配及真实新tick74026440通过，运输升级继续。最新19样本mean18.2340、Hauler2.7885/prepare0.8936/bucket1，尚未低于基线且缺测，不能称CPU问题全部解决。自动审批拒绝GitHub公开推送，本地保留待授权；Issue5继续verifying。",
+      "tick": 74026440,
       "issueNumbers": [
         5
       ]

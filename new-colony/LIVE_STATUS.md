@@ -302,3 +302,13 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - 线上 .6 版本的模块健康记录为空错误；主房 W21N26 RCL5、辅房 W23N26 RCL2 均继续运行，Hauler 线上状态使用 `idle/pickup/deliver`，旧 `loaded/haulPickup/haulDelivery` 标记均为 false。
 - 纯 .6 性能窗口 `73991822–73991840` 收到 17/20 个样本，平均 `19.5677`、峰值 `23.1396` CPU/tick、bucket `14`；因为有缺测，只作为部分窗口证据，不宣称长期稳定达到预算。Hauler 角色约 `2.6753/t`，creeps 阶段约 `10.7416/t`。
 - 本次部署保持已审核布局、Rampart 自动施工关闭、Ledger 统计口径和 `screeps-world` automation `PAUSED`。长期 CPU、能源利用率、W23 源侧积压与扩张经济性仍沿用既有问题生命周期观察。
+
+## 2026-09-29 — Hauler hot-path 与完整趟次修复（v0.6.2 / .2）
+
+- 2a46ae6/.1、c0d9e68/.2通过HTTP API备份、部署和17模块回读；.1备份215630.860888Z，.2备份220550.817883Z。.2真实版本已在74026400/420运行，模块无报错；没有GitHub推送，自动审批拒绝本轮公开诊断内容，保留本地待授权。
+- 稳定任务/房内实际货物核对、精确可达性heap缓存、占位/近场租约tile索引、占口备用、idle让路及同tick到货无效取货均有回归。标准半容量Hauler未来运力/串并行期限续代，不主动杀车，保留20-WORK池。
+- 独立审视复现跨完整趟次继承小订单：450容量车送完9后一直只取9；.2只在下一tick真实卸空后结束旧趟。新450预约与失败/部分结算/accepted/疲劳5边界通过。见L008与operations/diagnostics/2026-09-29-hauler-cpu-fix.md。
+- test:hauler7组、missions/movement/planning、API23项通过；原.7已有builder/upgrader旧测试断言未迁移，完整npm test不能记全绿。
+- 同8执行车的首完整.1窗，Hauler+prepare3.3640→4.3270CPU/t，未验收改善。movement self1.8887/t为大头；后续续代补给与worker缺能外出使负载变化，诊断/缺测窗排除。.2首9样本mean24.3173、后19样本mean18.7321/bucket3，不能称稳定恢复。
+- 74026420两房20WORK、W21/W23升级16.6/14.6、Hauler2/6、stalled0；真实运输/升级继续。长期CPU、自然续代、完整运输周期和能源90%仍待新合格窗口，不恢复用户暂停的巡检。
+- 22:09:46Z推进至74026440，.2/17模块匹配/无模块错误，临时3快照回读null。最新19样本mean18.2340、Hauler2.7885/prepare0.8936、bucket1；仍未验收CPU改善。升级19/14.4、stalled0，upgrader5.7329高于Hauler；下一轮按新鲜归因核验，不将原猜测当永久瓶颈。
