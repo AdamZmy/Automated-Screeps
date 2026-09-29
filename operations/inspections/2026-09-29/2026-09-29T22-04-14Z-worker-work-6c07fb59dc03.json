@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T22-04-14Z-worker-work-6c07fb59dc03",
+  "kind": "manual",
+  "startedAt": "2026-09-29T22:04:14.298Z",
+  "updatedAt": "2026-09-29T22:19:05.414Z",
+  "completedAt": "2026-09-29T22:19:05.368Z",
+  "status": "completed",
+  "title": "按容量模板修复 worker 全池补员与严格 WORK 上限",
+  "summary": "game2026-09-29.3/v0.6.3已按用户确认容量模板发布：W23目标8+8+4（3只）、W21目标10+10（2只）。API17模块回读、worker七组/API23项和独立审视通过。真实74026539满能量/20名义WORK时固定槽位被worker-work-cap拦截，旧碎片自然退休；完整数量收敛仍待后续生命周期，不提前重叠或主动淘汰。",
+  "game": {
+    "shard": "shard1",
+    "version": "2026-09-29.3",
+    "tick": 74026560,
+    "fetchedAt": "2026-09-29T22:18:30Z",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ]
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "原小身体逐只续代已改为固定池槽位",
+      "detail": "原1300容量的11碎片worker没有自然合并，并可产生旧新21WORK重叠；固定容量身体和统一名义WORK出生限额已实现。线上新模板与等待生效，最终数量还未完成自然收敛。",
+      "evidence": [
+        "部署前遥测74026480旧版本.2 W23 workerWork21/target20，确认实际旧新重叠。",
+        "74026539新版本.3：W23旧11只/20WORK，W21旧3只/20WORK；固定槽位worker-pool:20:8:0和worker-pool:20:10:0均等待worker-work-cap、pending空，满能源不额外出生。",
+        "74026540–560纯新版本窗口W21升级19/t、W23升级15.65/t；未增加人为动作轮休。"
+      ],
+      "issue": 4
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "容量模板与全池worker出生",
+      "status": "verifying",
+      "progress": "正式实现/API发布/回归/独立复核已完成；在线确认标准槽位满池等待。最终数量收敛尚未发生。",
+      "next": "后续已有生命周期自然释放后核验固定4/8/10WORK出生、总名义WORK不超20和矿工实际交班；保持自动巡检PAUSED。",
+      "owner": "01a0ef23-5c14-7cc0-9930-d922406065d2"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T22:06:04.211Z",
+      "description": "在隔离草稿实现并由独立审视复核。",
+      "status": "done",
+      "result": "不占用另一任务的共享源码与Git发布；多tick收敛和上限回归通过。"
+    },
+    {
+      "at": "2026-09-29T22:16:24.067Z",
+      "description": "整合共享源码并通过API发布三个受管模块。",
+      "status": "done",
+      "result": "备份后上传，main/workforce/mining回读verified；其他模块不变。"
+    },
+    {
+      "at": "2026-09-29T22:19:05.368Z",
+      "description": "完成线上行为验收、独立最终复核、临时诊断清理和本地交接。",
+      "status": "done",
+      "result": "新Game与遥测tick前进；两房标准模板/严格出生限额生效，无module error；workerCapacityProbe回读null。GitHub未推送，公开日志和Issue checkpoint未同步。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "worker-capacity草稿",
+      "result": "passed",
+      "detail": "W23碎片收敛8+8+4，W21收敛10+10；名义WORK、accepted/observed、多Spawn、外部旧role和bootstrap均覆盖。"
+    },
+    {
+      "name": "worker-pool/hauler续代草稿",
+      "result": "passed",
+      "detail": "角色半池、尾身体、Hauler标准融资/期限续代保持通过。"
+    },
+    {
+      "name": "正式worker与API回归",
+      "result": "passed",
+      "detail": "npm run test:worker七组，API23项与diff检查均通过；完整npm test仍有历史旧role oracle，不记录全绿。"
+    },
+    {
+      "name": "在线版本与模板",
+      "result": "passed",
+      "detail": "tick74026531 game.3，W23容量1300/名义20/模板8+8+4，W21容量1800/名义20/模板10+10；两房retiring-workers。"
+    },
+    {
+      "name": "满能量下的严格出生限额",
+      "result": "passed",
+      "detail": "74026539两房workerWork-cap等待、pending空、lastAttempt早于部署；不继续生成1WORK碎片。"
+    },
+    {
+      "name": "新版本实际升级与模块健康",
+      "result": "passed",
+      "detail": "74026540无module error；74026560 game.3，W21/W23纯新20tick升级19/15.65，不能解释为CPU或长期能效收益。"
+    },
+    {
+      "name": "最终独立问题审视",
+      "result": "passed",
+      "detail": "worker_review核对正式源码与新鲜工件，未发现阻断；声明完整数量收敛和线上矿工交班仍待验收。"
+    },
+    {
+      "name": "临时诊断清理",
+      "result": "passed",
+      "detail": "workerCapacityProbe回读null，保留本地证据。"
+    },
+    {
+      "name": "完整线上数量收敛",
+      "result": "pending",
+      "detail": "旧碎片继续工作至自然到期，不能把离线多tick收敛冒充线上完成。"
+    }
+  ],
+  "next": [
+    "Issue4保持verifying：自然退出后目标W23三只8+8+4、W21两只10+10；不suicide、不重造逐只续代。",
+    "保持automation PAUSED，CPU/长期能效沿用原Issue与完整窗口；公开日志和Issue尚未同步GitHub。"
+  ],
+  "references": [
+    {
+      "label": "Issue4长期用能验收",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    }
+  ]
+}

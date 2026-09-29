@@ -2,6 +2,16 @@
 const {E,range,energy,availableCapacity,go,give,allCreeps,roomCreeps,structures,myStructures,sources,spawns,miningSpots}=require('runtime');
 const {economyMemory,routeTravel}=require('colony');
 function mine(c) {
+    if(c.memory.retiredMiner){
+        const source=Game.getObjectById(c.memory.yieldSource);
+        if(source&&range(c,source)<=1){const home=spawns(c.room)[0]||c.room.controller;if(home)go(c,home);return;}
+        delete c.memory.yieldSource;
+        // Keep retired miners outside the development pool. Send carried fuel
+        // once, without collecting more or creating a worker renewal demand.
+        if(energy(c))require('logistics').haul(c);
+        else{require('logistics').release(c);require('logistics').clearStationTraffic(c);}
+        return;
+    }
     const s=Game.getObjectById(c.memory.source);if(!s)return;
     if(c.memory.replaces){
         const previous=Game.creeps[c.memory.replaces];
@@ -10,8 +20,11 @@ function mine(c) {
             // only when the replacement can step directly into the mining tile.
             if(range(c,previous)>1){go(c,previous);return;}
             if(c.fatigue||previous.fatigue)return;
-            previous.memory.role='worker';previous.memory.unitType='worker';previous.memory.workRole='repairman';previous.memory.owner='development:'+previous.memory.home;previous.memory.loaded=energy(previous)>0;previous.memory.yieldSource=s.id;
-            delete previous.memory.source;delete previous.memory.spot;
+            previous.memory.retiredMiner=true;previous.memory.yieldSource=s.id;
+            delete previous.memory.source;delete previous.memory.spot;delete previous.memory.replaces;
+            delete previous.memory.spawnOwner;delete previous.memory.spawnSlot;
+            delete previous.memory.unitType;delete previous.memory.workRole;delete previous.memory.workerState;
+            require('logistics').release(previous);
         }
         delete c.memory.replaces;
     }

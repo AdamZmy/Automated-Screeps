@@ -13,7 +13,8 @@
     "test:layout": "node new-colony/verify-reviewed-plan.cjs && node new-colony/verify-layout-execution.cjs && node new-colony/tools/verify-layout-build.cjs && node new-colony/tools/verify-layout-audit.cjs && node new-colony/research/layout-implementation/verify.cjs",
     "test:operations": "python3 tools/verify-github-ops.py && python3 tools/verify-inspection-log.py",
     "test:diagnostics": "node new-colony/tools/verify-hauling-hypotheses.cjs && node new-colony/tools/verify-retrospective-causes.cjs",
-    "test:policy": "node new-colony/tools/verify-policy-restrictions.cjs"
+    "test:policy": "node new-colony/tools/verify-policy-restrictions.cjs",
+    "test:worker": "node new-colony/verify-worker-capacity.cjs && node new-colony/verify-worker-pool.cjs && node new-colony/verify-runtime.cjs && node new-colony/verify-overflow.cjs && node new-colony/verify-missions.cjs && node new-colony/verify-ledger.cjs && node new-colony/verify-monitor.cjs"
   },
   "devDependencies": {
     "@screeps/common": "2.16.0-beta",

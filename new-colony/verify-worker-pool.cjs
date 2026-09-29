@@ -242,12 +242,12 @@ function renewalFixture({carry=6,energy=600,spawnCount=1}={}){
     assert(full.reduce((n,p)=>n+C.BODYPART_COST[p],0)<=f.room.energyCapacityAvailable);
     assert.equal(workforce.body('worker',f.room.energyCapacityAvailable).filter(p=>p===C.WORK).length,
         development.workerBodyWork(f.room));
-    const workers=[f.creep('a','upgrader',workerParts(5),900),f.creep('b','upgrader',workerParts(5),800),f.creep('c','upgrader',workerParts(7),700)];
+    const workers=[f.creep('a','upgrader',full,900),f.creep('b','upgrader',full,800)];
     const control={plannedHarvest:20,usefulTarget:20,developmentBudget:20,target:10,buildEnergyTarget:0,routes:[]};
     const demand=workforce.workforceDemand(f.room,control,workers);
     assert.equal(demand.workerWorkTarget,20);
-    assert.equal(demand.workerWork,3,'the final worker body is only the remaining WORK deficit');
-    assert.equal(demand.workerBody.filter(p=>p===C.WORK).length,3);
+    assert.equal(demand.workerWork,4,'the final target slot uses its fixed remainder body');
+    assert.equal(demand.workerBody.filter(p=>p===C.WORK).length,4);
 }
 {
     const f=fixture(),full=workforce.body('worker',f.room.energyCapacityAvailable);

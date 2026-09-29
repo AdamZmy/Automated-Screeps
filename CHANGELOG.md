@@ -6,6 +6,20 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.6.3 — 2026-09-29
+
+- Game build `2026-09-29.3` sizes standard workers from room energy capacity
+  and replenishes fixed pool slots: 1300 capacity uses 8+8+4 WORK, 1800 uses
+  10+10. Only the final target slot is shortened; low funding waits.
+- Reserve nominal WORK for living, spawning and accepted workers/bootstrap
+  units at the final birth gate. Damaged parts retain their allowance; multiple
+  spawns and legacy role aliases cannot bypass the target.
+- Existing fragmented workers retire naturally without individual renewal or
+  early worker overlap. Retired miners remain outside the development pool,
+  vacate their source and deliver any remaining cargo without collecting more.
+- Add focused capacity, migration, pending-birth and miner-handover regressions.
+  Full online count convergence still requires natural retirement.
+
 ## 0.6.2 — 2026-09-29
 
 - Game build `2026-09-29.2` reuses stable Hauler tasks, reconciles physical cargo

@@ -8,7 +8,7 @@
 
 服务器每 tick 执行 `main.loop`。开发子代理按需启动，分别处理战略、能源和布局；它们不充当永久运行的游戏进程。持续运行的是已经部署的 JavaScript 模块。
 
-当前运行架构为 game `2026-09-29.2`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
+当前运行架构为 game `2026-09-29.3`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
 
 | 文件 | 职责 |
 | --- | --- |
@@ -107,6 +107,7 @@ node --check planner.js
 node --check expansion.js
 node --check monitor.js
 node verify-economy.cjs
+node verify-worker-capacity.cjs
 node verify-worker-pool.cjs
 node verify-planner.cjs
 node verify-expansion.cjs
@@ -163,7 +164,12 @@ python3 screeps_api.py deploy --apply
 
 `.8` 修复侦察出口撞墙：出口候选先排除不可通行实体和占位单位；连续真实受阻后清除旧路径，失败出口暂避50tick（最多8格），全部受阻则10tick后重试。平时仍复用路线/出口缓存，疲劳与旧停滞记录不触发重选。不能用moveTo返回OK或“能到出口旁一格”代替真实跨房成功。
 
-当前 worker 模型：出生与续命请求统一使用 `role: "worker"`；运行时工作职责写入 `workRole`，取值为 `upgrader`、`builder` 或 `repairman`。旧的 upgrader/builder 记忆会在角色分配时迁移到该格式。
+当前 worker 模型：出生请求统一使用 `role: "worker"`；运行时工作职责写入 `workRole`，取值为 `upgrader`、`builder` 或 `repairman`。旧的 upgrader/builder 记忆会在角色分配时迁移到该格式。
+
+`.3` 按房间 `energyCapacityAvailable` 生成标准 worker，目标 WORK 由采集能力规划且不计矿工；两房当前目标均为20。1300容量固定槽位为8+8+4 WORK（3只），1800容量为10+10（2只）。只有最后一个目标尾槽缩体；当前能源不足等待完整身体，不按即时缺口生成小 worker。
+
+存活、孵化和accepted出生共同占用名义WORK额度，受伤不会释放额度。旧碎片身体仍正常工作直到自然死亡，不逐只续代；释放足够容量后才补缺失标准/尾槽。满池不提前重叠出生，死亡与孵化期间可以暂时低于目标。Bootstrap恢复占额度，退休矿工不转入worker池。运行时升级/建设/维修分工仍由Development按人数分配，有资源和有效任务则连续工作。验证入口为仓库根目录 `npm run test:worker`。
+
 
 
 ## .9 复核布局的生成与执行

@@ -312,3 +312,13 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - 同8执行车的首完整.1窗，Hauler+prepare3.3640→4.3270CPU/t，未验收改善。movement self1.8887/t为大头；后续续代补给与worker缺能外出使负载变化，诊断/缺测窗排除。.2首9样本mean24.3173、后19样本mean18.7321/bucket3，不能称稳定恢复。
 - 74026420两房20WORK、W21/W23升级16.6/14.6、Hauler2/6、stalled0；真实运输/升级继续。长期CPU、自然续代、完整运输周期和能源90%仍待新合格窗口，不恢复用户暂停的巡检。
 - 22:09:46Z推进至74026440，.2/17模块匹配/无模块错误，临时3快照回读null。最新19样本mean18.2340、Hauler2.7885/prepare0.8936、bucket1；仍未验收CPU改善。升级19/14.4、stalled0，upgrader5.7329高于Hauler；下一轮按新鲜归因核验，不将原猜测当永久瓶颈。
+
+
+## 2026-09-29：worker容量模板和数量收敛（game2026-09-29.3 / v0.6.3）
+
+- 用户确认按Spawn/Extension容量生成标准worker；1300→8+8+4 WORK（3只），1800→10+10（2只）。低当前能量等待完整身体，只缩目标尾槽；旧碎片自然退出，不逐只续代或主动淘汰。
+- 最终出生入口以名义WORK核验live/spawning/accepted和bootstrap；受伤不释放额度，多Spawn及旧role规范化后共享上限。退休矿工不转worker，先让位、只送已有货，空载不再取货。
+- API预览仅main/workforce/mining变化；备份后上传并17模块回读verified。专项worker七组、API23项与diff通过，独立审视正式版本通过。
+- 真实tick74026531/539已运行.3；W23仍11旧worker/20WORK，模板8+8+4；W21旧三只8+8+4/20WORK，模板10+10。tick539两房能源满额，固定worker-pool请求reason=worker-work-cap，pending空，无新碎片出生；新策略已在线等待自然释放。
+- 遥测74026560核验新版本；74026540模块健康spawn/creeps均ok、无module error。纯新版本74026540–560窗口，W21/W23真实升级19/15.65/t；CPU既有告警仍存在，不作性能收益结论。临时workerCapacityProbe已清理并回读null。
+- 完整自然数量收敛和线上矿工交班仍待后续生命周期验收；Issue4保留verifying。automation继续PAUSED。本轮本地记录未推送GitHub。

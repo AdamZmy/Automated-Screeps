@@ -166,3 +166,14 @@
 - L002：缓存卸货口被占且有合法可达备用口时，立即尝试备用口；全部暂占才保持原有界等待。fixture alternate-port 已确认旧分支会等8tick。
 - 同tick目的地已收到其他 accepted transfer 时，准备阶段的空车订单必须重新检查缺口，否则会取入当前已无需求的货物。fixture filled-by-peer 验证不取货且释放任务。
 - 临时worker的 includeStorage=false 不能通过全量requestsById绕过过滤，已有storage任务释放而非抛错。以上均已回归通过；只证明机制与边界，不证明当轮长期吞吐。
+
+## W006 — Worker 碎片化续代与容量模板偏离
+
+- 触发：房间容量已能生成标准worker，但普通补员使用当前可用能量缩体，续代又按单只旧单位WORK补回；名义池可满而单位数量长期偏多。
+- 最小观测：capacity/available、WORK/CARRY/MOVE名义身体、worker数量、replaces、live/spawning/pending和真实tick。
+- 确认：tick74026212 W23N26 1300容量，11worker=6×1+1×2+4×3=20WORK，全部是续代；目标容量模板8+8+4。最初具体出生能源无历史，不作事实推断。
+- 修复：容量模板固定槽位，匹配现存/孵化/accepted身体；未匹配旧体自然退出并占名义WORK额度；补缺失槽，不逐个续代旧体。只有尾槽缩小，普通融资不足等待。
+- 严格上限：出生最终入口名义WORK+accepted意图不得超过target；受伤不释放额度，治疗不超量，外部旧角色先规范化再按owner-slot去重。旧矿工退休不加入worker池。
+- 复现/回归：`node new-colony/verify-worker-capacity.cjs`、`node new-colony/verify-worker-pool.cjs`；包括W23→8+8+4、W21→10+10、多Spawn资金充足但WORK额度不足、damaged/healed、accepted/observed/failed、外部旧role、bootstrap、矿工退休让位/送货/恢复。
+- 边界：严格限制存活及孵化占用，满池时不提前出生；自然死亡和孵化期间可以暂时低于20。原有超量不会通过suicide处理。完整线上续代后才验收数量收敛。
+- 关联Issue #4；W004的任意1W缺口身体策略已被当前用户容量模板要求取代，历史证据保留。

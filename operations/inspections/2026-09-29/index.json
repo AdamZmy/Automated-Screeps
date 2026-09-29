@@ -1,8 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-29T22:11:41.673Z",
+  "updatedAt": "2026-09-29T22:19:05.414Z",
   "day": "2026-09-29",
   "runs": [
+    {
+      "id": "2026-09-29T22-04-14Z-worker-work-6c07fb59dc03",
+      "kind": "manual",
+      "startedAt": "2026-09-29T22:04:14.298Z",
+      "updatedAt": "2026-09-29T22:19:05.414Z",
+      "completedAt": "2026-09-29T22:19:05.368Z",
+      "status": "completed",
+      "title": "按容量模板修复 worker 全池补员与严格 WORK 上限",
+      "summary": "game2026-09-29.3/v0.6.3已按用户确认容量模板发布：W23目标8+8+4（3只）、W21目标10+10（2只）。API17模块回读、worker七组/API23项和独立审视通过。真实74026539满能量/20名义WORK时固定槽位被worker-work-cap拦截，旧碎片自然退休；完整数量收敛仍待后续生命周期，不提前重叠或主动淘汰。",
+      "tick": 74026560,
+      "issueNumbers": [
+        4
+      ]
+    },
     {
       "id": "2026-09-29T21-51-16Z-w23n26-worker-c72105401cae",
       "kind": "manual",
