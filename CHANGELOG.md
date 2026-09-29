@@ -6,6 +6,20 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.6.2 — 2026-09-29
+
+- Game build `2026-09-29.2` reuses stable Hauler tasks, reconciles physical cargo
+  once per room/tick and shares bounded approach and near-field port indexes.
+  Preserve same-tick accepted resource intents, urgent preemption, legal alternate
+  endpoints and idle-carrier traffic clearing.
+- Confirmed empty deliveries end their trip before a new pickup is sized; a
+  small historical order can no longer cap every subsequent trip.
+- Standard half-capacity Haulers renew against future CARRY and serial/parallel
+  spawn deadlines, using affordable emergency bodies only at the actual deadline.
+  Preserve the 20-WORK worker pool and natural replacement without suicide.
+- Add nested self-time CPU breakdown and focused regressions. Online performance
+  acceptance remains separate from passing tests and deployment readback.
+
 ## 0.6.1 — 2026-09-28
 
 - Game build `2026-09-28.7` shares static Hauler source-to-destination route

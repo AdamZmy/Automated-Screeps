@@ -150,3 +150,19 @@
 - 上述三项新边界由独立审视复现并写回测试；初次线上验收与长期吞吐证据记录在Issue13，不能把离线通过当作性能提升。
 
 - L007：无合法额外升级停车位且工人正挡卸货口时，development.overflowUpgrade调用了未导入的clearStationTraffic，独立沙盒抛ReferenceError。改为延迟调用logistics所有者；verify-overflow用真实三个模块验证正常让路与疲劳等待。当前线上样本errors为空且已有合法席位，故不把此潜在路径当作本次升级下降原因。
+
+## L008 — 卸空后跨趟继承小订单，导致持续低载量往返
+
+- 触发：上一趟合法小额交付已实际卸空，来源仍有大量库存、车容量与目的地缺口均更大；旧 task.amount 没有结束。
+- 最小观测：同车交付意图、下一tick实际cargo、再取货amount、来源库存、车容量和当前优先级；区分紧急订单本身小、取货竞争与来源枯竭。
+- 机制：旧版与2026-09-29.1均可复现容量450/来源1000的车送完9后持续每趟仅取9。旧任务续用时以旧amount为上限。不能仅凭现场88或9货量断言该车命中，抢占也会重建订单。
+- 安全处置：只在下一tick确认 deliver 意图对应车实际卸空后释放旧任务，再正常按来源、容量与新缺口分配。被拒或部分交付仍携货，保留核对和防回搬逻辑；不主动清空cargo或制造意图。
+- 复现/回归：`node new-colony/verify-logistics.cjs` 的 new-trip 场景及既有失败/部分交付、same-tick intent 组；450容量车完成9交付后下一趟取得450预约。`npm run test:hauler`。
+- 证据：独立审视与root回归确认，game2026-09-29.2修复；Issue #5。代码机制已修复，实际CPU/完整周期收益须单独线上验收。
+
+## 2026-09-29 — 物流 hot-path 回归补充
+
+- L001：prepare判idle的空车早退仍必须让出卸货口。verify-logistics区分 idle-on-port 与 idle-far，后者保留无动作快路。
+- L002：缓存卸货口被占且有合法可达备用口时，立即尝试备用口；全部暂占才保持原有界等待。fixture alternate-port 已确认旧分支会等8tick。
+- 同tick目的地已收到其他 accepted transfer 时，准备阶段的空车订单必须重新检查缺口，否则会取入当前已无需求的货物。fixture filled-by-peer 验证不取货且释放任务。
+- 临时worker的 includeStorage=false 不能通过全量requestsById绕过过滤，已有storage任务释放而非抛错。以上均已回归通过；只证明机制与边界，不证明当轮长期吞吐。

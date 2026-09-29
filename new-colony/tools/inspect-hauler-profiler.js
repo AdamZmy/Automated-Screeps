@@ -1,0 +1,1 @@
+{let n=100,m=require('metrics'),a=Game.cpu.getUsed();for(let i=0;i<n;i++)Game.cpu.getUsed();let b=Game.cpu.getUsed();for(let i=0;i<n;i++)m.measured('logistics','probe',()=>0);let c=Game.cpu.getUsed();Memory.frontier.haulerProfiler={tick:Game.time,n,cpuRead:(b-a)/n,measuredNoop:(c-b)/n};}

@@ -256,6 +256,10 @@ function reconcileTask(c,requests) {
     if(task.intent&&task.intent.at<Game.time){
         // Do not add expected pickup or subtract expected delivery from Memory.
         // Actual next-tick cargo alone decides which phase can continue.
+        // A physically empty carrier has finished this trip. Never recycle
+        // its old small quantity into the next pickup: that would turn a
+        // one-off 9-energy delivery into an indefinitely 9-energy courier.
+        if(task.intent.kind==='deliver'&&!energy(c)){clearTask(c);return;}
         if(task.intent.kind==='pickup'&&energy(c)>0)h.origin=task.source;
         delete task.intent;
     }

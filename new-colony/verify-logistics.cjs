@@ -263,6 +263,17 @@ function fixture(){
  assert.equal(c.memory.haul.task,null);
 }
 {
+ const f=fixture(),dest=f.station('new-trip',20,20),src=f.box('full-source',5,5,1000),c=f.creep('small-old-trip',21,20,9,450);
+ f.task(c,dest,src.id,9,'deliver');f.logistics.prepare(f.room);
+ assert(f.logistics.deliverHaul(c,dest));assert.equal(c.memory.haul.task.intent.amount,9);
+ f.settle();assert.equal(f.value(c),0);
+ f.logistics.prepare(f.room);
+ assert.equal(c.memory.haul.state,'pickup');
+ assert.equal(c.memory.haul.task.amount,450,'confirmed empty delivery starts a fresh full-sized trip instead of inheriting 9');
+ assert.equal(c.memory.haul.task.pickupAmount,450);
+ assert.equal(f.logistics.haulTarget(c),dest);
+}
+{
  const f=fixture(),dest=f.station('full-box',20,20,2000),c=f.creep('idle-on-port',21,20),far=f.creep('idle-far',5,5);
  f.freezeSnapshot();f.logistics.prepare(f.room);f.logistics.haul(c);f.logistics.haul(far);
  assert(c.actions.some(a=>a.kind==='move'),'an empty idle carrier clears the unload endpoint');
