@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T03-51-07Z-hauler-11b12afff699",
+  "kind": "manual",
+  "startedAt": "2026-09-29T03:51:07.482Z",
+  "updatedAt": "2026-09-29T03:51:57.192Z",
+  "completedAt": "2026-09-29T03:51:14Z",
+  "status": "completed",
+  "title": "Hauler 固定身材策略部署与线上验证",
+  "summary": "workforce 模块已通过官方 HTTP API 部署到 frontier24；远端回读哈希一致，快照 tick 推进到 74011120，并观察到新规则生成的 W23N26 5/5 Hauler。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-28.7",
+    "tick": 74011120,
+    "fetchedAt": null
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "workforce 部署成功",
+      "detail": "预览仅显示 workforce 变化；部署后 code-check 返回 all_match=true，其余受管模块未变化。",
+      "evidence": [
+        "branch=frontier24",
+        "workforce remote_sha256 与 local_sha256 一致"
+      ],
+      "issue": null
+    },
+    {
+      "severity": "info",
+      "title": "线上已出现固定身材 Hauler",
+      "detail": "W23N26 Spawn/Extension 能量容量为 1150，新出生的 hauler-74011104 正在孵化，身体为 5 CARRY + 5 MOVE。",
+      "evidence": [
+        "apiSnapshot.tick=74011120",
+        "W23N26 新 Hauler 处于 spawning=true，CARRY=5，MOVE=5"
+      ],
+      "issue": null
+    },
+    {
+      "severity": "warning",
+      "title": "当前 CPU 处于 recovery",
+      "detail": "线上快照显示 bucket=6、CPU EMA 约 22.83，高于 20 CPU limit；这是当前运行状态，未归因于本次 Hauler 部署。",
+      "evidence": [
+        "status tick=74011100",
+        "performance mean=21.5416",
+        "W21N26 spawnHold=cpu-recovery"
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [
+    {
+      "issue": null,
+      "title": "部署固定 Hauler 身材策略",
+      "status": "done",
+      "progress": "workforce 已通过 HTTP API 上传并回读一致",
+      "next": "观察后续自然续代",
+      "owner": "root"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T03:51:08Z",
+      "description": "执行 workforce 部署",
+      "status": "done",
+      "result": "deploy --apply 完成；未触碰其他受管模块。"
+    },
+    {
+      "at": "2026-09-29T03:51:12Z",
+      "description": "通过 API 回读代码、tick 和 Hauler 身体",
+      "status": "done",
+      "result": "code-check all_match=true；快照 tick=74011120；W23N26 新 Hauler 为 5/5。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "node new-colony/verify-worker-pool.cjs",
+      "result": "passed",
+      "detail": "固定容量映射、救急体型和容量缺口使用标准体型均通过。"
+    },
+    {
+      "name": "python3 new-colony/screeps_api.py code-check",
+      "result": "passed",
+      "detail": "frontier24 全部受管模块与本地一致。"
+    },
+    {
+      "name": "API snapshot readback",
+      "result": "passed",
+      "detail": "标准 apiSnapshot 已恢复，tick 从部署前继续推进到 74011120。"
+    }
+  ],
+  "next": [
+    "观察 CPU recovery 是否解除，以及 W21N26/W23N26 后续 Hauler 续代是否按各自房间容量生成标准体型。"
+  ],
+  "references": []
+}

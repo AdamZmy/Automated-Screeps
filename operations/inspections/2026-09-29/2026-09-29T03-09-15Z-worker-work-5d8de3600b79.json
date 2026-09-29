@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T03-09-15Z-worker-work-5d8de3600b79",
+  "kind": "manual",
+  "startedAt": "2026-09-29T03:09:15.195Z",
+  "updatedAt": "2026-09-29T03:10:37.413Z",
+  "completedAt": "2026-09-29T03:09:40Z",
+  "status": "completed",
+  "title": "部署统一 Worker WORK 池并验证",
+  "summary": "统一 Worker WORK 池已部署并由 API 回读验证。W21N26 已迁移为 role=worker/workRole=upgrader，目标 20 WORK 已生效；现有旧身体仍暂时保留 24 WORK，需自然续代后验收收敛。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-28.7",
+    "tick": 74010524,
+    "fetchedAt": "2026-09-29T03:08:08Z"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "部署成功",
+      "detail": "5 个 worker-pool 相关模块已上传；API deploy 返回 verified，随后 code-check 为 all_match=true。",
+      "evidence": [
+        "deploy verified：main、development、workforce、colony、mining changed=true。",
+        "回读 tick 74010500 的 17 个受管模块全部 match=true。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "warning",
+      "title": "旧身体尚未自然续代",
+      "detail": "新代码的 workerWorkTarget=20 已生效，但现有 3 个 8-WORK worker 不能在运行时缩减身体；当前 workerWork=24，最老单位 TTL 约293。续代逻辑会按剩余缺口生成较小 worker。",
+      "evidence": [
+        "workerPoolProbe tick 74010524：W21N26 workerWork=24、minerWork=10、totalWork=34。",
+        "W21N26 三个开发单位均为 role=worker、workRole=upgrader、8 WORK。",
+        "Memory economy：workerWorkTarget=20、workerCount=2。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "辅房同步迁移",
+      "detail": "W23N26 的现有 builder/upgrader 也已迁移到统一 worker 记忆格式；有工地时部分 worker 被分配 workRole=builder。",
+      "evidence": [
+        "tick 74010524：W23N26 workerWork=12、6 个 worker、6 个工地。"
+      ],
+      "issue": 4
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "消除矿区能源溢出：重做升级/施工预算与工人体型，验收持续用能率≥90%",
+      "status": "verifying",
+      "progress": "统一 worker 代码已部署；当前正在等待旧身体自然续代和真实 WORK 收敛。",
+      "next": "下一次观察确认 W21N26 workerWork≤20，并比较升级速率、CPU 和 bucket。",
+      "owner": "root"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T03:09:15.195Z",
+      "description": "通过 API deploy --apply 上传 worker-pool 相关模块。",
+      "status": "done",
+      "result": "远端备份完成，5 个模块上传并回读 verified。"
+    },
+    {
+      "at": "2026-09-29T03:09:25Z",
+      "description": "执行 code-check、status，并提交线上 workerPoolProbe。",
+      "status": "done",
+      "result": "all_match=true；新 tick 74010524 运行新代码并完成角色迁移。"
+    },
+    {
+      "at": "2026-09-29T03:09:30Z",
+      "description": "运行部署前相关回归。",
+      "status": "done",
+      "result": "worker-pool、语法和 diff 检查通过；完整旧测试集仍有未迁移的 builder/upgrader 断言，未将其记为通过。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "远端模块回读",
+      "result": "passed",
+      "detail": "17/17 模块 match=true。"
+    },
+    {
+      "name": "主房角色迁移",
+      "result": "passed",
+      "detail": "W21N26 新快照为 role=worker、workRole=upgrader。"
+    },
+    {
+      "name": "Worker WORK 目标",
+      "result": "pending",
+      "detail": "目标 20 已写入线上 economy；旧 worker 当前仍为24，等待自然续代。"
+    },
+    {
+      "name": "线上长期能效/CPU",
+      "result": "pending",
+      "detail": "当前只完成部署后短窗口，不能替代完整验收窗口。"
+    }
+  ],
+  "next": [
+    "等待最老 W21N26 worker 接近续代窗口，核对 replacement body 和 workerWork 是否降至20。",
+    "观察升级进度、CPU/bucket、补给和源侧积压，确认缩小 worker 不破坏升级/物流闭环。"
+  ],
+  "references": [
+    {
+      "label": "Issue 4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    }
+  ]
+}

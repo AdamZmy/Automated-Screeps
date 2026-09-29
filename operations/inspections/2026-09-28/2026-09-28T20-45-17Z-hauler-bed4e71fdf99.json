@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-28T20-45-17Z-hauler-bed4e71fdf99",
+  "kind": "manual",
+  "startedAt": "2026-09-28T20:45:17.225Z",
+  "updatedAt": "2026-09-28T20:46:02.225Z",
+  "completedAt": "2026-09-28T20:45:49Z",
+  "status": "completed",
+  "title": "总结当前物流与Hauler规划逻辑",
+  "summary": "按当前游戏源码总结了能量物流闭环，以及 Hauler 总 CARRY 目标、身体模板、增减与续代规则。未采集新的线上 tick；代码版本为 2026-09-28.7。",
+  "game": null,
+  "findings": [
+    {
+      "severity": "info",
+      "title": "物流与 Hauler 规划逻辑已完成代码核对",
+      "detail": "logistics.js 负责 idle/pickup/deliver、来源/目标选择、双端预留、路径和卸货；colony.js 计算总 CARRY 目标；workforce.js 生成 Hauler 身体、补缺与续代请求。",
+      "evidence": [
+        "源码版本 main.js 为 2026-09-28.7；静态检查覆盖 main.js、logistics.js、colony.js、workforce.js。"
+      ],
+      "issue": null
+    },
+    {
+      "severity": "warning",
+      "title": "物流回归通过，两个 workforce/economy 断言仍与统一 worker 角色设计不一致",
+      "detail": "verify-logistics.cjs 通过；verify-workforce.cjs 与 verify-economy.cjs 各有一个旧断言失败，失败点期望旧的 upgrader/builder 角色名，而当前实现统一出生 role 为 worker 并用 workRole 表示运行时岗位。",
+      "evidence": [
+        "node verify-logistics.cjs：PASS。",
+        "node verify-workforce.cjs：失败于 W005 断言。",
+        "node verify-economy.cjs：失败于 idle builder 角色断言。"
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [],
+  "actions": [
+    {
+      "at": "2026-09-28T20:45:49Z",
+      "description": "读取当前 World 源码、项目交接状态及物流/ workforce/ economy 回归测试；未修改游戏源码或部署。",
+      "status": "done",
+      "result": "完成逻辑总结与验证记录。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "物流回归",
+      "result": "passed",
+      "detail": "verify-logistics.cjs 通过。"
+    },
+    {
+      "name": "Hauler 身体/数量相关 workforce 回归",
+      "result": "failed",
+      "detail": "现有测试断言仍使用旧岗位 role 语义；不是线上 API 观测。"
+    },
+    {
+      "name": "线上状态",
+      "result": "pending",
+      "detail": "本轮未采集新的 API tick；交接记录中的线上摘要不作为本轮新观测。"
+    }
+  ],
+  "next": [
+    "如需继续，可单独修正 workforce/economy 回归测试中的旧 role 断言，并再跑完整测试。"
+  ],
+  "references": []
+}

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T03-46-12Z-hauler-8eb5e5a26826",
+  "kind": "manual",
+  "startedAt": "2026-09-29T03:46:12.354Z",
+  "updatedAt": "2026-09-29T03:47:43.064Z",
+  "completedAt": "2026-09-29T03:46:49Z",
+  "status": "completed",
+  "title": "固定 Hauler 身材策略调整与本地验证",
+  "summary": "将普通 Hauler 身材简化为 Spawn/Extension 总能量容量的 1/2，并保留首次恢复与紧急续代时按当前可用能量生成救急体型。未部署线上。",
+  "game": null,
+  "findings": [
+    {
+      "severity": "info",
+      "title": "普通 Hauler 采用固定房间级身材",
+      "detail": "普通 Hauler 身材改为 Spawn/Extension 总能量容量的 1/2，并只生成完整 CARRY+MOVE 对。",
+      "evidence": [
+        "standardHaulerBudget 使用 room.energyCapacityAvailable 的 0.5 倍；body 只生成完整 CARRY+MOVE 对。",
+        "RCL 容量示例：300→1/1、550→2/2、800→4/4、1300→6/6。"
+      ],
+      "issue": null
+    },
+    {
+      "severity": "info",
+      "title": "救急路径保留动态身材",
+      "detail": "首次恢复和标准续代当前能量不足时保留按当前可用能量生成较小救急体型。",
+      "evidence": [
+        "无 Hauler 的恢复请求和标准续代当前能量不足时，仍可按 room.energyAvailable 生成较小救急体型。"
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [
+    {
+      "issue": null,
+      "title": "更新 Hauler 出生策略",
+      "status": "done",
+      "progress": "已修改 new-colony/workforce.js",
+      "next": "等待用户确认后再决定是否部署",
+      "owner": "root"
+    },
+    {
+      "issue": null,
+      "title": "增加固定身材回归覆盖",
+      "status": "done",
+      "progress": "已修改 new-colony/verify-worker-pool.cjs",
+      "next": "保持本地回归",
+      "owner": "root"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T03:46:30Z",
+      "description": "修改普通 Hauler 身材计算",
+      "status": "done",
+      "result": "普通补运力和续代改用标准房间级 body；首次恢复及紧急续代保留 emergencyHaulerBody。"
+    },
+    {
+      "at": "2026-09-29T03:46:45Z",
+      "description": "未执行线上操作",
+      "status": "done",
+      "result": "没有调用游戏 API、Console 或 deploy。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "node new-colony/verify-worker-pool.cjs",
+      "result": "passed",
+      "detail": "固定容量映射、救急体型和运输缺口使用标准体型均通过。"
+    },
+    {
+      "name": "node --check new-colony/workforce.js",
+      "result": "passed",
+      "detail": "JavaScript 语法检查通过。"
+    },
+    {
+      "name": "node new-colony/verify-workforce.cjs",
+      "result": "failed",
+      "detail": "仓库已有 workforce 重构与旧测试不同步，首个 worker 场景即失败；失败发生在 Hauler 定向检查之前。"
+    }
+  ],
+  "next": [
+    "如需生效，先运行完整相关回归，再按用户授权通过 HTTP API 预览和部署；当前未部署。"
+  ],
+  "references": []
+}

@@ -1,8 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T18:48:39.222Z",
+  "updatedAt": "2026-09-28T20:46:02.225Z",
   "day": "2026-09-28",
   "runs": [
+    {
+      "id": "2026-09-28T20-45-17Z-hauler-bed4e71fdf99",
+      "kind": "manual",
+      "startedAt": "2026-09-28T20:45:17.225Z",
+      "updatedAt": "2026-09-28T20:46:02.225Z",
+      "completedAt": "2026-09-28T20:45:49Z",
+      "status": "completed",
+      "title": "总结当前物流与Hauler规划逻辑",
+      "summary": "按当前游戏源码总结了能量物流闭环，以及 Hauler 总 CARRY 目标、身体模板、增减与续代规则。未采集新的线上 tick；代码版本为 2026-09-28.7。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e",
       "kind": "scheduled",

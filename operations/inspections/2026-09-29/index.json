@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-29T21:54:54.990Z",
+  "day": "2026-09-29",
+  "runs": [
+    {
+      "id": "2026-09-29T21-51-16Z-w23n26-worker-c72105401cae",
+      "kind": "manual",
+      "startedAt": "2026-09-29T21:51:16.302Z",
+      "updatedAt": "2026-09-29T21:54:54.990Z",
+      "completedAt": "2026-09-29T21:54:54.950Z",
+      "status": "completed",
+      "title": "检查 W23N26 worker 数量与职责策略",
+      "summary": "W23N26 11 worker 合计20 WORK，总量与统一角色分工符合；1300容量可支持8+8+4的3工人模板，实际为6×1+1×2+4×3。11工人均为旧小工人的续代，逐只缺口续代使碎片化延续，偏离容量定型要求。本轮只读检查，无代码修改或部署；共享仓库另一任务活跃，Git发布暂缓。",
+      "tick": 74026212,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T21-48-32Z-hauler-cpu-b61a8e5a6624",
+      "kind": "manual",
+      "startedAt": "2026-09-29T21:48:32.413Z",
+      "updatedAt": "2026-09-29T21:53:21.808Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler CPU 修复与线上验证",
+      "summary": "用户授权修复 Hauler CPU。本轮 root 独占 logistics、metrics、API 与部署；独立审视者只读，workforce 续代由有限实现者负责。新鲜基线 tick74026120/.7：8只Hauler，角色2.5757CPU/t，logistics准备0.7883/t，主循环16.1732/t。已实现稳定任务复用、精确起点来源缓存、端口索引，并回归 idle让路、同tick到货阻止无效取货、占口立即备用。尚未部署。",
+      "tick": 74026120,
+      "issueNumbers": [
+        5
+      ]
+    },
+    {
+      "id": "2026-09-29T03-51-07Z-hauler-11b12afff699",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:51:07.482Z",
+      "updatedAt": "2026-09-29T03:51:57.192Z",
+      "completedAt": "2026-09-29T03:51:14Z",
+      "status": "completed",
+      "title": "Hauler 固定身材策略部署与线上验证",
+      "summary": "workforce 模块已通过官方 HTTP API 部署到 frontier24；远端回读哈希一致，快照 tick 推进到 74011120，并观察到新规则生成的 W23N26 5/5 Hauler。",
+      "tick": 74011120,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-46-14Z-hauler-cpu-fe0ef68ace6b",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:46:14.110Z",
+      "updatedAt": "2026-09-29T03:52:39.738Z",
+      "completedAt": "2026-09-29T03:51:19.300Z",
+      "status": "completed",
+      "title": "拆解 Hauler CPU 占用来源",
+      "summary": "当前版本中 Hauler 的总 CPU 最高主要由数量造成，而不是单车执行最贵：16 只 Hauler 的直接角色 CPU 为约 5.13/t，占约 21.54/t 主循环的 23.8%；单次 Hauler 调用均值约 0.3172，低于 upgrader 0.3635、builder 0.4126 和 miner 0.4511。另有每房一次的 logistics.prepare 约 1.48/t。主要代码热点是需求/任务重协调、候选评分与当前车到来源的路径可达性检查、卸货口租约扫描与失败重试；当前没有证据表明静态路线缓存失效或持续堵塞是主因。未改代码、未部署。",
+      "tick": 74011100,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-46-12Z-hauler-8eb5e5a26826",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:46:12.354Z",
+      "updatedAt": "2026-09-29T03:47:43.064Z",
+      "completedAt": "2026-09-29T03:46:49Z",
+      "status": "completed",
+      "title": "固定 Hauler 身材策略调整与本地验证",
+      "summary": "将普通 Hauler 身材简化为 Spawn/Extension 总能量容量的 1/2，并保留首次恢复与紧急续代时按当前可用能量生成救急体型。未部署线上。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-37-31Z-worker-cb418e45b28e",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:37:31.001Z",
+      "updatedAt": "2026-09-29T03:42:55.116Z",
+      "completedAt": "2026-09-29T03:42:04.300Z",
+      "status": "completed",
+      "title": "检查主房 Worker 补员逻辑",
+      "summary": "主房 Worker 缺口计算正确，但在 CPU recovery 期间被标为非 essential，导致第三只 Worker 延后出生；随后 CPU 窗口恢复到 limit 以下，Worker 已实际出生并将总 WORK 补到20。",
+      "tick": 74010988,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T03-09-15Z-worker-work-5d8de3600b79",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:09:15.195Z",
+      "updatedAt": "2026-09-29T03:10:37.413Z",
+      "completedAt": "2026-09-29T03:09:40Z",
+      "status": "completed",
+      "title": "部署统一 Worker WORK 池并验证",
+      "summary": "统一 Worker WORK 池已部署并由 API 回读验证。W21N26 已迁移为 role=worker/workRole=upgrader，目标 20 WORK 已生效；现有旧身体仍暂时保留 24 WORK，需自然续代后验收收敛。",
+      "tick": 74010524,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T02-36-54Z-work-08de7fe18495",
+      "kind": "scheduled",
+      "startedAt": "2026-09-29T02:36:54.038Z",
+      "updatedAt": "2026-09-29T02:44:47.563Z",
+      "completedAt": "2026-09-29T02:44:30Z",
+      "status": "completed",
+      "title": "主房升级单位角色与 WORK 数量巡检",
+      "summary": "主房异常已确认：线上仍运行旧的已提交版本，工作区的统一 worker / WORK 预算改动尚未部署；W21N26 新鲜快照显示 3 个 builder 命名的升级工和 34 个总 WORK（含矿工）。",
+      "tick": 74010088,
+      "issueNumbers": [
+        4
+      ]
+    }
+  ]
+}

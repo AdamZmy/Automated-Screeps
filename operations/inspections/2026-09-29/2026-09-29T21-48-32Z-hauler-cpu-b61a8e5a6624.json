@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T21-48-32Z-hauler-cpu-b61a8e5a6624",
+  "kind": "manual",
+  "startedAt": "2026-09-29T21:48:32.413Z",
+  "updatedAt": "2026-09-29T21:53:21.808Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "Hauler CPU 修复与线上验证",
+  "summary": "用户授权修复 Hauler CPU。本轮 root 独占 logistics、metrics、API 与部署；独立审视者只读，workforce 续代由有限实现者负责。新鲜基线 tick74026120/.7：8只Hauler，角色2.5757CPU/t，logistics准备0.7883/t，主循环16.1732/t。已实现稳定任务复用、精确起点来源缓存、端口索引，并回归 idle让路、同tick到货阻止无效取货、占口立即备用。尚未部署。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-28.7",
+    "tick": 74026120,
+    "fetchedAt": "2026-09-29T21:48:07Z"
+  },
+  "findings": [],
+  "tasks": [
+    {
+      "issue": 5,
+      "title": "Hauler CPU 优化",
+      "status": "in-progress",
+      "progress": "稳定任务/缓存/端口优化及回归已完成；标准身体续代与独立审视在整合中。",
+      "next": "完成复核、API备份部署与可比20tick窗口验证。",
+      "owner": "root 01a0eb3c-2aea-77b0-b28c-69f63e2cc893；reviewer 01a0ef23-5507-7c93-a6ac-7e6dc172cd59；workforce 01a0ef23-e4ba-77e0-9629-6c2198f74fb3，二者parent为root"
+    }
+  ],
+  "actions": [],
+  "checks": [],
+  "next": [
+    "部署前确认所有有限实现者释放文件，保留用户worker池与标准Hauler半容量规则。"
+  ],
+  "references": [
+    {
+      "label": "运输成本 Issue #5",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/5"
+    }
+  ]
+}

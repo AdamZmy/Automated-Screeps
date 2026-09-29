@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T02-36-54Z-work-08de7fe18495",
+  "kind": "scheduled",
+  "startedAt": "2026-09-29T02:36:54.038Z",
+  "updatedAt": "2026-09-29T02:44:47.563Z",
+  "completedAt": "2026-09-29T02:44:30Z",
+  "status": "completed",
+  "title": "主房升级单位角色与 WORK 数量巡检",
+  "summary": "主房异常已确认：线上仍运行旧的已提交版本，工作区的统一 worker / WORK 预算改动尚未部署；W21N26 新鲜快照显示 3 个 builder 命名的升级工和 34 个总 WORK（含矿工）。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-28.7",
+    "tick": 74010088,
+    "fetchedAt": "2026-09-29T02:37:13Z"
+  },
+  "findings": [
+    {
+      "severity": "critical",
+      "title": "统一 worker 改动未部署",
+      "detail": "code-check 为 all_match=false；线上哈希与 Git HEAD 旧版本一致，而工作区 main/development/workforce/colony/mining 均有未提交改动。deploy dry-run 列出这 5 个模块为 changed，未执行 apply。",
+      "evidence": [
+        "远端版本 2026-09-28.7；W21N26 快照 tick 74010088。",
+        "线上 main/development/workforce/colony/mining 哈希分别为 c5272e、5592b0、757483、47a5b6、57e3b8；均与 HEAD 一致。",
+        "dry-run 的 changed_modules 为 main、development、workforce、colony、mining。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "warning",
+      "title": "旧角色命名与实际角色不一致",
+      "detail": "W21N26 的 builder-* 名称单位实际 memory.role=upgrader；这是旧实现将 builder 转成 upgrader 时保留 creep 名称的结果，不是当前线上真的存在 builder role。独立审视确认旧 development.js 在无工地时只改 memory.role，不改 name。",
+      "evidence": [
+        "tick 74010088：builder-74008738、builder-74009237、builder-74009736 均为 role upgrader、每个 8 WORK。",
+        "旧版本角色转换逻辑保留原 builder 名称。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "critical",
+      "title": "主房 WORK 总量超过目标",
+      "detail": "W21N26 当前 3 个升级工共 24 WORK，2 个矿工共 10 WORK，总计 34 WORK；当前线上 economy 仍显示 upgradeWork=24、builderWork=0，说明统一 worker 池和剩余 WORK 缺口控制尚未生效。独立复核确认：20 WORK 是新模型 worker pool 目标，不含矿工；当前合理总量基线应为 30，线上 worker pool 仍多 4 WORK。",
+      "evidence": [
+        "tick 74010088：3×8 WORK upgrader + 2×5 WORK miner = 34 WORK。",
+        "线上 economy：upgradeWorkTarget=11、upgradeWork=24、builderWork=0、constructionSites=0。",
+        "独立审视：旧 workforce 分开规划 builder/upgrader，缺少统一 WORK 上限。"
+      ],
+      "issue": 4
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "消除矿区能源溢出：重做升级/施工预算与工人体型，验收持续用能率≥90%",
+      "status": "verifying",
+      "progress": "工作区 worker-pool 改动已存在并通过 verify-worker-pool.cjs；线上尚未部署。",
+      "next": "先确认用户是否授权本轮提交并 deploy --apply；部署后回读 code-check、等待新 tick，再验证角色迁移和 WORK 总量。",
+      "owner": "root"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T02:37:13Z",
+      "description": "通过 HTTP API 获取 identity、status、code-check。",
+      "status": "done",
+      "result": "认证正常；线上版本为 2026-09-28.7；code-check all_match=false。"
+    },
+    {
+      "at": "2026-09-29T02:38:00Z",
+      "description": "提交只读 world 快照诊断并回读 frontier.apiSnapshot。",
+      "status": "done",
+      "result": "快照 tick 74010088，主房角色/身体数据与症状一致。"
+    },
+    {
+      "at": "2026-09-29T02:43:00Z",
+      "description": "执行 deploy dry-run 与本地 worker-pool 回归。",
+      "status": "done",
+      "result": "5 个模块待上传；verify-worker-pool.cjs PASS；未执行线上写入。"
+    },
+    {
+      "at": "2026-09-29T02:44:00Z",
+      "description": "独立只读故障审视复核角色命名、旧角色转换和 WORK 预算。",
+      "status": "done",
+      "result": "确认未部署之外还存在旧代码的分角色规划机制；20 WORK 仅为 worker pool，不含矿工。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "身份与 API 读取",
+      "result": "passed",
+      "detail": "AdamZmy / shard1 / frontier24 可读。"
+    },
+    {
+      "name": "线上与工作区代码一致",
+      "result": "failed",
+      "detail": "5 个 worker-pool 相关模块不一致；线上与 HEAD 旧版本一致。"
+    },
+    {
+      "name": "角色与 WORK 线上复核",
+      "result": "passed",
+      "detail": "tick 74010088 复现 builder-* 名称、upgrader role 和 34 WORK。"
+    },
+    {
+      "name": "新 worker 模型离线回归",
+      "result": "passed",
+      "detail": "verify-worker-pool.cjs PASS；仅代表本地行为，不代表线上已生效。"
+    },
+    {
+      "name": "线上修复验收",
+      "result": "pending",
+      "detail": "尚未部署，等待明确执行部署后再验证。"
+    },
+    {
+      "name": "独立故障审视",
+      "result": "passed",
+      "detail": "独立审视复核了 builder 命名保留和旧 workforce 分角色导致 WORK 超额的因果。"
+    }
+  ],
+  "next": [
+    "等待独立故障审视结果，确认是否存在未部署之外的第二个机制。",
+    "若执行部署：先保留当前线上备份，上传 5 个变更模块，回读哈希并等待新 tick；再检查 W21N26 worker role、总 WORK、升级进度和 CPU。"
+  ],
+  "references": [
+    {
+      "label": "Issue 4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "Issue 13",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/13"
+    }
+  ]
+}

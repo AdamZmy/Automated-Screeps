@@ -1,13 +1,132 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-28T18:48:39.222Z",
+  "updatedAt": "2026-09-29T21:54:54.990Z",
   "days": [
+    "2026-09-29",
     "2026-09-28",
     "2026-09-27",
     "2026-09-26",
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-29T21-51-16Z-w23n26-worker-c72105401cae",
+      "kind": "manual",
+      "startedAt": "2026-09-29T21:51:16.302Z",
+      "updatedAt": "2026-09-29T21:54:54.990Z",
+      "completedAt": "2026-09-29T21:54:54.950Z",
+      "status": "completed",
+      "title": "检查 W23N26 worker 数量与职责策略",
+      "summary": "W23N26 11 worker 合计20 WORK，总量与统一角色分工符合；1300容量可支持8+8+4的3工人模板，实际为6×1+1×2+4×3。11工人均为旧小工人的续代，逐只缺口续代使碎片化延续，偏离容量定型要求。本轮只读检查，无代码修改或部署；共享仓库另一任务活跃，Git发布暂缓。",
+      "tick": 74026212,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T21-48-32Z-hauler-cpu-b61a8e5a6624",
+      "kind": "manual",
+      "startedAt": "2026-09-29T21:48:32.413Z",
+      "updatedAt": "2026-09-29T21:53:21.808Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler CPU 修复与线上验证",
+      "summary": "用户授权修复 Hauler CPU。本轮 root 独占 logistics、metrics、API 与部署；独立审视者只读，workforce 续代由有限实现者负责。新鲜基线 tick74026120/.7：8只Hauler，角色2.5757CPU/t，logistics准备0.7883/t，主循环16.1732/t。已实现稳定任务复用、精确起点来源缓存、端口索引，并回归 idle让路、同tick到货阻止无效取货、占口立即备用。尚未部署。",
+      "tick": 74026120,
+      "issueNumbers": [
+        5
+      ]
+    },
+    {
+      "id": "2026-09-29T03-51-07Z-hauler-11b12afff699",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:51:07.482Z",
+      "updatedAt": "2026-09-29T03:51:57.192Z",
+      "completedAt": "2026-09-29T03:51:14Z",
+      "status": "completed",
+      "title": "Hauler 固定身材策略部署与线上验证",
+      "summary": "workforce 模块已通过官方 HTTP API 部署到 frontier24；远端回读哈希一致，快照 tick 推进到 74011120，并观察到新规则生成的 W23N26 5/5 Hauler。",
+      "tick": 74011120,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-46-14Z-hauler-cpu-fe0ef68ace6b",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:46:14.110Z",
+      "updatedAt": "2026-09-29T03:52:39.738Z",
+      "completedAt": "2026-09-29T03:51:19.300Z",
+      "status": "completed",
+      "title": "拆解 Hauler CPU 占用来源",
+      "summary": "当前版本中 Hauler 的总 CPU 最高主要由数量造成，而不是单车执行最贵：16 只 Hauler 的直接角色 CPU 为约 5.13/t，占约 21.54/t 主循环的 23.8%；单次 Hauler 调用均值约 0.3172，低于 upgrader 0.3635、builder 0.4126 和 miner 0.4511。另有每房一次的 logistics.prepare 约 1.48/t。主要代码热点是需求/任务重协调、候选评分与当前车到来源的路径可达性检查、卸货口租约扫描与失败重试；当前没有证据表明静态路线缓存失效或持续堵塞是主因。未改代码、未部署。",
+      "tick": 74011100,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-46-12Z-hauler-8eb5e5a26826",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:46:12.354Z",
+      "updatedAt": "2026-09-29T03:47:43.064Z",
+      "completedAt": "2026-09-29T03:46:49Z",
+      "status": "completed",
+      "title": "固定 Hauler 身材策略调整与本地验证",
+      "summary": "将普通 Hauler 身材简化为 Spawn/Extension 总能量容量的 1/2，并保留首次恢复与紧急续代时按当前可用能量生成救急体型。未部署线上。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
+      "id": "2026-09-29T03-37-31Z-worker-cb418e45b28e",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:37:31.001Z",
+      "updatedAt": "2026-09-29T03:42:55.116Z",
+      "completedAt": "2026-09-29T03:42:04.300Z",
+      "status": "completed",
+      "title": "检查主房 Worker 补员逻辑",
+      "summary": "主房 Worker 缺口计算正确，但在 CPU recovery 期间被标为非 essential，导致第三只 Worker 延后出生；随后 CPU 窗口恢复到 limit 以下，Worker 已实际出生并将总 WORK 补到20。",
+      "tick": 74010988,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T03-09-15Z-worker-work-5d8de3600b79",
+      "kind": "manual",
+      "startedAt": "2026-09-29T03:09:15.195Z",
+      "updatedAt": "2026-09-29T03:10:37.413Z",
+      "completedAt": "2026-09-29T03:09:40Z",
+      "status": "completed",
+      "title": "部署统一 Worker WORK 池并验证",
+      "summary": "统一 Worker WORK 池已部署并由 API 回读验证。W21N26 已迁移为 role=worker/workRole=upgrader，目标 20 WORK 已生效；现有旧身体仍暂时保留 24 WORK，需自然续代后验收收敛。",
+      "tick": 74010524,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-29T02-36-54Z-work-08de7fe18495",
+      "kind": "scheduled",
+      "startedAt": "2026-09-29T02:36:54.038Z",
+      "updatedAt": "2026-09-29T02:44:47.563Z",
+      "completedAt": "2026-09-29T02:44:30Z",
+      "status": "completed",
+      "title": "主房升级单位角色与 WORK 数量巡检",
+      "summary": "主房异常已确认：线上仍运行旧的已提交版本，工作区的统一 worker / WORK 预算改动尚未部署；W21N26 新鲜快照显示 3 个 builder 命名的升级工和 34 个总 WORK（含矿工）。",
+      "tick": 74010088,
+      "issueNumbers": [
+        4
+      ]
+    },
+    {
+      "id": "2026-09-28T20-45-17Z-hauler-bed4e71fdf99",
+      "kind": "manual",
+      "startedAt": "2026-09-28T20:45:17.225Z",
+      "updatedAt": "2026-09-28T20:46:02.225Z",
+      "completedAt": "2026-09-28T20:45:49Z",
+      "status": "completed",
+      "title": "总结当前物流与Hauler规划逻辑",
+      "summary": "按当前游戏源码总结了能量物流闭环，以及 Hauler 总 CARRY 目标、身体模板、增减与续代规则。未采集新的线上 tick；代码版本为 2026-09-28.7。",
+      "tick": null,
+      "issueNumbers": []
+    },
     {
       "id": "2026-09-28T18-36-20Z-hauler-cpu-fb220b3d166e",
       "kind": "scheduled",
@@ -707,149 +826,6 @@
       "tick": null,
       "issueNumbers": [
         1,
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-48-54Z-run-7c2c32f32630",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:48:54.707Z",
-      "updatedAt": "2026-09-26T07:10:32.637Z",
-      "completedAt": "2026-09-26T07:00:17.836Z",
-      "status": "skipped",
-      "title": "巡检跳过：现有协调者正在执行",
-      "summary": "共享状态在接管前已变更，实时核验当前协调者active/inProgress。本轮不接管API、代码、Issue、CURRENT_STATE或共享Git；起始与结束日志待现有协调者串行发布。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-48-39Z-run-6acf835a929e",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:48:39.312Z",
-      "updatedAt": "2026-09-26T07:10:32.607Z",
-      "completedAt": "2026-09-26T06:59:25.918Z",
-      "status": "skipped",
-      "title": "周期巡检跳过：已有活动协调者",
-      "summary": "新协调者active/inProgress，本轮已让行。无新游戏tick、代码变更或部署；独立批次起止记录已验证，GitHub发布待串行移交。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-48-13Z-run-e5f991de9b44",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:48:13.863Z",
-      "updatedAt": "2026-09-26T07:33:04.820Z",
-      "completedAt": "2026-09-26T07:00:16.472Z",
-      "status": "skipped",
-      "title": "协调状态核验巡检",
-      "summary": "Skipped takeover: task-status tools unavailable. Final read found a newly recorded coordinator and concurrent shared Git changes. No fresh game observation or shared mutations by this task. Local start/final records await serialized publication.",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-48-05Z-run-d212bbc16bb2",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:48:05.830Z",
-      "updatedAt": "2026-09-26T07:10:32.578Z",
-      "completedAt": "2026-09-26T06:55:05.899Z",
-      "status": "skipped",
-      "title": "巡检跳过：协调者状态无法核验",
-      "summary": "任务状态工具不可用，依照状态未知不接管的规则结束本轮；游戏状态未知。起止日志仅本地Git留存，尚未推送或发布。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-47-40Z-run-8c4258a6bc97",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:47:40.373Z",
-      "updatedAt": "2026-09-26T07:33:04.782Z",
-      "completedAt": "2026-09-26T06:58:49.690Z",
-      "status": "skipped",
-      "title": "协调任务处理中，本轮让行",
-      "summary": "另一协调任务正在核验唯一接管者并要求本轮让行。本轮未调用游戏API、无新tick、未接管文件或部署；起止日志仅在隔离仓库提交，待统一发布。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-47-40Z-run-9b5ead60f9c1",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:47:40.263Z",
-      "updatedAt": "2026-09-26T07:10:32.549Z",
-      "completedAt": "2026-09-26T07:01:24.948Z",
-      "status": "skipped",
-      "title": "巡检跳过：当前协调者仍在运行",
-      "summary": "写入前复核捕获新owner并确认active/inProgress；未接管共享文件、API、Issue或Git发布，未取得新游戏tick。起止记录已本地提交，等待当前协调者串行导入和推送。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T00-49-28Z-run-dc38f5c816cd",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T00:49:28.968Z",
-      "updatedAt": "2026-09-26T07:10:32.502Z",
-      "completedAt": "2026-09-26T07:02:17.146Z",
-      "status": "skipped",
-      "title": "巡检跳过：当前协调者仍运行",
-      "summary": "重读CURRENT_STATE并即时核验当前root01a0dc5e-78e0-7412-8f71-16b514713719仍运行，本轮让行；无新tick，起止记录隔离提交，公共发布待同步。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-25T22-39-19Z-run-9b4b2827888c",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T22:39:19.414Z",
-      "updatedAt": "2026-09-26T08:46:16.374Z",
-      "completedAt": "2026-09-25T23:33:09Z",
-      "status": "failed",
-      "title": "协调者仍运行，本轮跳过接管",
-      "summary": "Recovered true ending after live task-status verification: the original coordinator failed during a concurrent inspection; no new game observation was recorded.",
-      "tick": null,
-      "issueNumbers": [
-        12
-      ]
-    },
-    {
-      "id": "2026-09-25T22-02-39Z-run-224be65131e4",
-      "kind": "scheduled",
-      "startedAt": "2026-09-25T22:02:39.509Z",
-      "updatedAt": "2026-09-26T07:10:33.101Z",
-      "completedAt": "2026-09-25T22:03:53.247Z",
-      "status": "skipped",
-      "title": "周期巡检：协调者状态核验",
-      "summary": "现有协调者仍active/inProgress，本轮已跳过游戏巡检并完成独立日志；起始/结束发布待串行处理。",
-      "tick": null,
-      "issueNumbers": [
         4,
         12
       ]

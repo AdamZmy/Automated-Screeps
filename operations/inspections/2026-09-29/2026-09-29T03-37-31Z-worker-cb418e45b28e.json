@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-29T03-37-31Z-worker-cb418e45b28e",
+  "kind": "manual",
+  "startedAt": "2026-09-29T03:37:31.001Z",
+  "updatedAt": "2026-09-29T03:42:55.116Z",
+  "completedAt": "2026-09-29T03:42:04.300Z",
+  "status": "completed",
+  "title": "检查主房 Worker 补员逻辑",
+  "summary": "主房 Worker 缺口计算正确，但在 CPU recovery 期间被标为非 essential，导致第三只 Worker 延后出生；随后 CPU 窗口恢复到 limit 以下，Worker 已实际出生并将总 WORK 补到20。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26"
+    ],
+    "version": "2026-09-28.7",
+    "tick": 74010988,
+    "fetchedAt": "2026-09-29T03:42:04Z"
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "CPU recovery 会延后部分 WORK 缺口补员",
+      "detail": "tick74010941 时两只 Worker 各8 WORK，总16，目标20；Spawn 空闲且房间能量1800，但队列 worker:0 的 reason 为 cpu-recovery、essential=false。代码在 workforce.js 中把已有部分 WORK 的缺口视为非 essential，并在 recovery 时跳过所有非 essential 出生。",
+      "evidence": [
+        "API 快照 tick74010941：W21N26 两只 Worker、active WORK 合计16，Spawn 无 spawning。",
+        "Memory.frontier.rooms.W21N26.workforce：worker:0 自74010817 等待，reason=cpu-recovery。",
+        "Memory.frontier.performance：tick74010940 窗口 mean20.585，高于 CPU limit20；bucket17。",
+        "new-colony/workforce.js:195-207、340-341：部分 WORK 缺口 essential=false，CPU recovery 直接跳过非 essential 请求。"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "第三只 Worker 已在后续 CPU 窗口恢复后出生",
+      "detail": "tick74010960 窗口 mean19.5956 低于 limit20 后，tick74010961 提交 worker:0、tick74010962 确认；tick74010988 快照显示第三只 Worker active WORK=4，总 WORK=20。",
+      "evidence": [
+        "Memory.frontier.rooms.W21N26.workforce：lastAttempt tick74010961，reason=worker-work-capacity-gap；lastConfirmed tick74010962。",
+        "API 快照 tick74010988：W21N26 包含 worker-74010961-W21N26-0，active WORK=4。",
+        "Memory.frontier.rooms.W21N26.economy：workerWorkTarget=20、workerWork=20。"
+      ],
+      "issue": null
+    }
+  ],
+  "tasks": [
+    {
+      "issue": 4,
+      "title": "CPU 保护与 Worker 缺口补员边界",
+      "status": "verifying",
+      "progress": "已确认缺口请求存在且线上最终补员；当前未修改代码。",
+      "next": "决定是否让小幅 WORK 缺口在 CPU recovery 下采用有界、可回本的补员例外，并补充对应回归。",
+      "owner": "root"
+    }
+  ],
+  "actions": [
+    {
+      "at": "2026-09-29T03:37:55Z",
+      "description": "通过 HTTP API 读取身份、状态、代码一致性及主房 Memory。",
+      "status": "done",
+      "result": "身份 AdamZmy；frontier24 受管模块 all_match=true；症状样本 tick74010920/74010941。"
+    },
+    {
+      "at": "2026-09-29T03:39:00Z",
+      "description": "提交只读 API 快照诊断并回读新 tick。",
+      "status": "done",
+      "result": "tick74010941 核实两只8 WORK、Spawn 空闲、worker:0 等待 cpu-recovery。"
+    },
+    {
+      "at": "2026-09-29T03:42:04Z",
+      "description": "再次回读 Worker 队列、性能窗口和 API 快照。",
+      "status": "done",
+      "result": "tick74010961/62 已提交并确认第三只 Worker；tick74010988 总 WORK=20。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "worker-pool 回归",
+      "result": "passed",
+      "detail": "node verify-worker-pool.cjs 通过，覆盖按剩余 WORK 定型。"
+    },
+    {
+      "name": "全套旧 workforce 回归",
+      "result": "failed",
+      "detail": "verify-workforce.cjs 仍有旧 role=upgrader 断言，且与当前统一 role=worker 设计不一致；不是本轮线上 API 故障证据。"
+    },
+    {
+      "name": "线上补员结果",
+      "result": "passed",
+      "detail": "API 快照 tick74010988 显示第三只 Worker 已出生，总 WORK 达20。"
+    }
+  ],
+  "next": [
+    "不执行代码修改或部署，等待用户决定是否调整 CPU recovery 下的 Worker 缺口策略。",
+    "若要修复，先增加 CPU normal/recovery、Spawn busy、pending birth 四组回归，再做有界补员策略的线上验证。"
+  ],
+  "references": [
+    {
+      "label": "Issue #4 持续用能率与 CPU/出生保护",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    }
+  ]
+}
