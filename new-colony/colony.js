@@ -131,9 +131,12 @@ function policy(room) {
     const cached=policyCache[room.name];if(cached&&cached.room===room&&cached.memory===m&&cached.cpuRecovery===cpuRecovery)return cached.value;
     const all=allCreeps().filter(c=>c.memory.home===room.name);
     const productive=role=>all.some(c=>c.memory.role===role&&(c.spawning||c.getActiveBodyparts(role==='hauler'?CARRY:WORK)>0));
+    const productiveWorker=all.some(c=>c.memory.role==='worker'&&(
+        c.spawning||['upgrader','builder','repairman'].includes(c.memory.workRole||'upgrader'))&&c.getActiveBodyparts(WORK)>0)||
+        all.some(c=>['upgrader','builder','repairman'].includes(c.memory.role)&&c.getActiveBodyparts(WORK)>0);
     const missingSources=sources(room).filter(s=>!all.some(c=>c.memory.role==='miner'&&c.memory.source===s.id&&(c.spawning||c.getActiveBodyparts(WORK)>0))).map(s=>s.id);
     const bootstrap=room.controller.level===1;
-    const recovery=missingSources.length>0||!productive('hauler')||!productive('upgrader');
+    const recovery=missingSources.length>0||!productive('hauler')||!productiveWorker;
     const threatened=hostiles(room).some(c=>!c.getActiveBodyparts||[ATTACK,RANGED_ATTACK,WORK,HEAL,CLAIM].some(p=>c.getActiveBodyparts(p)>0));
     const value={tick:Game.time,phase:bootstrap?'bootstrap':recovery?'recovery':room.controller.level===8?'mature':'growth',
         security:threatened?'threatened':'normal',cpuMode:cpuRecovery?'recovery':'normal',missingSources,
@@ -142,7 +145,7 @@ function policy(room) {
 }
 function criticalSignature(room,status) {
     const all=allCreeps().filter(c=>c.memory.home===room.name);
-    const roster=all.map(c=>[c.name,c.memory.role,c.memory.source||'',Number(!!c.spawning),c.getActiveBodyparts(WORK),c.getActiveBodyparts(CARRY)].join(':')).sort();
+    const roster=all.map(c=>[c.name,c.memory.role,c.memory.workRole||'',c.memory.source||'',Number(!!c.spawning),c.getActiveBodyparts(WORK),c.getActiveBodyparts(CARRY)].join(':')).sort();
     const nodes=structures(room).filter(s=>[STRUCTURE_SPAWN,STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType)).map(s=>s.id).sort();
     const sites=constructionSites(room).filter(s=>s.structureType!==STRUCTURE_RAMPART).map(s=>s.id).sort();
     return [room.controller.level,status.phase,status.security,status.cpuMode,roster.join(','),nodes.join(','),sites.join(',')].join('|');

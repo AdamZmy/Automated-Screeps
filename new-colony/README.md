@@ -8,7 +8,7 @@
 
 服务器每 tick 执行 `main.loop`。开发子代理按需启动，分别处理战略、能源和布局；它们不充当永久运行的游戏进程。持续运行的是已经部署的 JavaScript 模块。
 
-当前运行架构为 game `2026-09-28.7`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
+当前运行架构为 game `2026-09-29.1`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
 
 | 文件 | 职责 |
 | --- | --- |
@@ -37,6 +37,10 @@
 Hauler只保留 `memory.haul={state,task,origin}`；旧 `loaded/haulPickup/haulDelivery` 在首次执行时迁移并移除。`creep.store` 是实际货物权威；`task.intent` 仅表示本tick接受的请求，下一tick重新核对。空车先预约完整取送任务，已携货车辆优先获得未覆盖需求；Storage与矿点/Hub一同竞选来源。已有任务通常保留，紧急需求、失效、耗尽和真实堵塞才改派。卸货按当前实际空位与本tick其他已接受意图计算，空车未来预约可被实货回收，不要求装至90%。
 
 出生与施工同样区分 accepted 与 observed。规划与任务只发布请求，实际游戏写入只由workforce/development各自负责。Rampart在规划候选和统一施工入口双重禁止，已有建筑和归档坐标保留。巡检自动任务仍暂停；部署不会恢复调度。
+
+`.1` 的 Hauler CPU 修复：稳定任务直接复用，物理货物每房统一核对；同tick的到货容量和紧急需求仍即时检查。精确起点→来源和来源→目的地的可达性使用有界heap缓存，结构身份/位置/通行变化使缓存失效。卸货口的房内占位和近场租约按tile共享索引；缓存口被占立即尝试合法备用口，只有所有口暂占才有界等待，空闲车仍清理卸货通道。标准Hauler保持房容量50%的CARRY/MOVE体型；续代按未来CARRY与串行/并行Spawn期限规划，仅实际安全开工期限到达且标准买不起时用应急体型，不主动淘汰旧车。
+
+`performance.logistics` 新增 needs、reconcile、assignment、target、pickup、delivery、port、movement 细分CPU，`logisticsTiming=self` 表示已剔除嵌套子调用，可直接相加；roles/stages仍为原来的整段计时。计时不改变实际动作或首次Memory成本，20tick窗口/60条历史保持不变。专项回归：`npm run test:hauler`。
 
 ## 主房地理与升级
 
@@ -101,6 +105,7 @@ node --check planner.js
 node --check expansion.js
 node --check monitor.js
 node verify-economy.cjs
+node verify-worker-pool.cjs
 node verify-planner.cjs
 node verify-expansion.cjs
 node verify-monitor.cjs
@@ -155,6 +160,8 @@ python3 screeps_api.py deploy --apply
 `.7` 修复成长阶段施工完成后的预算缺口：没有工地、维修或储存工作的builder转为upgrader，转换当tick不追加升级，之后加入同一升级配额和补员统计。基础建设短空档、RCL1、紧急防降级、bootstrap与pioneer维持原行为。不要把转岗前未计入预算的额外升级当作可持续收益。
 
 `.8` 修复侦察出口撞墙：出口候选先排除不可通行实体和占位单位；连续真实受阻后清除旧路径，失败出口暂避50tick（最多8格），全部受阻则10tick后重试。平时仍复用路线/出口缓存，疲劳与旧停滞记录不触发重选。不能用moveTo返回OK或“能到出口旁一格”代替真实跨房成功。
+
+当前 worker 模型：出生与续命请求统一使用 `role: "worker"`；运行时工作职责写入 `workRole`，取值为 `upgrader`、`builder` 或 `repairman`。旧的 upgrader/builder 记忆会在角色分配时迁移到该格式。
 
 
 ## .9 复核布局的生成与执行

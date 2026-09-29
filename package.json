@@ -9,6 +9,7 @@
     "test": "npm run test:game && npm run test:layout && npm run test:api && npm run test:operations && npm run test:diagnostics && npm run test:policy",
     "test:game": "node new-colony/verify-economy.cjs && node new-colony/verify-planner.cjs && node new-colony/verify-expansion.cjs && node new-colony/verify-monitor.cjs && node new-colony/verify-ledger.cjs && node new-colony/verify-runtime.cjs && node new-colony/verify-logistics.cjs && node new-colony/verify-workforce.cjs && node new-colony/verify-missions.cjs && node new-colony/verify-overflow.cjs",
     "test:api": "python3 new-colony/verify-api.py",
+    "test:hauler": "node new-colony/verify-logistics.cjs && node new-colony/verify-worker-pool.cjs && node new-colony/verify-hauler-cpu.cjs && node new-colony/verify-runtime.cjs && node new-colony/verify-overflow.cjs && node new-colony/verify-ledger.cjs && node new-colony/verify-monitor.cjs",
     "test:layout": "node new-colony/verify-reviewed-plan.cjs && node new-colony/verify-layout-execution.cjs && node new-colony/tools/verify-layout-build.cjs && node new-colony/tools/verify-layout-audit.cjs && node new-colony/research/layout-implementation/verify.cjs",
     "test:operations": "python3 tools/verify-github-ops.py && python3 tools/verify-inspection-log.py",
     "test:diagnostics": "node new-colony/tools/verify-hauling-hypotheses.cjs && node new-colony/tools/verify-retrospective-causes.cjs",

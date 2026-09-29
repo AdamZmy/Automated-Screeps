@@ -4,7 +4,7 @@ const {constants:C,loadGameModule}=require('./test-support/runtime.cjs');
 // Quantities settle only at the next tick, with optional rejected intents.
 // This separates accepted commands from measured cargo and destination stores.
 function fixture(){
- const probes={allCreeps:0,stores:0,objectLookups:0,demandReads:0,walkable:0,movement:{}};
+ const probes={allCreeps:0,stores:0,objectLookups:0,demandReads:0,walkable:0,movement:{},profileCalls:{}};
  const room={name:'W21N26',objects:[],walls:new Set(),sites:[],station:null,memory:{plan:{structures:[]}},controller:{my:true,level:4},
   getTerrain(){return{get:(x,y)=>this.walls.has(x+50*y)?C.TERRAIN_MASK_WALL:0};},
   lookForAt(type,x,y){return objects().filter(o=>o.structureType&&o.pos.x===x&&o.pos.y===y);},
@@ -36,7 +36,7 @@ function fixture(){
  }
  ctx.RoomPosition=Position;room.controller.pos=new Position(45,45);
  ctx.Game.getObjectById=id=>{probes.objectLookups++;return objects().find(o=>o.id===id)||Object.values(ctx.Game.creeps).find(c=>c.id===id);};
- ctx.gameModuleOverrides={metrics:{movementCount(name){probes.movement[name]=(probes.movement[name]||0)+1;}},infrastructure:{linkNetwork:()=>({hub:room.hub})},
+ ctx.gameModuleOverrides={metrics:{movementCount(name){probes.movement[name]=(probes.movement[name]||0)+1;},measured(group,name,run){probes.profileCalls[name]=(probes.profileCalls[name]||0)+1;return run();}},infrastructure:{linkNetwork:()=>({hub:room.hub})},
   movement:{go(c,target,r=1,options={}){if(c.fatigue)return C.ERR_TIRED;return c.moveTo(target.pos||target,{range:r,...options});}},
   development:{controllerStation:()=>room.station,upgraderAssignment:()=>{probes.demandReads++;return{primary:[],policy:{target:0}};},economyMemory:()=>room.memory,
    routeTravel:()=>10,constructionJobs:()=>room.sites,walkable(r,p){probes.walkable++;return p.x>=1&&p.x<=48&&p.y>=1&&p.y<=48&&!room.walls.has(p.x+50*p.y)&&
@@ -247,8 +247,47 @@ function fixture(){
  f.logistics.prepare(f.room);for(const c of haulers)assert.equal(f.logistics.haulTarget(c),dest);
  assert.equal(haulers.reduce((n,c)=>n+c.memory.haul.task.amount,0),1800);
  assert.equal(f.probes.demandReads,1);assert(f.probes.allCreeps<=3,'indexed claims do not rescan all room actors for every claimant');
+ assert.equal(f.probes.profileCalls.assignment||0,0,'stable funded tasks skip candidate construction/sorting');
+ assert.equal(f.probes.profileCalls.reconcile,1,'physical reconciliation runs once for the room, not once again per loaded executor');
  assert(f.probes.objectLookups<18*18,'indexed destination totals avoid quadratic peer validity lookups');
  const initial=f.probes.walkable;for(const c of haulers)f.logistics.deliveryPorts(f.room,dest);
  assert.equal(f.probes.walkable-initial,9,'one node shares its static nine-cell unloading geometry for the tick');
+}
+{
+ const f=fixture(),dest=f.station('filled-by-peer',10,10,1900),src=f.box('supply',5,5,100),c=f.creep('empty-courier',6,5);
+ f.freezeSnapshot();f.logistics.prepare(f.room);
+ assert.equal(c.memory.haul.task.amount,100);
+ f.runtime.commitEnergy({id:'peer'},dest,100);
+ f.logistics.haul(c);
+ assert(!c.actions.some(a=>a.kind==='pickup'),'same-tick incoming cancels a now-useless pickup before taking cargo');
+ assert.equal(c.memory.haul.task,null);
+}
+{
+ const f=fixture(),dest=f.station('full-box',20,20,2000),c=f.creep('idle-on-port',21,20),far=f.creep('idle-far',5,5);
+ f.freezeSnapshot();f.logistics.prepare(f.room);f.logistics.haul(c);f.logistics.haul(far);
+ assert(c.actions.some(a=>a.kind==='move'),'an empty idle carrier clears the unload endpoint');
+ assert.equal(far.actions.length,0,'remote idle carrier keeps the cheap no-action path');
+ assert(!c.actions.some(a=>a.kind==='pickup'));
+}
+{
+ const f=fixture(),dest=f.station('alternate-port',20,20),c=f.creep('courier',22,20,100),block=f.creep('blocker',21,20);
+ const task=f.task(c,dest,'source',100,'deliver');task.port={x:21,y:20};
+ const layout={ports:[{x:21,y:20},{x:21,y:21}],preferred:{x:21,y:20},seats:[]};
+ assert.deepEqual({...f.logistics.deliveryPort(c,dest,task,layout)},{x:21,y:21},'occupied cached hint tries a reachable alternate immediately');
+}
+{
+ const f=fixture(),dest=f.station('shared-port-index',20,20),src=f.box('source',5,5,1000);
+ const ports=[{x:19,y:19},{x:20,y:19},{x:21,y:19},{x:19,y:20},{x:21,y:20},{x:19,y:21},{x:20,y:21},{x:21,y:21}];
+ const cs=ports.map((p,i)=>{const c=f.creep('port-'+i,p.x,p.y,100);f.task(c,dest,src.id,100,'deliver').port={...p};return c;});
+ f.freezeSnapshot();f.logistics.prepare(f.room);
+ for(const c of cs)assert(f.logistics.deliveryPort(c,dest,c.memory.haul.task,{ports,preferred:null,seats:[]}));
+ assert.equal(f.probes.movement.haulPortActorScans,1,'room occupancy is indexed once, not once per cached port');
+ assert.equal(f.probes.movement.haulPortClaimScans,1,'unchanged near-field leases share one tile index');
+}
+{
+ const f=fixture(),store=f.node(C.STRUCTURE_STORAGE,'excluded-storage',20,20,0,1000000),c=f.creep('temporary-worker',10,10,100);
+ c.memory.role='builder';f.task(c,store,'old-mine',100,'deliver');
+ assert.equal(f.logistics.haulTarget(c,false),null,'filtered request lists cannot resurrect an excluded storage request from the full index');
+ assert.equal(c.memory.haul.task,null,'an excluded sink releases the old temporary-worker task');
 }
 console.log('PASS: unified haul migration/reset, multi-tick actual reconciliation, tiny batches, full-route/storage sourcing, dual reservations, loaded-first reclamation, source/destination invalidation, emergency preemption, full unload, Link intent coordination, no self-route or storage bounce, bounded nearby topup');

@@ -104,7 +104,7 @@ function singleSource(f){const s=f.source('single',24,24);for(let y=23;y<=25;y++
  const f=fixture();f.structure(C.STRUCTURE_STORAGE,'storage',20,20,1000,1000000);
  const c=f.creep('haul','hauler',21,20,0,100,[C.CARRY,C.MOVE]);haul(c);
  assert.equal(c.actions.length,0,'idle hauler must not withdraw storage just to return it');
- const builder=f.creep('builder','builder',21,21);work(builder);assert.equal(builder.memory.role,'upgrader','idle builder uses its WORK for upgrading instead of storage hauling');
+ const builder=f.creep('builder','builder',21,21);work(builder);assert.equal(builder.memory.role,'worker','idle builder uses its WORK for upgrading instead of storage hauling');assert.equal(builder.memory.workRole,'upgrader','idle builder retains the upgrader work duty');
  delete ctx.Game.creeps.builder;
  const sp=f.structure(C.STRUCTURE_SPAWN,'spawn',22,20,0,300);haul(c);assert.deepEqual(c.actions.pop(),['withdraw','storage']);
  c.store[C.RESOURCE_ENERGY]=100;sp.store[C.RESOURCE_ENERGY]=300;haul(c);

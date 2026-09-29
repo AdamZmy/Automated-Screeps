@@ -6,6 +6,17 @@ let upgradeIntentTick=-1,upgradeActors=new Set();
 let upgraderCacheTick=-1,upgraderCache={};
 let stationCacheTick=-1,stationCache={};
 let constructionCacheTick=-1,constructionCache={};
+const WORKER_ROLES=new Set(['upgrader','builder','repairman']);
+const BUILDER_TRAIL_LIMIT=32;
+function workerRole(c) {
+    const memory=c&&c.memory||{};
+    if(memory.role==='worker')return WORKER_ROLES.has(memory.workRole)?memory.workRole:'upgrader';
+    return WORKER_ROLES.has(memory.role)?memory.role:null;
+}
+function isWorker(c) { return !!workerRole(c); }
+function setWorkerRole(c,role) {
+    c.memory.role='worker';c.memory.unitType='worker';c.memory.workRole=role;
+}
 function upgrade(c) {
     const t=c.room.controller;if(!t||!t.my)return;
     if(upgradeIntentTick!==Game.time){upgradeIntentTick=Game.time;upgradeActors=new Set();}
@@ -17,17 +28,84 @@ function upgrade(c) {
 function upgraderAssignment(room) {
     if(upgraderCacheTick!==Game.time){upgraderCacheTick=Game.time;upgraderCache={};}
     if(upgraderCache[room.name]&&upgraderCache[room.name].room===room)return upgraderCache[room.name].value;
-    const policy=upgradePolicy(room),primary=[],support=[];
-    const peers=allCreeps().filter(o=>!o.spawning&&o.room.name===room.name&&o.memory.role==='upgrader').sort((a,b)=>a.name.localeCompare(b.name));
-    let work=0;
-    // Stable names keep the same workers at the controller throughout this stage.
-    for(const c of peers){if(policy.mode==='infrastructure'&&work>=policy.target)support.push(c);else{primary.push(c);work+=c.getActiveBodyparts(WORK);}}
-    const value={policy,primary,support};upgraderCache[room.name]={room,value};return value;
+    const assignment=workerAssignment(room);
+    const value={policy:assignment.policy,primary:assignment.upgraders,support:[],builders:assignment.builders,repairmen:assignment.repairmen,
+        workers:assignment.workers,builderCount:assignment.builderCount,repairmanCount:assignment.repairmanCount,building:assignment.building};
+    upgraderCache[room.name]={room,value};return value;
 }
 function upgradeAllowed(c,assignment=upgraderAssignment(c.room)) {
-    // Staffing and supply use the economic plan. A fueled primary upgrader
-    // never skips an executable action merely to enforce that planning rate.
+    // Worker count is the room-level capacity. Role conversion, rather than
+    // an old per-role budget, decides whether this worker is upgrading.
     return assignment.primary.includes(c);
+}
+function workerAssignment(room) {
+    delete upgraderCache[room.name];
+    const policy=upgradePolicy(room);
+    const all=allCreeps().filter(c=>!c.spawning&&c.room&&c.room.name===room.name);
+    const workers=all.filter(isWorker);
+    const jobs=constructionJobs(room),repairs=criticalRepairs(room);
+    const building=jobs.length>0||repairs.length>0;
+    // Critical maintenance takes the temporary half-pool first. Ordinary
+    // construction uses the same half-pool when no repairman is required.
+    const taskRole=repairs.length?'repairman':jobs.length?'builder':'upgrader';
+    const taskCount=taskRole==='upgrader'?0:Math.floor(workers.length/2);
+    const fullWork=workerBodyWork(room);
+    const candidates=workers.slice().sort((a,b)=>
+        Number(a.getActiveBodyparts(WORK)!==fullWork)-Number(b.getActiveBodyparts(WORK)!==fullWork)||
+        (b.ticksToLive||0)-(a.ticksToLive||0)||a.name.localeCompare(b.name));
+    const taskWorkers=new Set(candidates.slice(0,taskCount));
+    const builders=[],repairmen=[],upgraders=[];
+    for(const c of workers){
+        const role=taskWorkers.has(c)?taskRole:'upgrader';
+        if(workerRole(c)!==role||c.memory.role!=='worker'){
+            setWorkerRole(c,role);
+            c.memory.workerRoleSince=Game.time;
+            delete c.memory.workJob;
+            if(role!=='builder')clearBuilderTrajectory(c);
+        }
+        if(role==='builder')markBuilderTrajectory(c);
+        if(role==='builder')builders.push(c);
+        else if(role==='repairman')repairmen.push(c);
+        else upgraders.push(c);
+    }
+    return {policy,workers,upgraders,builders,repairmen,builderCount:builders.length,repairmanCount:repairmen.length,building,jobs,repairs,fullWork};
+}
+function workerBodyWork(room) {
+    const budget=room&&Number.isFinite(room.energyCapacityAvailable)?room.energyCapacityAvailable:0;
+    const parts=budget>=200?bodyForWorker(budget):null;
+    return parts?parts.filter(p=>(p.type||p)===WORK).length:0;
+}
+function bodyForWorker(budget,workLimit=50) {
+    for(let work=Math.min(50,Math.floor(budget/BODYPART_COST[WORK]),workLimit);work>=1;work--){
+        const carry=Math.max(1,Math.ceil(work*.5));
+        const move=Math.max(1,Math.ceil((work+carry)/2));
+        if(work+carry+move<=50&&work*BODYPART_COST[WORK]+carry*BODYPART_COST[CARRY]+move*BODYPART_COST[MOVE]<=budget)
+            return Array(work).fill(WORK).concat(Array(carry).fill(CARRY),Array(move).fill(MOVE));
+    }
+    return null;
+}
+function setWorkerState(c,state) {
+    if(!isWorker(c)&&c.memory.role!=='bootstrap')return;
+    if(c.memory.workerState!==state){c.memory.workerState=state;c.memory.workerStateSince=Game.time;}
+}
+function clearBuilderTrajectory(c) {
+    delete c.memory.builderTrail;delete c.memory.builderTrailTask;delete c.memory.builderTrailRoom;
+}
+function markBuilderTrajectory(c) {
+    if(workerRole(c)!=='builder'||!c.pos)return;
+    const task=c.memory.workJob||'unassigned',roomName=c.room&&c.room.name;
+    if(c.memory.builderTrailTask!==task||c.memory.builderTrailRoom!==roomName){
+        c.memory.builderTrail=[];c.memory.builderTrailTask=task;c.memory.builderTrailRoom=roomName;
+    }
+    const trail=c.memory.builderTrail,last=trail[trail.length-1];
+    if(!last||last.x!==c.pos.x||last.y!==c.pos.y||last.t!==Game.time){
+        trail.push({x:c.pos.x,y:c.pos.y,t:Game.time});
+        if(trail.length>BUILDER_TRAIL_LIMIT)trail.splice(0,trail.length-BUILDER_TRAIL_LIMIT);
+    }
+    const visual=c.room&&c.room.visual;
+    if(visual&&typeof visual.poly==='function'&&trail.length>1)
+        visual.poly(trail.map(p=>({x:p.x,y:p.y})),{stroke:'#f59e0b',width:.15,opacity:.65});
+    if(visual&&typeof visual.circle==='function')visual.circle(c.pos.x,c.pos.y,{radius:.35,fill:'#f59e0b',opacity:.7});
 }
 function walkable(room,p) {
     return p.x>0&&p.y>0&&p.x<49&&p.y<49&&!(room.getTerrain().get(p.x,p.y)&TERRAIN_MASK_WALL)&&
@@ -167,7 +245,7 @@ function workerSupply(c,job) {
     c.memory.refuelAvoid={id:target.id,until:Game.time+15};delete c.memory.refuelTarget;delete c.memory.workSupply;return false;
 }
 function workReady(c) {
-    return energy(c)>0&&(c.memory.loaded||c.store.getFreeCapacity(E)===0||['builder','upgrader'].includes(c.memory.role));
+    return energy(c)>0&&(c.memory.loaded||c.store.getFreeCapacity(E)===0||isWorker(c));
 }
 // Readiness and accepted intents are diagnostics, not a spending valve. The
 // ledger remains the authority for actual engine expenditure and RCL8 limits.
@@ -177,7 +255,7 @@ function developmentPlan(room) {
     if(developmentTick!==Game.time){developmentTick=Game.time;developmentPlans={};}
     const cached=developmentPlans[room.name];if(cached&&cached.room===room&&cached.memory===m)return cached;
     delete m.developmentCredit;
-    const control=m.economyControl,assignment=upgraderAssignment(room),jobs=constructionJobs(room),supportJobs=constructionJobs(room,true);
+    const control=m.economyControl,assignment=workerAssignment(room),jobs=assignment.jobs;
     const requests=[],reserved={};let upgradeReady=0;
     const workers=allCreeps().slice().sort((a,b)=>Number(!!(jobs[0]&&range(b,jobs[0])<=3))-Number(!!(jobs[0]&&range(a,jobs[0])<=3))||a.name.localeCompare(b.name));
     for(const c of workers){
@@ -185,15 +263,16 @@ function developmentPlan(room) {
         const work=c.getActiveBodyparts(WORK);if(!work)continue;
         const yielding=c.memory.yieldSource&&Game.getObjectById(c.memory.yieldSource);
         if(yielding&&range(c,yielding)<=1)continue;
-        if(assignment.primary.includes(c)){
+        if(assignment.upgraders.includes(c)){
             if(!room.controller.upgradeBlocked&&range(c,room.controller)<=3)upgradeReady+=Math.min(work,energy(c));
             continue;
         }
-        if(!['builder','bootstrap'].includes(c.memory.role)&&!assignment.support.includes(c))continue;
-        const candidates=(assignment.support.includes(c)?supportJobs:jobs).filter(target=>!Number.isFinite(target.progressTotal)||target.progressTotal-target.progress-(reserved[target.id]||0)>0);
+        if(workerRole(c)!=='builder'&&c.memory.role!=='bootstrap')continue;
+        const candidates=jobs.filter(target=>!Number.isFinite(target.progressTotal)||target.progressTotal-target.progress-(reserved[target.id]||0)>0);
         const previous=candidates.find(target=>target.id===c.memory.workJob);
         const target=previous&&candidates[0]&&previous.structureType===candidates[0].structureType?previous:candidates[0];
         if(!target){delete c.memory.workJob;continue;}c.memory.workJob=target.id;
+        if(workerRole(c)==='builder')markBuilderTrajectory(c);
         if(c.memory.role==='bootstrap'&&room.energyAvailable<room.energyCapacityAvailable)continue;
         const ready=range(c,target)<=3;
         const cost=ready?Math.min(work*BUILD_POWER,energy(c),Number.isFinite(target.progressTotal)?Math.max(0,target.progressTotal-target.progress-(reserved[target.id]||0)):Infinity):0;
@@ -220,7 +299,7 @@ function finishDevelopment(room) {
         buildIntentEnergy:plan.spent.build,upgradeIntentEnergy:plan.spent.upgrade,upgradeThrottled:false,buildThrottled:false};
 }
 function buildAllowed(c) {
-    if(!['builder','bootstrap','upgrader'].includes(c.memory.role))return true;
+    if(!isWorker(c)&&c.memory.role!=='bootstrap')return true;
     const plan=developmentPlan(c.room),request=plan.requests.find(r=>r.creep===c);
     if(!request||request.done)return false;
     return !Number.isFinite(request.target.progressTotal)||request.target.progressTotal-request.target.progress-(plan.siteSpent[request.target.id]||0)>0;
@@ -233,7 +312,7 @@ function build(c,target) {
     if(result===ERR_NOT_IN_RANGE)go(c,target,3);
 }
 function refuel(c,harvest=true,protectController=false) {
-    const station=controllerStation(c.room),dedicated=station&&(protectController||!(c.memory.role==='upgrader'&&upgraderAssignment(c.room).primary.includes(c)));
+    const station=controllerStation(c.room),dedicated=station&&(protectController||!(workerRole(c)==='upgrader'&&upgraderAssignment(c.room).primary.includes(c)));
     const protectedStock=t=>dedicated&&station.nodes.some(n=>n.id===t.id);
     const peers=roomCreeps(c.room).filter(o=>o.name!==c.name);
     const free=p=>!peers.some(o=>{
@@ -327,52 +406,47 @@ function work(c) {
         delete c.memory.yieldSource;
     }
     delete c.memory.haulSupply;
-    if(c.memory.role==='builder'&&c.getActiveBodyparts(WORK)>0&&ctrl&&ctrl.my&&ctrl.level>1&&
-        !constructionSites(c.room).length&&
-        !structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55)){
-        c.memory.role='upgrader';c.memory.owner='development:'+c.memory.home;delete c.memory.workSupply;
-    }
-    const ordinaryWork=c.memory.role==='upgrader'||!c.room.storage||!ctrl||!ctrl.my||ctrl.ticksToDowngrade<4000||ctrl.level===1||constructionJobs(c.room).length||structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
+    const assignment=isWorker(c)||c.memory.role==='bootstrap'?workerAssignment(c.room):null;
+    if(workerRole(c)==='builder')markBuilderTrajectory(c);
+    const ordinaryWork=workerRole(c)==='upgrader'||!c.room.storage||!ctrl||!ctrl.my||ctrl.ticksToDowngrade<4000||ctrl.level===1||constructionJobs(c.room).length||structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
     if(ordinaryWork&&c.memory.role!=='hauler')require('logistics').release(c);
-    const assignment=c.memory.role==='upgrader'?upgraderAssignment(c.room):null;
-    const maintenanceWorker=!assignment||assignment.support.includes(c)||!roomCreeps(c.room).some(o=>o!==c&&!o.spawning&&['builder','bootstrap'].includes(o.memory.role)&&o.getActiveBodyparts(WORK)>0);
-    if(maintenanceWorker&&!(ctrl&&ctrl.my&&(ctrl.level===1||ctrl.ticksToDowngrade<4000))&&repairCritical(c))return;
+    const maintenanceWorker=!assignment||workerRole(c)==='repairman'||!assignment.repairmen.some(o=>o!==c&&o.getActiveBodyparts(WORK)>0);
+    if(maintenanceWorker&&!(ctrl&&ctrl.my&&(ctrl.level===1||ctrl.ticksToDowngrade<4000))&&repairCritical(c)){
+        setWorkerState(c,'work');return;
+    }
     // Initial carried energy can upgrade while the same tick also withdraws,
     // picks up or moves. Refuel/readiness and seat routing must not hide work.
-    if(assignment&&assignment.primary.includes(c)&&energy(c)>0&&ctrl&&range(c,ctrl)<=3)upgrade(c);
-    if(assignment&&assignment.primary.includes(c)){
-        if(stationUpgrade(c,assignment)){delete c.memory.upgradeParking;return;}
-        if(overflowUpgrade(c,assignment))return;
+    if(assignment&&assignment.upgraders.includes(c)&&energy(c)>0&&ctrl&&range(c,ctrl)<=3){
+        setWorkerState(c,'work');upgrade(c);
     }
-    if(!assignment||!assignment.primary.includes(c))delete c.memory.upgradeSeat;
+    if(assignment&&assignment.upgraders.includes(c)){
+        const upgradeAssignment={...assignment,primary:assignment.upgraders};
+        if(stationUpgrade(c,upgradeAssignment)){delete c.memory.upgradeParking;return;}
+        if(overflowUpgrade(c,upgradeAssignment))return;
+    }
+    if(!assignment||!assignment.upgraders.includes(c))delete c.memory.upgradeSeat;
     // Retired construction workers can distribute surplus without withdrawing and
     // returning it to storage as an endless idle job.
-    if(c.room.storage&&c.memory.role!=='upgrader'&&ctrl&&ctrl.my&&ctrl.ticksToDowngrade>=4000&&
+    if(c.room.storage&&workerRole(c)!=='upgrader'&&ctrl&&ctrl.my&&ctrl.ticksToDowngrade>=4000&&
         !constructionSites(c.room).length&&
         !structures(c.room).some(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55)&&
         (energy(c.room.storage)>0||allCreeps().some(o=>o.room.name===c.room.name&&o.memory.role==='miner'&&o.getActiveBodyparts(WORK)))){require('logistics').haul(c);return;}
     if(!energy(c)) c.memory.loaded=false;
     // Any carried energy can fund useful work; refill only after it runs out.
-    if(workReady(c))c.memory.loaded=true;
+    if(workReady(c)){c.memory.loaded=true;setWorkerState(c,'work');}
     if(c.memory.loaded)delete c.memory.refuelTarget;
     if(!c.memory.loaded){
         const job=(criticalRepairs(c.room)[0]||{}).node||constructionJobs(c.room,!!assignment)[0];
+        setWorkerState(c,'refuel');
         if(job&&workerSupply(c,job)||refuel(c)||!energy(c))return;
         c.memory.loaded=true;
+        setWorkerState(c,'work');
     }
     if(ctrl&&ctrl.my&&(ctrl.ticksToDowngrade<4000 || ctrl.level===1)&&c.memory.role!=='bootstrap'){upgrade(c);return;}
     if(c.memory.role==='bootstrap'&&urgentFill(c))return;
-    let infrastructureSites;
-    if(c.memory.role==='upgrader'){
-        if(!assignment.support.includes(c)){if(upgradeAllowed(c,assignment))upgrade(c);return;}
-        infrastructureSites=constructionJobs(c.room,true);
-        // Between construction and miner arrival, help fund the replacement body.
-        // With no remaining infrastructure job, existing workers can still upgrade.
-        if(!infrastructureSites.length){if(!urgentFill(c))upgrade(c);return;}
-    }
-    const sites=infrastructureSites||constructionJobs(c.room);
+    const sites=constructionJobs(c.room);
     if(ctrl&&ctrl.my&&ctrl.level===1){upgrade(c);return;}
-    if(sites.length){
+    if(workerRole(c)==='builder'&&sites.length){
         const plan=developmentPlan(c.room),assigned=plan.requests.find(r=>r.creep===c&&!r.done);
         const t=assigned&&assigned.target;
         if(t){
@@ -381,11 +455,16 @@ function work(c) {
             if(buildAllowed(c)){build(c,t);return;}
         }
         // Every site's remaining work is already covered this tick. Existing
-        // fueled WORK can still maintain the controller instead of idling.
-        if(ctrl&&ctrl.my){upgrade(c);return;}
+        // fueled builders can only fall back to maintenance here. Role
+        // selection will return them to the upgrade pool on the next tick.
+        if(ctrl&&ctrl.my&&workerRole(c)==='builder'){upgrade(c);return;}
     }
     const broken=structures(c.room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_ROAD].includes(s.structureType)&&s.hits<s.hitsMax*.55);
     const b=near(c,broken);if(b){if(c.repair(b)===ERR_NOT_IN_RANGE)go(c,b,3);return;}
+    if((workerRole(c)==='builder'||workerRole(c)==='repairman')&&!constructionJobs(c.room).length&&!criticalRepairs(c.room).length){
+        setWorkerRole(c,'upgrader');c.memory.workerRoleSince=Game.time;clearBuilderTrajectory(c);delete c.memory.workJob;
+        setWorkerState(c,'work');
+    }
     if(c.room.storage&&c.room.storage.store.getFreeCapacity(E)>0){give(c,c.room.storage);return;}
     upgrade(c);
 }
@@ -438,4 +517,4 @@ function runConstruction(room,requests=[]) {
     constructionResults[room.name]=result;m.construction=result;return result;
 }
 
-module.exports={upgrade,baseUpgradePolicy,economyMemory,routeTravel,updateEconomy,upgradePolicy,upgraderAssignment,upgradeAllowed,walkable,controllerStation,stationUpgrade,overflowUpgrade,workerSupply,workReady,developmentPlan,recordDevelopment,finishDevelopment,buildAllowed,build,refuel,urgentFill,constructionJobs,criticalRepairs,repairCritical,runConstruction,work,mine};
+module.exports={upgrade,baseUpgradePolicy,economyMemory,routeTravel,updateEconomy,upgradePolicy,workerRole,isWorker,setWorkerRole,upgraderAssignment,workerAssignment,workerBodyWork,setWorkerState,markBuilderTrajectory,upgradeAllowed,walkable,controllerStation,stationUpgrade,overflowUpgrade,workerSupply,workReady,developmentPlan,recordDevelopment,finishDevelopment,buildAllowed,build,refuel,urgentFill,constructionJobs,criticalRepairs,repairCritical,runConstruction,work,mine};

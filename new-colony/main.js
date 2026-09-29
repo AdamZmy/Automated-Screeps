@@ -1,6 +1,6 @@
 'use strict';
 // Frontier composition root. Each action has exactly one business owner.
-const VERSION='2026-09-28.7';
+const VERSION='2026-09-29.1';
 const runtime=require('runtime'),metrics=require('metrics');
 const colony=require('colony'),mining=require('mining'),development=require('development');
 const logistics=require('logistics'),workforce=require('workforce');
@@ -50,7 +50,8 @@ module.exports.loop=function(){
     const creeps=allCreeps().slice().sort((a,b)=>(b.memory.role==='hauler'&&energy(b)>0?1:0)-(a.memory.role==='hauler'&&energy(a)>0?1:0));
     for(const c of creeps){
         if(c.spawning)continue;
-        guarded('creeps',c.room,()=>measured('roles',c.memory.role||'unknown',()=>{
+        const metricRole=c.memory.role==='worker'?c.memory.workRole||'worker':c.memory.role||'unknown';
+        guarded('creeps',c.room,()=>measured('roles',metricRole,()=>{
             if(defense.evacuate(c))return;
             if(c.memory.role==='miner')mining.mine(c);
             else if(c.memory.role==='hauler')logistics.haul(c);

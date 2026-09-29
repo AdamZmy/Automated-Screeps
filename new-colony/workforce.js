@@ -1,8 +1,22 @@
 'use strict';
-const {vals,range,energy,alive,allCreeps,spawns,sources,stores,miningSpots}=require('runtime');
-const {controllerStation,constructionJobs,upgraderAssignment,criticalRepairs}=require('development');
-const {upgradePolicy,economyMemory,updateEconomy,routeTravel,policy:colonyPolicy}=require('colony');
+const {range,allCreeps,spawns,sources,stores,miningSpots}=require('runtime');
+const {controllerStation,constructionJobs,workerAssignment,workerRole,isWorker,criticalRepairs}=require('development');
+const {upgradePolicy,economyMemory,updateEconomy,policy:colonyPolicy}=require('colony');
 const mining=require('mining');
+const isWorkerRole=role=>role==='worker'||role==='upgrader'||role==='builder'||role==='repairman';
+function workerWorkTarget(room,control) {
+    const planned=control&&Number.isFinite(control.plannedHarvest)?control.plannedHarvest:0;
+    const theoretical=sources(room).reduce((n,s)=>n+(s.energyCapacity||SOURCE_ENERGY_CAPACITY)/ENERGY_REGEN_TIME,0);
+    // Planned harvest includes miners in transit. When no miner has been
+    // observed yet, retain one WORK for bootstrap rather than spawning no
+    // consumer at all. The room's two normal sources cap this at 20 WORK.
+    const level=planned>0?(theoretical>0?Math.min(planned,theoretical):planned):theoretical;
+    return Math.max(sources(room).length?1:0,Math.min(20,Math.ceil(level)));
+}
+function workerWork(all) {
+    return (all||[]).filter(c=>isWorker(c)||c.memory&&c.memory.role==='bootstrap')
+        .reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
+}
 function workerDuty(room,parts,job,stationary=false,nodes=null) {
     const count=type=>parts.filter(p=>(p.type||p)===type).length;
     const work=count(WORK),carry=count(CARRY),move=count(MOVE);
@@ -27,70 +41,40 @@ function demandContext(room) {
     const old=demandContexts[room.name];
     if(old&&old.room===room&&old.jobs===jobs&&old.station===station&&old.fixture===fixture&&old.remaining===remaining&&old.jobKey===jobKey)return old;
     const nodes=stores(room).filter(s=>[STRUCTURE_CONTAINER,STRUCTURE_STORAGE,STRUCTURE_LINK].includes(s.structureType));
-    return demandContexts[room.name]={room,jobs,job:jobs[0],station,fixture,nodes,spawn:spawns(room)[0],choices:{},
+    return demandContexts[room.name]={room,jobs,job:jobs[0],station,fixture,nodes,spawn:spawns(room)[0],
         remaining,jobKey};
-}
-function* candidateChoices(room,context,role,limit,stationary) {
-    const key=role+':'+limit+':'+Number(stationary),task=role==='builder'?context.job:room.controller;
-    let options=context.choices[key];
-    if(!options){const largest=body(role,limit,{stationary});options=context.choices[key]={maxWork:largest?largest.filter(p=>p===WORK).length:0,choices:[]};}
-    for(let work=1;work<=options.maxWork;work++){
-        let choice=options.choices[work-1];
-        if(!choice){
-            const candidate=body(role,limit,{stationary,workLimit:work}),price=candidate.reduce((n,p)=>n+BODYPART_COST[p],0);
-            const duty=workerDuty(room,candidate,task,stationary,context.nodes);
-            choice=options.choices[work-1]={body:candidate,price,duty,capacity:candidate.filter(p=>p===WORK).length*duty*(role==='builder'?BUILD_POWER:1)};
-        }
-        yield choice;
-    }
 }
 function workforceDemand(room,control,all) {
     const context=demandContext(room),{station,job,nodes,remaining}=context,budget=room.energyCapacityAvailable;
-    const pool=Math.max(0,Math.min(control.usefulTarget,control.developmentBudget));
-    const options={stationary:!!(station&&station.seats.length)};
-    const cost=b=>b?b.reduce((n,p)=>n+BODYPART_COST[p],0):0;
-    const upgraders=all.filter(c=>c.memory.role==='upgrader').sort((a,b)=>b.getActiveBodyparts(WORK)-a.getActiveBodyparts(WORK)||a.name.localeCompare(b.name));
-    const seated=options.stationary?upgraders.slice(0,station.seats.length):upgraders;
-    const effectiveUp=seated.reduce((n,c)=>n+c.getActiveBodyparts(WORK)*workerDuty(room,c.body,room.controller,options.stationary,nodes),0);
-    const weakest=options.stationary&&upgraders.length>=station.seats.length?seated[seated.length-1]:null;
-    const replacedRate=weakest?weakest.getActiveBodyparts(WORK)*workerDuty(room,weakest.body,room.controller,true,nodes):0;
-    const support=upgradePolicy(room).mode==='infrastructure'?upgraderAssignment(room).support:[];
-    const builders=all.filter(c=>c.memory.role==='builder'||c.memory.role==='bootstrap'||support.includes(c));
+    const assignment=workerAssignment(room),target=workerWorkTarget(room,control),current=workerWork(all),
+        fullBody=body('worker',budget),fullWork=fullBody?fullBody.filter(p=>(p.type||p)===WORK).length:0,
+        deficit=Math.max(0,target-current),nextWork=Math.min(fullWork,deficit),workerBody=nextWork?body('worker',budget,{workLimit:nextWork}):null;
+    const upgraders=assignment.upgraders;
+    const builders=assignment.builders.concat(all.filter(c=>c.memory.role==='bootstrap'));
+    const repairmen=assignment.repairmen;
+    const effectiveUp=upgraders.reduce((n,c)=>n+c.getActiveBodyparts(WORK)*workerDuty(room,c.body,room.controller,!!(station&&station.seats.length),nodes),0);
     const effectiveBuild=job?builders.reduce((n,c)=>n+c.getActiveBodyparts(WORK)*BUILD_POWER*workerDuty(room,c.body,job,false,nodes),0):0;
-    // Compare legal role bodies against the exact capacity still missing, with
-    // each candidate's own refill/travel duty and recurring lifetime cost. The
-    // first sufficient body is cheapest; otherwise retain the best affordable
-    // capacity. Full stations must recover the seat being replaced as well.
-    const select=(role,limit,retained,task,stationary,target)=>{
-        let best=null;
-        for(const candidate of candidateChoices(room,context,role,limit,stationary)){
-            const rate=target(candidate.price),choice={...candidate,rate};
-            if(retained+candidate.capacity>=rate)return choice;
-            if(!best||candidate.capacity>best.capacity)best=choice;
-        }
-        return best||{body:null,duty:1,rate:target(0),capacity:0};
-    };
-    // A slow priority-share transition cannot cap staffing after sites end.
-    const nextUp=select('upgrader',budget,effectiveUp-replacedRate,room.controller,options.stationary,
-        price=>Math.max(2,Math.min(job?control.target:pool,pool)-price/1500));
-    const {body:upgradeBody,duty:upgradeDuty,rate:upgradeRate}=nextUp;
-    let upgrade=effectiveUp<upgradeRate&&!!upgradeBody;
-    if(upgrade&&weakest){
-        const gain=Math.min(upgradeRate-effectiveUp,nextUp.capacity-replacedRate);
-        const horizon=Math.max(0,Math.min(weakest.ticksToLive||1500,1500)-upgradeBody.length*CREEP_SPAWN_TIME-50);
-        // Allow one profitable stronger seat occupant, retaining the displaced
-        // worker for ordinary work. A pending birth prevents duplicate upgrades.
-        upgrade=!upgraders.some(c=>c.spawning)&&gain*horizon>cost(upgradeBody);
-    }
-    const nextBuild=job?select('builder',Math.min(budget,Math.max(300,remaining)),effectiveBuild,job,false,
-        price=>Math.max(0,Math.min(control.buildEnergyTarget,pool-price/1500))):{body:null,duty:1,rate:0};
-    const {body:builderBody,duty:buildDuty,rate:buildRate}=nextBuild;
+    const upgradeWork=upgraders.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
+    const builderWork=assignment.builders.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
+    const repairWork=repairmen.reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
+    // This is the engine-equivalent instantaneous demand. It is intentionally
+    // exposed because BUILD_POWER is higher than one energy per WORK in the
+    // actual game, even though staffing is sized by the unified WORK pool.
+    const workerEnergyDemand=upgradeWork+repairWork+(builderWork+all.filter(c=>c.memory.role==='bootstrap').reduce((n,c)=>n+c.getActiveBodyparts(WORK),0))*BUILD_POWER;
+    const workerDutyRate=workerBody?workerDuty(room,workerBody,job||room.controller,false,nodes):1;
     const spawn=spawns(room)[0];
-    const buildLead=builderBody?builderBody.length*CREEP_SPAWN_TIME+(job&&spawn&&spawn.pos?range(spawn,job)*2:0)+20:0;
-    return {upgrade,upgradeBody,builderBody,upgradeWork:Math.ceil(upgradeRate/Math.max(.2,upgradeDuty)),
-        builderWork:job?Math.ceil(buildRate/(BUILD_POWER*Math.max(.2,buildDuty))):0,
-        upgradeRate:+upgradeRate.toFixed(2),effectiveUp:+effectiveUp.toFixed(2),effectiveBuild:+effectiveBuild.toFixed(2),
-        build:!!(job&&builderBody&&effectiveBuild<buildRate&&remaining>effectiveBuild*buildLead),stationSeats:options.stationary?station.seats.length:0};
+    const buildLead=workerBody?workerBody.length*CREEP_SPAWN_TIME+(job&&spawn&&spawn.pos?range(spawn,job)*2:0)+20:0;
+    // One worker body is used for every future consumer. The final body is
+    // capped by the exact remaining WORK deficit, so the room converges to
+    // its harvest WORK target instead of adding a whole extra worker.
+    return {worker:!!workerBody,workerBody,workerWork:nextWork,workerWorkTarget:target,
+        workerCount:fullWork?Math.ceil(target/fullWork):0,
+        upgrade:!!workerBody,upgradeBody:workerBody,builderBody:workerBody,
+        upgradeWork,builderWork,repairWork,workerEnergyDemand,
+        upgradeRate:+effectiveUp.toFixed(2),effectiveUp:+effectiveUp.toFixed(2),effectiveBuild:+effectiveBuild.toFixed(2),
+        build:!!(job&&workerBody&&remaining>effectiveBuild*buildLead),
+        builderWorkTarget:job?Math.ceil((control.buildEnergyTarget||0)/BUILD_POWER):0,
+        stationSeats:station&&station.seats?station.seats.length:0,workerDuty:+workerDutyRate.toFixed(3)};
 }
 function body(role,budget,options={}) {
     if(role==='miner'){
@@ -98,19 +82,37 @@ function body(role,budget,options={}) {
     }
     if(role==='miner')return null;
     if(role==='hauler'){if(budget<100)return null;const n=Math.max(1,Math.min(25,Math.floor(budget/100)));return Array(n).fill(CARRY).concat(Array(n).fill(MOVE));}
-    if(role==='upgrader'||role==='builder'){
-        // Fixed workers pay movement only on their initial journey. Mobile
-        // workers keep a two-tick plain step and enough fuel for useful batches.
+    if(role==='worker'||role==='upgrader'||role==='builder'||role==='repairman'){
+        // All development workers use one mobile body template. Work roles
+        // are runtime state, so builders and repairmen cannot get a different
+        // birth body from upgraders. The legacy names are accepted only as
+        // body-builder aliases; all live spawn requests use role "worker".
         for(let work=Math.min(50,Math.floor(budget/BODYPART_COST[WORK]),Math.floor(options.workLimit===undefined?50:options.workLimit));work>=1;work--){
-            const carry=Math.max(1,Math.ceil(work*(role==='builder'?1.2:options.stationary?.25:.4)));
-            const move=Math.max(1,Math.ceil((work+carry)/(options.stationary?4:2)));
+            const carry=Math.max(1,Math.ceil(work*.5));
+            const move=Math.max(1,Math.ceil((work+carry)/2));
             if(work+carry+move<=50&&work*BODYPART_COST[WORK]+carry*BODYPART_COST[CARRY]+move*BODYPART_COST[MOVE]<=budget)
                 return Array(work).fill(WORK).concat(Array(carry).fill(CARRY),Array(move).fill(MOVE));
         }
         return budget>=200?[WORK,CARRY,MOVE]:null;
     }
+    if(role!=='bootstrap')return null;
     if(budget<200)return null;
     const n=Math.max(1,Math.min(4,Math.floor(budget/200)));return Array(n).fill(WORK).concat(Array(n).fill(CARRY),Array(n).fill(MOVE));
+}
+const HAULER_CAPACITY_FRACTION=.5;
+function standardHaulerBudget(room) {
+    const capacity=Number(room&&room.energyCapacityAvailable);
+    if(!Number.isFinite(capacity)||capacity<100)return 0;
+    // Keep ordinary transport bodies stable within an RCL. Round only through
+    // body(), which can spend complete CARRY+MOVE pairs; emergency recovery
+    // below may still use the currently available energy.
+    return Math.max(100,Math.floor(capacity*HAULER_CAPACITY_FRACTION));
+}
+function standardHaulerBody(room) {
+    const budget=standardHaulerBudget(room);return budget?body('hauler',budget):null;
+}
+function emergencyHaulerBody(room) {
+    return body('hauler',Number(room&&room.energyAvailable)||0);
 }
 function minerReplacement(room,all,spawn) {
     const next=body('miner',room.energyCapacityAvailable);if(!next)return null;
@@ -163,27 +165,28 @@ function reconcileBirths(room,roster) {
     return {state,roster:roster.concat(pending)};
 }
 function nextSlot(role,roster) {
-    const occupied=new Set(roster.filter(c=>c.memory.role===role&&(c.spawning||(c.ticksToLive||0)>0)).map(c=>c.memory.spawnSlot).filter(Boolean));
+    const matches=c=>role==='worker'?isWorker(c):c.memory.role===role;
+    const occupied=new Set(roster.filter(c=>matches(c)&&(c.spawning||(c.ticksToLive||0)>0)).map(c=>c.memory.spawnSlot).filter(Boolean));
     // Existing pre-migration workers count as occupied slots without mutation.
-    const legacy=roster.filter(c=>c.memory.role===role&&(c.spawning||(c.ticksToLive||0)>0)&&!c.memory.spawnSlot).length;
+    const legacy=roster.filter(c=>matches(c)&&(c.spawning||(c.ticksToLive||0)>0)&&!c.memory.spawnSlot).length;
     for(let n=0;n<legacy;n++)occupied.add(role+':'+n);
     let n=0;while(occupied.has(role+':'+n))n++;return role+':'+n;
 }
 function roomRequests(room,roster,control,demand) {
     const all=roster.filter(c=>c.spawning||(c.ticksToLive||0)>0),requests=[],count=role=>all.filter(c=>c.memory.role===role).length;
+    const workerCount=all.filter(isWorker).length;
     const miners=roster.filter(c=>c.memory.role==='miner'&&(c.spawning||(c.ticksToLive||0)>0)&&c.getActiveBodyparts(WORK)>0).length,haulers=count('hauler'),carry=all.filter(c=>c.memory.role==='hauler').reduce((n,c)=>n+c.getActiveBodyparts(CARRY),0);
     const owner='colony:'+room.name,add=(role,parts,priority,essential,reason,memory={},slotKey=nextSlot(role,roster),neededAt=Game.time)=>{
         if(!parts)return;requests.push({id:owner+':'+slotKey,owner,slotKey,home:room.name,role,body:parts,memory,priority,neededAt,essential,reason});
     };
     const immediate=room.energyAvailable,capacity=room.energyCapacityAvailable;
-    const missingUp=!all.some(c=>c.memory.role==='upgrader'&&c.getActiveBodyparts(WORK)>0);
-    const support=upgradePolicy(room).mode==='infrastructure'?upgraderAssignment(room).support:[];
-    const builders=all.filter(c=>['builder','bootstrap'].includes(c.memory.role)||support.includes(c));
-    const construction=constructionJobs(room).length>0||criticalRepairs(room).length>0;
-    const missingBuild=construction&&!builders.some(c=>c.getActiveBodyparts(WORK)>0);
-    if((!count('bootstrap')||count('bootstrap')+count('builder')<2)&&!miners)
+    const currentWorkerWork=workerWork(all),workerTarget=demand.workerWorkTarget||workerWorkTarget(room,control);
+    if((!count('bootstrap')||count('bootstrap')+workerCount<2)&&!miners)
         add('bootstrap',body('bootstrap',Math.min(immediate,400)),1100,true,'restore-harvest-and-spawn');
-    if(!haulers&&miners)add('hauler',body('hauler',immediate),1050,true,'restore-energy-transport');
+    if(!haulers&&miners){
+        const standard=standardHaulerBody(room),rescue=emergencyHaulerBody(room);
+        add('hauler',standard&&price(standard)<=immediate?standard:rescue,1050,true,'restore-energy-transport');
+    }
     const nextMiner=body('miner',capacity),spawnList=spawns(room),availability=spawnList.map(s=>s.spawning&&s.spawning.remainingTime||0);
     const queue=(availability.length?Math.min(...availability):0)+Math.max(0,Math.ceil(sources(room).length/Math.max(1,spawnList.length))-1)*(nextMiner?nextMiner.length*CREEP_SPAWN_TIME:0);
     const operations=mining.operations(room,roster),renewals=mining.replacementNeeds(room,roster,nextMiner,queue,operations);
@@ -204,9 +207,22 @@ function roomRequests(room,roster,control,demand) {
             memory:{source:operation.sourceId,operationId:operation.id},priority:!assigned.length?1020:750,essential:!assigned.length,
             neededAt:Game.time,reason:!assigned.length?'restore-source-harvesting':'source-capacity-gap'});
     }
-    // Distinct consumer roles are independent recovery obligations (W005).
-    if(missingUp)add('upgrader',body('upgrader',immediate,{stationary:!!demand.stationSeats,workLimit:Math.max(1,control.target)}),950,true,'restore-controller-work');
-    if(missingBuild)add('builder',demand.builderBody&&price(demand.builderBody)<=immediate?demand.builderBody:body('builder',immediate)||demand.builderBody,925,true,'restore-construction-or-maintenance');
+    // Development has one birth role. Construction is a temporary runtime
+    // role assigned by development.workerAssignment(), never a second spawn
+    // obligation that can inflate total WORK after a site completes.
+    const affordableWorkerBody=demand.workerWork?body('worker',immediate,{workLimit:demand.workerWork}):null;
+    // A partial pool is still operational; only a completely empty pool is a
+    // lifeline. The remaining WORK deficit is discretionary so it does not
+    // starve miner or hauler recovery.
+    const workerEssential=currentWorkerWork===0;
+    // A live worker already provides some controller/build capacity. Let
+    // source and transport recovery take precedence over topping up the
+    // remaining WORK deficit; the worker request remains queued for the next
+    // available spawn slot.
+    const workerPriority=currentWorkerWork===0?925:600;
+    if(currentWorkerWork<workerTarget&&(affordableWorkerBody||demand.workerBody))
+        add('worker',affordableWorkerBody||demand.workerBody,workerPriority,workerEssential,'worker-work-capacity-gap',
+            {unitType:'worker',workRole:'upgrader',workerState:'refuel'});
     if(!requests.some(r=>r.role==='miner')){
         const replacement=minerReplacement(room,all,spawnList[0]);
         if(replacement){const old=roster.find(c=>c.name===replacement.replaces),operation=operations.find(o=>o.sourceId===replacement.source);
@@ -215,51 +231,76 @@ function roomRequests(room,roster,control,demand) {
                 memory:{...replacement,operationId:operation.id},priority:700,neededAt:Game.time,essential:false,reason:'profitable-miner-upgrade'});
         }
     }
-    if(haulers&&carry<control.carry)add('hauler',body('hauler',Math.min(capacity,Math.max(2,control.carry-carry)*100)),500,false,'transport-capacity-gap');
-    if(!missingBuild&&demand.build)add('builder',demand.builderBody,400,false,'effective-construction-gap');
-    if(!missingUp&&demand.upgrade)add('upgrader',demand.upgradeBody,300,false,'effective-upgrade-gap');
+    if(haulers&&carry<control.carry)add('hauler',standardHaulerBody(room),500,false,'transport-capacity-gap');
     return requests;
 }
 function workerRenewals(room,roster,control) {
     const requests=[],owner='colony:'+room.name,sp=spawns(room)[0];
     const timeline=spawns(room).map(s=>s.spawning&&s.spawning.remainingTime||0);if(!timeline.length)return requests;
-    const sourceTrips=control.routes||[],haulTravel=sourceTrips.length?Math.max(...sourceTrips.map(r=>r.roundTrip/2)):sp&&sp.pos?Math.max(1,range(sp,room.controller)):1;
     const current=roster.filter(c=>c.spawning||(c.ticksToLive||0)>0),replaced=new Set(current.map(c=>c.memory.replaces).filter(Boolean));
-    const projected=current.slice();
-    const job=constructionJobs(room)[0],maxLead={},repairs=criticalRepairs(room),roles=new Set(current.map(c=>c.memory.role));
-    for(const role of ['hauler','upgrader','builder']){
-        if(!roles.has(role))continue;
-        const parts=body(role,room.energyCapacityAvailable,{stationary:role==='upgrader'&&!!controllerStation(room)});
-        if(!parts){maxLead[role]=0;continue;}
-        const moving=parts.filter(p=>p===MOVE).length,loaded=parts.length-moving;
-        const target=role==='builder'?job||room.controller:room.controller;
-        const travel=role==='hauler'?haulTravel:sp&&sp.pos?Math.max(0,range(sp,target)-3)*Math.max(1,Math.ceil(loaded/moving)):haulTravel;
-        maxLead[role]=parts.length*CREEP_SPAWN_TIME+travel;
+    const job=constructionJobs(room)[0],workerTarget=workerWorkTarget(room,control),full=body('worker',room.energyCapacityAvailable),fullWork=full?full.filter(p=>p===WORK).length:0;
+    const haulers=current.filter(c=>c.memory.role==='hauler'&&!c.spawning&&!replaced.has(c.name)).sort((a,b)=>a.ticksToLive-b.ticksToLive||a.name.localeCompare(b.name));
+    const sourceTrips=control.routes||[],haulTravel=sourceTrips.length?Math.max(...sourceTrips.map(r=>r.roundTrip/2)):sp&&sp.pos?Math.max(1,range(sp,room.controller)):1;
+    const standard=standardHaulerBody(room),haulPlans=[],standardCarry=standard?standard.filter(p=>p===CARRY).length:0;
+    let futureCarry=0;
+    const peers=current.filter(c=>c.memory.role==='hauler').sort((a,b)=>a.name.localeCompare(b.name));
+    for(const old of haulers){
+        if(!standard)break;
+        // Count transport at this death, not the temporary overlap of today's
+        // fleet. Equal-deadline predecessors all disappear together; accepted
+        // or observed successors and planned standard births cover later gaps.
+        const carry=current.filter(c=>c.memory.role==='hauler'&&(c.spawning||c.ticksToLive>old.ticksToLive))
+            .reduce((n,c)=>n+c.getActiveBodyparts(CARRY),0)+futureCarry;
+        if(carry>=control.carry)continue;
+        const travel=haulTravel,birth=standard.length*CREEP_SPAWN_TIME;
+        const slotKey=old.memory.spawnSlot||'hauler:'+peers.indexOf(old);
+        haulPlans.push({id:owner+':'+slotKey,owner,slotKey,home:room.name,role:'hauler',body:standard,memory:{replaces:old.name},priority:1000,
+            neededAt:Game.time+old.ticksToLive,latestStart:Game.time+old.ticksToLive-birth-travel,travelTicks:travel,essential:true,
+            emergencyAtDeadline:true,reason:'hauler-renewal-deadline'});
+        futureCarry+=standardCarry;
     }
-    const candidates=current.filter(c=>!c.spawning&&['hauler','upgrader','builder'].includes(c.memory.role)&&!replaced.has(c.name)).sort((a,b)=>a.ticksToLive-b.ticksToLive||a.name.localeCompare(b.name));
+    // Work backwards from arrival deadlines to reserve serial spawn time for
+    // peers. Prefer a spawn released later when both can meet the deadline,
+    // leaving the earlier/free spawn available to the older predecessor.
+    const ends=timeline.map(()=>Infinity);
+    for(let i=haulPlans.length-1;i>=0;i--){
+        const request=haulPlans[i],birth=request.body.length*CREEP_SPAWN_TIME;
+        const starts=ends.map(end=>Math.min(request.latestStart,end-birth));
+        const feasible=starts.map((start,index)=>({start,index})).filter(s=>s.start>=Game.time+timeline[s.index]);
+        const choices=feasible.length?feasible:starts.map((start,index)=>({start,index}));
+        choices.sort((a,b)=>b.start-a.start||timeline[b.index]-timeline[a.index]||a.index-b.index);
+        const choice=choices[0];request.latestStart=choice.start;ends[choice.index]=choice.start;
+    }
+    for(const request of haulPlans){
+        const first=timeline.indexOf(Math.min(...timeline));
+        if(request.latestStart>Game.time+timeline[first])continue;
+        requests.push(request);timeline[first]+=request.body.length*CREEP_SPAWN_TIME;
+    }
+    if(!fullWork)return requests;
+    const projected=current.slice();
+    const candidates=current.filter(c=>!c.spawning&&isWorker(c)&&!replaced.has(c.name))
+        .sort((a,b)=>a.ticksToLive-b.ticksToLive||a.name.localeCompare(b.name));
     for(const old of candidates){
-        const role=old.memory.role;
-        if(old.ticksToLive>Math.min(...timeline)+maxLead[role])continue;
-        if(role==='builder'&&!job&&!repairs.length)continue;
-        const without=projected.filter(c=>c!==old),demand=role==='hauler'?null:workforceDemand(room,control,without);
-        const carry=without.filter(c=>c.memory.role==='hauler').reduce((n,c)=>n+c.getActiveBodyparts(CARRY),0);
-        let parts=role==='hauler'&&carry<control.carry?body(role,Math.min(room.energyCapacityAvailable,Math.max(2,control.carry-carry)*100)):
-            role==='upgrader'&&demand.upgrade?demand.upgradeBody:role==='builder'&&demand.build?demand.builderBody:role==='builder'&&repairs.length&&!without.some(c=>c.memory.role==='builder'&&(c.spawning||c.ticksToLive>maxLead.builder)&&c.getActiveBodyparts(WORK)>0)?body('builder',Math.min(room.energyCapacityAvailable,300)):null;
-        if(!parts)continue;
-        const task=role==='builder'?constructionJobs(room)[0]||room.controller:room.controller;
-        const work=parts.filter(p=>p===WORK).length,carrying=parts.filter(p=>p===CARRY).length,moving=parts.filter(p=>p===MOVE).length;
-        const travel=role==='hauler'?haulTravel:sp&&sp.pos?Math.max(0,range(sp,task)-3)*Math.max(1,Math.ceil((work+carrying)/moving)):haulTravel;
-        const first=timeline.indexOf(Math.min(...timeline)),birth=parts.length*CREEP_SPAWN_TIME,lead=timeline[first]+birth+travel;
+        const moving=Math.max(1,full.filter(p=>p===MOVE).length),loaded=full.length-moving;
+        const task=job||room.controller,travel=sp&&sp.pos?Math.max(0,range(sp,task)-3)*Math.max(1,Math.ceil(loaded/moving)):haulTravel;
+        const first=timeline.indexOf(Math.min(...timeline)),birth=full.length*CREEP_SPAWN_TIME,lead=timeline[first]+birth+travel;
         if(old.ticksToLive>lead)continue;
-        const peers=current.filter(c=>c.memory.role===role).sort((a,b)=>a.name.localeCompare(b.name));
-        const slotKey=old.memory.spawnSlot||role+':'+peers.indexOf(old);
-        const surviving=without.some(c=>c.memory.role===role&&(c.spawning||c.ticksToLive>lead)&&c.getActiveBodyparts(role==='hauler'?CARRY:WORK)>0);
-        const request={id:owner+':'+slotKey,owner,slotKey,home:room.name,role,body:parts,memory:{replaces:old.name},priority:surviving?600:1000,
-            neededAt:Game.time+old.ticksToLive,latestStart:Game.time+old.ticksToLive-birth-travel,travelTicks:travel,essential:!surviving,reason:role+'-renewal-deadline'};
-        requests.push(request);timeline[first]+=birth;
-        // Planned replacement substitutes capacity in subsequent projections;
-        // it is never added to current delivered/harvested energy estimates.
-        projected.splice(projected.indexOf(old),1,{name:'requested:'+old.name,memory:{role},body:parts,spawning:true,ticksToLive:1500,
+        const without=projected.filter(c=>c!==old),deficit=Math.max(0,workerTarget-workerWork(without));
+        if(!deficit)continue;
+        const work=Math.min(fullWork,deficit),parts=body('worker',room.energyCapacityAvailable,{workLimit:work});
+        if(!parts)continue;
+        const actualMoving=Math.max(1,parts.filter(p=>p===MOVE).length),actualLoaded=parts.length-actualMoving;
+        const actualTravel=sp&&sp.pos?Math.max(0,range(sp,task)-3)*Math.max(1,Math.ceil(actualLoaded/actualMoving)):haulTravel;
+        const actualBirth=parts.length*CREEP_SPAWN_TIME,actualLead=timeline[first]+actualBirth+actualTravel;
+        if(old.ticksToLive>actualLead)continue;
+        const peers=current.filter(isWorker).sort((a,b)=>a.name.localeCompare(b.name));
+        const slotKey=old.memory.spawnSlot||'worker:'+peers.indexOf(old);
+        requests.push({id:owner+':'+slotKey,owner,slotKey,home:room.name,role:'worker',body:parts,
+            memory:{unitType:'worker',workRole:'upgrader',replaces:old.name,workerState:'refuel'},priority:workerWork(without)===0?1000:700,
+            neededAt:Game.time+old.ticksToLive,latestStart:Game.time+old.ticksToLive-actualBirth-actualTravel,travelTicks:actualTravel,
+            essential:workerWork(without)===0,reason:'worker-renewal-deadline'});
+        timeline[first]+=actualBirth;
+        projected.splice(projected.indexOf(old),1,{name:'requested:'+old.name,memory:{role:'worker',unitType:'worker',workRole:'upgrader'},body:parts,spawning:true,ticksToLive:1500,
             getActiveBodyparts:type=>parts.filter(p=>p===type).length});
     }
     return requests;
@@ -269,11 +310,11 @@ function busyPlanKey(room,control,roster,active,recovering) {
     // Absolute death and spawn-completion ticks stay constant during ordinary
     // progress. Unexpected lifespan changes, body damage and role transfers
     // invalidate the plan just like policy or infrastructure changes.
-    return [control.at,control.eventSignature,control.target,control.carry,control.buildEnergyTarget,control.usefulTarget,control.developmentBudget,
+    return [control.at,control.eventSignature,control.target,control.plannedHarvest,control.carry,control.buildEnergyTarget,control.usefulTarget,control.developmentBudget,
         room.energyCapacityAvailable,Number(recovering),Number(room.controller.ticksToDowngrade<4000),
         criticalRepairs(room).map(r=>r.node.id).join(','),
         active.map(s=>(s.id||s.name)+':'+(s.spawning?s.spawning.name+':'+(Game.time+s.spawning.remainingTime):'free')).join(','),
-        roster.map(c=>[c.name,c.memory.role,c.memory.source||'',c.memory.replaces||'',c.getActiveBodyparts(WORK),c.getActiveBodyparts(CARRY),
+        roster.map(c=>[c.name,c.memory.role,c.memory.workRole||'',c.memory.source||'',c.memory.replaces||'',c.getActiveBodyparts(WORK),c.getActiveBodyparts(CARRY),
             c.spawning?'spawning':Game.time+(c.ticksToLive||0)].join(':')).join(',')].join('|');
 }
 function spawnRoom(room,externalRequests=[]) {
@@ -288,13 +329,21 @@ function spawnRoom(room,externalRequests=[]) {
     }else{
         demand=workforceDemand(room,control,all);
         const renewals=workerRenewals(room,roster,control);
-        const ordinary=roomRequests(room,roster,control,demand).filter(r=>!renewals.some(n=>n.role===r.role)&&!roster.some(c=>c.spawning&&c.memory.role===r.role&&c.memory.replaces&&r.reason.endsWith('gap')));
+        const workerRenewalPending=renewals.some(n=>isWorkerRole(n.role));
+        const ordinary=roomRequests(room,roster,control,demand).filter(r=>
+            !(workerRenewalPending&&isWorkerRole(r.role))&&
+            !(r.reason==='transport-capacity-gap'&&renewals.some(n=>n.role==='hauler'))&&
+            !renewals.some(n=>n.role===r.role&&n.memory&&n.memory.replaces===r.memory?.replaces)&&
+            !roster.some(c=>c.spawning&&c.memory.role===r.role&&c.memory.replaces&&r.reason.endsWith('gap')));
         internal=ordinary.concat(renewals);state.planningTick=Game.time;state.planReused=false;
         if(busy)busyPlans[room.name]={at:Game.time,key,demand,internal};else delete busyPlans[room.name];
     }
     const capacity=role=>all.filter(c=>c.memory.role===role).reduce((n,c)=>n+c.getActiveBodyparts(role==='hauler'?CARRY:WORK),0);
-    m.economy={upgradeWorkTarget:demand.upgradeWork,upgradeWork:capacity('upgrader'),mode:policy.mode,reason:control.reason,carryTarget:control.carry,
-        carry:capacity('hauler'),builderWork:capacity('builder')+capacity('bootstrap'),builderWorkTarget:demand.builderWork,upgradeEffectiveRate:demand.effectiveUp,
+    const workerCapacity=role=>all.filter(c=>workerRole(c)===role).reduce((n,c)=>n+c.getActiveBodyparts(WORK),0);
+    const totalWorkerWork=workerWork(all),workerTarget=demand.workerWorkTarget||workerWorkTarget(room,control);
+    m.economy={workerWorkTarget:workerTarget,workerWork:totalWorkerWork,workerCount:demand.workerCount,
+        upgradeWorkTarget:demand.upgradeWork,upgradeWork:workerCapacity('upgrader'),mode:policy.mode,reason:control.reason,carryTarget:control.carry,
+        carry:capacity('hauler'),builderWork:workerCapacity('builder')+capacity('bootstrap'),repairmanWork:workerCapacity('repairman'),builderWorkTarget:demand.builderWorkTarget,workerEnergyDemand:demand.workerEnergyDemand,upgradeEffectiveRate:demand.effectiveUp,
         upgradeEnergyTarget:demand.upgradeRate,stationSeats:demand.stationSeats,builderEffectiveRate:demand.effectiveBuild,harvestPotential:control.harvestPotential,
         usefulEnergyTarget:control.usefulTarget,buildEnergyTarget:control.buildEnergyTarget,reserveRate:control.reserveRate,upkeep:control.upkeep,
         feedbackTicks:control.feedbackTicks,incomeBasis:control.incomeBasis,decisionTick:control.at,routes:control.routes};
@@ -308,7 +357,10 @@ function spawnRoom(room,externalRequests=[]) {
     const wanted=new Set(unique.keys());for(const key of Object.keys(state.waiting))if(!wanted.has(key))delete state.waiting[key];
     const requests=[];
     for(const [key,request] of unique){
-        const occupied=roster.some(c=>c.memory.role===request.role&&c.name!==request.memory?.replaces&&(c.spawning||(c.ticksToLive||0)>0)&&c.memory.spawnOwner===request.owner&&c.memory.spawnSlot===request.slotKey);
+        const occupied=roster.some(c=>
+            (request.role==='worker'?isWorker(c):c.memory.role===request.role)&&
+            c.name!==request.memory?.replaces&&(c.spawning||(c.ticksToLive||0)>0)&&
+            c.memory.spawnOwner===request.owner&&c.memory.spawnSlot===request.slotKey);
         if(occupied||state.pending[key]){delete state.waiting[key];continue;}
         const wait=state.waiting[key]||(state.waiting[key]={since:Game.time});
         wait.reason=recovering&&!request.essential?'cpu-recovery':busy?'all-spawns-busy':'queued';
@@ -327,20 +379,25 @@ function spawnRoom(room,externalRequests=[]) {
         let budget=Math.max(0,room.energyAvailable-reserved.spent);
         for(const [requestIndex,request] of requests.entries()){
             if(request.done||recovering&&!request.essential)continue;
-            const cost=price(request.body),wait=state.waiting[request.key];
+            // Plans always retain the standard body and its queue deadline.
+            // Decide rescue only at a real free spawn, using shared unspent
+            // energy, so financing changes cannot shrink the planning window.
+            const parts=request.role==='hauler'&&request.emergencyAtDeadline&&request.latestStart<=Game.time&&price(request.body)>budget?
+                body('hauler',budget):request.body;
+            const cost=parts?price(parts):Infinity,wait=state.waiting[request.key];
             if(cost>budget){wait.reason='insufficient-energy';continue;}
             // A lower job must leave funds and spawn time for an unaffordable
             // critical request whose latest start is already due.
-            const blocked=requests.find((r,i)=>i<requestIndex&&!r.done&&r.essential&&price(r.body)>budget&&r.latestStart<=Game.time+request.body.length*CREEP_SPAWN_TIME);
+            const blocked=requests.find((r,i)=>i<requestIndex&&!r.done&&r.essential&&price(r.body)>budget&&r.latestStart<=Game.time+parts.length*CREEP_SPAWN_TIME);
             if(blocked){wait.reason='critical-deadline-reservation';continue;}
             const name=request.role+'-'+Game.time+'-'+room.name+'-'+index;
-            const memory={...request.memory,role:request.role,home:room.name,owner:request.owner,spawnOwner:request.owner,spawnSlot:request.slotKey,
+            const memory={...request.memory,role:request.role,...(request.role==='worker'?{unitType:'worker',workRole:request.memory&&request.memory.workRole||'upgrader'}:{}),home:room.name,owner:request.owner,spawnOwner:request.owner,spawnSlot:request.slotKey,
                 birthRoom:room.name,bornAt:Game.time};
-            const code=spawn.spawnCreep(request.body,name,{memory});
+            const code=spawn.spawnCreep(parts,name,{memory});
             state.lastAttempt={tick:Game.time,id:request.id,owner:request.owner,slotKey:request.slotKey,spawn:spawnKey,code,reason:request.reason};
             if(code!==OK){wait.reason='spawn-error:'+code;continue;}
             request.done=true;reserved.used.add(spawnKey);reserved.spent+=cost;
-            state.pending[request.key]={name,spawn:spawn.id||spawn.name,at:Game.time,owner:request.owner,slotKey:request.slotKey,body:request.body,memory,status:'accepted-intent'};
+            state.pending[request.key]={name,spawn:spawn.id||spawn.name,at:Game.time,owner:request.owner,slotKey:request.slotKey,body:parts,memory,status:'accepted-intent'};
             delete state.waiting[request.key];accepted.push({name,role:request.role,slotKey:request.slotKey,cost});break;
         }
     }
@@ -348,4 +405,4 @@ function spawnRoom(room,externalRequests=[]) {
         latestStart:r.latestStart,waitingSince:r.waitingSince,reason:state.waiting[r.key]&&state.waiting[r.key].reason,essential:!!r.essential}));
     return accepted;
 }
-module.exports={workerDuty,workforceDemand,body,minerReplacement,minerRenewal,roomRequests,workerRenewals,reconcileBirths,spawnRoom};
+module.exports={workerDuty,workerWorkTarget,workerWork,workforceDemand,body,standardHaulerBudget,standardHaulerBody,emergencyHaulerBody,minerReplacement,minerRenewal,roomRequests,workerRenewals,reconcileBirths,spawnRoom};

@@ -10,7 +10,7 @@ function mine(c) {
             // only when the replacement can step directly into the mining tile.
             if(range(c,previous)>1){go(c,previous);return;}
             if(c.fatigue||previous.fatigue)return;
-            previous.memory.role='builder';previous.memory.owner='development:'+previous.memory.home;previous.memory.loaded=energy(previous)>0;previous.memory.yieldSource=s.id;
+            previous.memory.role='worker';previous.memory.unitType='worker';previous.memory.workRole='repairman';previous.memory.owner='development:'+previous.memory.home;previous.memory.loaded=energy(previous)>0;previous.memory.yieldSource=s.id;
             delete previous.memory.source;delete previous.memory.spot;
         }
         delete c.memory.replaces;
@@ -32,7 +32,8 @@ function mine(c) {
     if(!spot)return;
     if(c.pos.x!==spot.x||c.pos.y!==spot.y){
         if(!c.fatigue&&range(c,spot)<=1){
-            const blocker=roomCreeps(c.room).find(o=>o.room.name===c.room.name&&!o.spawning&&o.pos.x===spot.x&&o.pos.y===spot.y&&['bootstrap','builder','upgrader'].includes(o.memory.role));
+            const blocker=roomCreeps(c.room).find(o=>o.room.name===c.room.name&&!o.spawning&&o.pos.x===spot.x&&o.pos.y===spot.y&&
+                (o.memory.role==='worker'||['bootstrap','builder','upgrader','repairman'].includes(o.memory.role)));
             if(blocker){blocker.memory.yieldSource=s.id;delete blocker.memory.refuelTarget;}
         }
         go(c,new RoomPosition(spot.x,spot.y,c.room.name),0);return;
