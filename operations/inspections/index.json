@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T22:09:02.142Z",
+  "updatedAt": "2026-09-30T22:23:27.717Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -10,6 +10,20 @@
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-30T22-22-54Z-hauler-c3d28f4367ca",
+      "kind": "manual",
+      "startedAt": "2026-09-30T22:22:54.226Z",
+      "updatedAt": "2026-09-30T22:23:27.717Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "两房Hauler低载运输专项诊断",
+      "summary": "用户指出两房长期低载；本轮专项核对现行取货额度、来源库存、配送需求及实际下一tick持能。基线保持。",
+      "tick": null,
+      "issueNumbers": [
+        5
+      ]
+    },
     {
       "id": "2026-09-30T22-02-14Z-hauler-e2594abcaa4c",
       "kind": "scheduled",
@@ -810,24 +824,6 @@
       "tick": null,
       "issueNumbers": [
         4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-50-17Z-run-a0aa60e1f170",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:50:17.708Z",
-      "updatedAt": "2026-09-26T07:42:00.845Z",
-      "completedAt": "2026-09-26T07:42:00.803Z",
-      "status": "completed",
-      "title": "周期巡检与交接核验",
-      "summary": "本轮完成：.16主房持续升级、无矿区掉落/运输停滞；Storage已建但库存0，主窗仍库存微降，#1/#4/#6保持verifying。RCL4地图已上线，历史日志恢复并发布；用户已将独立巡检改为每小时。",
-      "tick": 73952900,
-      "issueNumbers": [
-        1,
-        4,
-        5,
-        6,
         12
       ]
     }
