@@ -3,19 +3,47 @@
   "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:32:17.166Z",
-  "updatedAt": "2026-09-30T21:32:48.763Z",
+  "updatedAt": "2026-09-30T21:33:55.434Z",
   "completedAt": null,
   "status": "running",
   "title": "Hauler基线验收与闭环推进",
-  "summary": "Verified previous coordinator and all active Issue owner tasks completed; taking ownership for fresh API observation and fixed baseline evaluation.",
-  "game": null,
-  "findings": [],
+  "summary": "Baseline advanced to 1448/1500 valid ticks; observe/incomplete_baseline. No proposal or gameplay change.",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-30.1",
+    "tick": 74046440,
+    "fetchedAt": "2026-09-30T21:33:05Z"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "Incomplete valid baseline",
+      "detail": "Collector tick74046454, window ends74046506; keep verifying until full evidence.",
+      "evidence": [
+        "1448 ticks; 24670 actual delivery energy; 209 events; 2936 haulerTicks; errors0; invalidReasons[]"
+      ],
+      "issue": 14
+    },
+    {
+      "severity": "info",
+      "title": "Sustainable energy acceptance remains open",
+      "detail": "At74046440 W21U1500=100.39% with stock-1225 ineligible; W23U1500=99.30%, stock+74 eligible single rolling window. Both RCL5, peace and dropped0.",
+      "evidence": [
+        "CPUmean13.1207/max15.1308; bucket10000; module errors0; main worker pool20WORK (10+10), observed renewal74046333."
+      ],
+      "issue": 4
+    }
+  ],
   "tasks": [
     {
       "issue": 14,
       "title": "Hauler self-evolution",
       "status": "verifying",
-      "progress": "Prior baseline 1245/1500 ticks; fresh observation pending.",
+      "progress": "1448/1500 ticks, valid partial baseline; fresh API room status checked.",
       "next": "Run cycle and follow deterministic next action.",
       "owner": "01a0f43a-9236-7b41-ba14-8022a98b399e"
     }
@@ -26,6 +54,12 @@
       "description": "Verify coordinator and Issue ownership before shared writes",
       "status": "done",
       "result": "01a0f41f, 01a0dd13 and 01a0e59f each notLoaded with latestTurn completed; previous reviewer released in parent checkpoint; CURRENT_STATE reread unchanged."
+    },
+    {
+      "at": "2026-09-30T21:33:55Z",
+      "description": "Run identity/hash preflight and fixed baseline evaluator",
+      "status": "done",
+      "result": "19 managed local/remote hashes matched; phase baseline, action wait, sampleTicks1448."
     }
   ],
   "checks": [
@@ -33,6 +67,11 @@
       "name": "Previous owner status",
       "result": "passed",
       "detail": "Actual per-task snapshots confirm completed turns; no inference from a new agent tree."
+    },
+    {
+      "name": "Fixed evaluator",
+      "result": "pending",
+      "detail": "observe/incomplete_baseline; no extrapolation or candidate allowed."
     }
   ],
   "next": [
