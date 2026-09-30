@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T20:29:16.253Z",
+  "updatedAt": "2026-09-30T21:15:52.018Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -10,6 +10,20 @@
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-30T21-15-51Z-hauler-8a2fa5b70df3",
+      "kind": "scheduled",
+      "startedAt": "2026-09-30T21:15:51.982Z",
+      "updatedAt": "2026-09-30T21:15:52.018Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler 基线定时观察",
+      "summary": "上轮协调者和全部活动Issue旧owner已实查停止；本轮接管只读游戏观察及实验/日志记录，待运行cycle。",
+      "tick": null,
+      "issueNumbers": [
+        14
+      ]
+    },
     {
       "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
       "kind": "scheduled",
@@ -809,21 +823,6 @@
       "tick": null,
       "issueNumbers": [
         1,
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-49-55Z-run-7b2c580e93d6",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:49:55.190Z",
-      "updatedAt": "2026-09-26T07:10:32.756Z",
-      "completedAt": "2026-09-26T07:05:29.787Z",
-      "status": "skipped",
-      "title": "周期巡检：并发协调者接管后让行",
-      "summary": "本轮确认另一协调者active后让行；未调用游戏API、修改源码或部署。独立日志和审视结果已准备移交，共享发布尚待唯一协调者完成。",
-      "tick": null,
-      "issueNumbers": [
         4,
         12
       ]
