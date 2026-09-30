@@ -3,11 +3,11 @@
   "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:32:17.166Z",
-  "updatedAt": "2026-09-30T21:33:55.434Z",
+  "updatedAt": "2026-09-30T21:38:35.909Z",
   "completedAt": null,
   "status": "running",
   "title": "Hauler基线验收与闭环推进",
-  "summary": "Baseline advanced to 1448/1500 valid ticks; observe/incomplete_baseline. No proposal or gameplay change.",
+  "summary": "Complete baseline passed fixed validation at74046506. Independent problem review is running; no candidate proposed.",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -15,16 +15,17 @@
       "W23N26"
     ],
     "version": "2026-09-30.1",
-    "tick": 74046440,
-    "fetchedAt": "2026-09-30T21:33:05Z"
+    "tick": 74046500,
+    "fetchedAt": "2026-09-30T21:36:41Z"
   },
   "findings": [
     {
       "severity": "info",
-      "title": "Incomplete valid baseline",
-      "detail": "Collector tick74046454, window ends74046506; keep verifying until full evidence.",
+      "title": "Complete Hauler baseline ready for diagnosis",
+      "detail": "Exactly1500ticks, coverage1, no errors or invalid reasons; throughput is8.328947 actual energy/haulerTick. This is baseline evidence, not measured improvement.",
       "evidence": [
-        "1448 ticks; 24670 actual delivery energy; 209 events; 2936 haulerTicks; errors0; invalidReasons[]"
+        "Window74045006-74046506; delivered25320/217events; haulerTicks3040; carryMean18.24, workerWorkMean19.08, minerWorkMean10.0667.",
+        "Travel payload0.287739; waitingPickup216/3040; blocked93/3040; spawnStarved0/101demandTicks; roomCPU3.610795/t; bucket9646→9833,min9480."
       ],
       "issue": 14
     },
@@ -36,6 +37,15 @@
         "CPUmean13.1207/max15.1308; bucket10000; module errors0; main worker pool20WORK (10+10), observed renewal74046333."
       ],
       "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "Scout CPU spikes remain separate",
+      "detail": "Latest74046500 CPUmean22.6514/max195.7673 dominated by scoutmax181.8961 in W23N29. Previous74046480 mean13.735. No fresh module error or emergency; existing Issue7 retains X003 follow-up.",
+      "evidence": [
+        "Global bucket9814; no causal claim tying scout spike to Hauler output or X003 alone."
+      ],
+      "issue": 7
     }
   ],
   "tasks": [
@@ -43,8 +53,8 @@
       "issue": 14,
       "title": "Hauler self-evolution",
       "status": "verifying",
-      "progress": "1448/1500 ticks, valid partial baseline; fresh API room status checked.",
-      "next": "Run cycle and follow deterministic next action.",
+      "progress": "Baseline complete; independent reviewer checks causality and allowed control surface.",
+      "next": "Propose only with supported hypothesis; otherwise defer and start new baseline.",
       "owner": "01a0f43a-9236-7b41-ba14-8022a98b399e"
     }
   ],
@@ -60,6 +70,12 @@
       "description": "Run identity/hash preflight and fixed baseline evaluator",
       "status": "done",
       "result": "19 managed local/remote hashes matched; phase baseline, action wait, sampleTicks1448."
+    },
+    {
+      "at": "2026-09-30T21:38:35Z",
+      "description": "Start independent bounded diagnosis after completed baseline",
+      "status": "done",
+      "result": "hauler_review parent01a0f43a-9236-7b41-ba14-8022a98b399e owns only operations/diagnostics/2026-09-30-hauler-baseline-review.md. Root owns API/integration; read-only Game snapshot executed74046474, beyond prior74046274."
     }
   ],
   "checks": [
@@ -69,9 +85,9 @@
       "detail": "Actual per-task snapshots confirm completed turns; no inference from a new agent tree."
     },
     {
-      "name": "Fixed evaluator",
-      "result": "pending",
-      "detail": "observe/incomplete_baseline; no extrapolation or candidate allowed."
+      "name": "Fixed baseline evaluator",
+      "result": "passed",
+      "detail": "ready; complete1500ticks,217actual delivery events, errors0 and no confounder flags."
     }
   ],
   "next": [

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "hauler-20260930T195223821086Z",
   "room": "W21N26",
-  "phase": "baseline",
+  "phase": "diagnose",
   "createdAt": "2026-09-30T19:52:25Z",
   "config": {
     "id": "hauler-20260930T195223821086Z",
@@ -82,7 +82,7 @@
     "startedTick": 74045006,
     "fromTick": 74045006,
     "endTick": 74046506,
-    "tick": 74046454,
+    "tick": 74046506,
     "signature": {
       "rcl": 5,
       "energyCapacity": 1800,
@@ -96,42 +96,47 @@
       "sources": 2,
       "sites": 0
     },
-    "complete": false,
-    "frozen": false,
+    "complete": true,
+    "frozen": true,
     "invalidReasons": [],
-    "observedTicks": 1448,
-    "coverage": 0.9653333333333334,
+    "observedTicks": 1500,
+    "coverage": 1,
     "bucketStart": 9646,
-    "bucketEnd": 9828,
+    "bucketEnd": 9833,
     "bucketMin": 9480,
     "haulerCountMin": 2,
     "haulerCountMax": 3,
-    "metrics": null,
-    "ticks": 1448,
-    "haulerTicks": 2936,
-    "carryTicks": 26424,
-    "workerWorkTicks": 27580,
-    "minerWorkTicks": 14580,
-    "delivered": 24670,
-    "deliveryEvents": 209,
-    "travelTicks": 1562,
-    "payloadSum": 457.49555555555645,
+    "metrics": {
+      "deliveredPerHaulerTick": 8.328947368421053,
+      "averageTravelPayload": 0.28773861059575323,
+      "blockedFraction": 0.030592105263157896,
+      "roomCpuPerTick": 3.6107954130002664
+    },
+    "ticks": 1500,
+    "haulerTicks": 3040,
+    "carryTicks": 27360,
+    "workerWorkTicks": 28620,
+    "minerWorkTicks": 15100,
+    "delivered": 25320,
+    "deliveryEvents": 217,
+    "travelTicks": 1617,
+    "payloadSum": 465.27333333333297,
     "idle": 0,
-    "waitingPickup": 208,
+    "waitingPickup": 216,
     "blocked": 93,
-    "spawnDemandTicks": 64,
+    "spawnDemandTicks": 101,
     "spawnStarvedTicks": 0,
-    "roomCpu": 5228.536226200369,
-    "cpuTicks": 1448,
+    "roomCpu": 5416.1931195004,
+    "cpuTicks": 1500,
     "errors": 0
   },
   "trial": null,
   "proposal": null,
   "attempt": 1,
   "decisions": [],
-  "lastTick": 74046454,
+  "lastTick": 74046506,
   "incumbentWeight": 0,
-  "updatedAt": "2026-09-30T21:33:02Z",
+  "updatedAt": "2026-09-30T21:36:38Z",
   "deployments": [
     {
       "at": "2026-09-30T19:52:48Z",
@@ -167,11 +172,9 @@
       }
     }
   ],
-  "observedAt": "2026-09-30T21:33:02Z",
+  "observedAt": "2026-09-30T21:36:38Z",
   "baselineValidation": {
-    "decision": "observe",
-    "reasons": [
-      "incomplete_baseline"
-    ]
+    "decision": "ready",
+    "reasons": []
   }
 }
