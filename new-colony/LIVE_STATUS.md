@@ -328,3 +328,7 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 发布2026-09-30.1：19受管模块经API备份、上传和回读；新增实际事件采集evolution、受控hauler-policy、外部单实验状态机和五角色提示词。W21N26仅非紧急取货评分可进化，baseline权重0不改行为。Game74045015已核验新版本、9完整样本tick、50actual delivery energy/1事件/18haulerTicks、零错误/不可比较原因；随后74045036采样30tick。完整1500基线/候选300+1500效果待定时任务，未宣称优化收益。
 
 唯一screeps-world任务恢复ACTIVE、正确World项目每30分钟执行，保留原模型/推理及通知设置。采集/参数隔离、22评价/17工作流/24API及Hauler回归通过；独立采集→评价真实schema桥接通过。普通续代纳入曝光，明显Hauler数量/CARRY/WORK均值变化>20%不可比；代码哈希、runtime故障/丢遥测、preparing与deploying中断、精确policy回滚均有防护。暂未开放Link/扩张实验，不修改旧haul Memory或已确认Worker规则。
+
+## 2026-09-30 - Scout routing mechanism recorded; baseline unchanged
+
+Independent review reproduced X003: an unsafe scout destination reaches the engine route search before rejection. Synthetic callback counts are not live CPU; the actual peak at74046200 remains unattributed. At74046220/240 CPU recovered and bucket rose; snapshot74046274 shows moving scouts. No emergency or gameplay deployment. See operations/diagnostics/2026-09-30-scout-cpu-review.md and Issue7. Hauler baseline remains1245/1500ticks with zero collector errors.

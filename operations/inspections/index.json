@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T21:18:10.363Z",
+  "updatedAt": "2026-09-30T21:26:30.529Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -14,13 +14,14 @@
       "id": "2026-09-30T21-15-51Z-hauler-8a2fa5b70df3",
       "kind": "scheduled",
       "startedAt": "2026-09-30T21:15:51.982Z",
-      "updatedAt": "2026-09-30T21:18:10.363Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-30T21:26:30.529Z",
+      "completedAt": "2026-09-30T21:26:30.491Z",
+      "status": "completed",
       "title": "Hauler 基线定时观察",
-      "summary": "基线1207/1500tick有效继续采样；独立审视scout CPU峰值，不部署或改候选。",
-      "tick": 74046200,
+      "summary": "Hauler baseline1245/1500 continues unchanged. Scout routing mechanism X003 reproduced offline; actual CPU peak cause remains unproven, no emergency deployment.",
+      "tick": 74046240,
       "issueNumbers": [
+        4,
         7,
         14
       ]

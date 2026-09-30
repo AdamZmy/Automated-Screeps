@@ -177,3 +177,14 @@
 - 复现/回归：`node new-colony/verify-worker-capacity.cjs`、`node new-colony/verify-worker-pool.cjs`；包括W23→8+8+4、W21→10+10、多Spawn资金充足但WORK额度不足、damaged/healed、accepted/observed/failed、外部旧role、bootstrap、矿工退休让位/送货/恢复。
 - 边界：严格限制存活及孵化占用，满池时不提前出生；自然死亡和孵化期间可以暂时低于20。原有超量不会通过suicide处理。完整线上续代后才验收数量收敛。
 - 关联Issue #4；W004的任意1W缺口身体策略已被当前用户容量模板要求取代，历史证据保留。
+
+## X003 — Scout searches routes to known unsafe destinations
+
+- Trigger: scout target selection ranks a known foreign-owned or recently hostile destination early; its failed-route cache is absent or older than ten ticks.
+- Confirmed mechanism: expansion.neighborhood filters allowed rooms, while movement.route does not precheck safeRoom for its destination. The actual engine findRoute rejects the destination through an Infinity callback and may explore a large graph before failing. A safe alternative is then selected; the failed route can be searched again after ten ticks.
+- Minimum evidence: same-tick scout origin, attempted candidates, owner/mine/hostiles/seen intel, route failures and internal CPU. A whole-role CPU peak alone does not identify this mechanism.
+- Reproduce: `node new-colony/tools/verify-scout-routing-diagnostic.cjs`. Actual expansion/movement and pinned engine map on a synthetic 60x60 graph make 4 callback calls for a safe neighbor versus 5270 for the rejected destination. Counts are not live CPU or actual terrain. The diagnostic also checks failure caching, one-time terrain reads and physical-room CPU attribution.
+- Current attribution: code mechanism confirmed, not repaired/deployed. At74046200 scout max187.8277 and W22N28 max187.8317 correlate, but no peak-tick candidate trace exists. Snapshot74046274 has old foreign-owner intel for W24N27 and two moving scouts; this cannot establish the historical peak cause.
+- Safe treatment: do not interrupt a healthy Hauler baseline/trial for this nonurgent issue. At an allowed maintenance boundary, review destination preflight using existing safeRoom semantics; preserve safe travel, retreat and cache invalidation. Never permit unsafe rooms to avoid search cost. After a fix, replace the failure reproduction with a correct-behavior oracle and verify real travel/CPU. Safe endpoints isolated by unsafe intermediate rooms remain a separate possible cause.
+- Evidence: game2026-09-30.1, Issue7 with Issue4/14 context; `diagnostics/2026-09-30-scout-cpu-review.md`. CPU recovered at74046220/240 and bucket rose; no current emergency production harm demonstrated.
+- Validation gap: the old retrospective regression failed in its bootstrap fixture before W005 assertions this run. It is not a passed check or a live runtime failure.

@@ -3,11 +3,11 @@
   "id": "2026-09-30T21-15-51Z-hauler-8a2fa5b70df3",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:15:51.982Z",
-  "updatedAt": "2026-09-30T21:18:10.363Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-30T21:26:30.529Z",
+  "completedAt": "2026-09-30T21:26:30.491Z",
+  "status": "completed",
   "title": "Hauler 基线定时观察",
-  "summary": "基线1207/1500tick有效继续采样；独立审视scout CPU峰值，不部署或改候选。",
+  "summary": "Hauler baseline1245/1500 continues unchanged. Scout routing mechanism X003 reproduced offline; actual CPU peak cause remains unproven, no emergency deployment.",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -15,27 +15,48 @@
       "W23N26"
     ],
     "version": "2026-09-30.1",
-    "tick": 74046200,
-    "fetchedAt": "2026-09-30T21:16:14Z"
+    "tick": 74046240,
+    "fetchedAt": "2026-09-30T21:18:15Z"
   },
   "findings": [
     {
       "severity": "info",
-      "title": "基线仍未完成",
-      "detail": "cycle核验身份与19模块哈希，返回baseline/wait；样本不足并非异常。",
+      "title": "Valid incomplete baseline",
+      "detail": "Keep verifying; no proposal or policy change before complete1500ticks. Fixed evaluator observes incomplete_baseline.",
       "evidence": [
-        "collector74046213:1207/1500ticks,20820actualenergy,169events,2454haulerTicks,errors0,invalidReasons[]",
-        "fixed evaluator observe/incomplete_baseline; baseline ends74046506"
+        "collector74046213 to74046251;1245/1500ticks;21648actual delivery energy;174events;2530haulerTicks;errors0;invalidReasons[]",
+        "bucket start9646/min9480/end9856; id/room/stage/revision match; same experiment hauler-20260930T195223821086Z"
       ],
       "issue": 14
     },
     {
       "severity": "warning",
-      "title": "scout CPU峰值需独立审视",
-      "detail": "CPU余量告警；峰值主要在scout执行段，暂未证实具体根因或紧急损害。",
+      "title": "X003 scout route search mechanism confirmed offline",
+      "detail": "Unsafe target reaches full route search. Real peak attribution unproven; later CPU recovery and uninterrupted production do not justify emergency maintenance.",
       "evidence": [
-        "status74046200:mean22.7386/max200.9723 over20ticks; scout9.9768/t max187.8277; W22N28 max187.8317",
-        "EMA16.77/20,bucket9696,no module errors; main upgrade20/t; no collector errors"
+        "74046200 loop mean22.7386/max200.9723; scout max187.8277; W22N28 max187.8317",
+        "74046220/240 mean14.1473/13.9357; bucket9696 to9822; no module errors",
+        "API Game snapshot74046274 is newer than status74046240: two scouts stuck0/cached exits/terrain; old foreign-owner intel W24N27",
+        "Pinned-engine synthetic graph: safe4 vs unsafe5270 route callbacks; not measured CPU. Diagnostic persisted and rerun PASS."
+      ],
+      "issue": 7
+    },
+    {
+      "severity": "info",
+      "title": "Sustainable primary-window acceptance still open",
+      "detail": "Main-room drawdown makes its1500tick utilization ineligible. Auxiliary room has one eligible window; do not claim sustained success.",
+      "evidence": [
+        "74046240 W21U1500=97.37%,coverage1,stock-319,ineligible;20WORK and20upgrade/t,drop0",
+        "W23U1500=97.7%,coverage1,stock+572,eligible single window;20WORK,11sites,drop0"
+      ],
+      "issue": 4
+    },
+    {
+      "severity": "warning",
+      "title": "Legacy retrospective regression incomplete",
+      "detail": "Bootstrap fixture raises TypeError before W005 assertions. This is an offline validation gap, not a confirmed live runtime failure.",
+      "evidence": [
+        "node new-colony/tools/verify-retrospective-causes.cjs failed before W005; Node25.5.0 versus declared22.x needs checking during fixture maintenance"
       ],
       "issue": 7
     }
@@ -43,19 +64,27 @@
   "tasks": [
     {
       "issue": 14,
-      "title": "Hauler 首轮基线",
+      "title": "Hauler self-evolution baseline",
       "status": "verifying",
-      "progress": "已采集1207/1500tick，权重0。",
-      "next": "身份/哈希校验后继续同一1500tick基线。",
+      "progress": "1245/1500ticks; observe/incomplete_baseline; weight0; no source change/deploy.",
+      "next": "Verify previous root stopped, then cycle through74046506 before diagnosing controlled parameters.",
       "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8"
     },
     {
       "issue": 7,
-      "title": "scout CPU独立审视",
+      "title": "Auxiliary room and scout CPU review",
       "status": "verifying",
-      "progress": "有限cpu_review子代理运行；parent01a0f41f-c50e-7542-8779-34b246f00ad8，仅报告operations/diagnostics/2026-09-30-scout-cpu-review.md。",
-      "next": "审视机制和紧急性，root补新摘要；不与baseline并行部署。",
-      "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8/cpu_review"
+      "progress": "Independent cpu_review completed, parent01a0f41f-c50e-7542-8779-34b246f00ad8; files released. X003 mechanism recorded; CPU recovered and no urgent damage confirmed.",
+      "next": "Maintain experiment isolation; at safe maintenance boundary review target precheck, fixture gap and real same-tick CPU attribution.",
+      "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8"
+    },
+    {
+      "issue": 4,
+      "title": "Sustainable utilization",
+      "status": "verifying",
+      "progress": "Main1500tick stock-drawdown persists; auxiliary one eligible window.",
+      "next": "Continue covered comparable windows across renewal without wasteful expenditure.",
+      "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8"
     }
   ],
   "actions": [
@@ -64,33 +93,64 @@
       "description": "运行cycle及API房间摘要，按异常规程启动独立只读审视",
       "status": "done",
       "result": "baseline继续；主房/辅房和平，掉落0；CPU审视进行中。"
+    },
+    {
+      "at": "2026-09-30T21:26:30.491Z",
+      "description": "Complete independent review, persist X003 diagnostic, update original Issues and final handoff",
+      "status": "done",
+      "result": "Reviewer released files. Gameplay hashes unchanged; root integrated report/catalog/regression and final same-run record."
     }
   ],
   "checks": [
     {
-      "name": "真实任务状态核验",
+      "name": "Real task ownership",
       "result": "passed",
-      "detail": "01a0f3fd、01a0dd13、01a0e59f均notLoaded/latestTurn completed；01a0f3cb idle/completed。CURRENT_STATE首次写前重新核验未变化。"
+      "detail": "Prior root and active Issue owners verified stopped; current ownership reread before mutation; reviewer completed and released."
     },
     {
-      "name": "身份/完整代码哈希",
+      "name": "Identity and full code hashes",
       "result": "passed",
-      "detail": "cycle成功核验AdamZmy/frontier24与19个本地/远端受管模块。"
+      "detail": "Two cycle preflights verified AdamZmy/frontier24 and19local/remote modules; local hashes still identical at final integration."
     },
     {
-      "name": "固定阈值评价",
+      "name": "Baseline fixed evaluator",
       "result": "pending",
-      "detail": "observe/incomplete_baseline；没有收益或候选部署结论。"
+      "detail": "1245/1500; observe/incomplete_baseline. State and experiment JSON identical."
+    },
+    {
+      "name": "Fresh API evidence",
+      "result": "passed",
+      "detail": "Status advanced74046200 to74046240; read-only Game snapshot executed at74046274, not accepted-only evidence."
+    },
+    {
+      "name": "Independent offline checks",
+      "result": "passed",
+      "detail": "verify-expansion, verify-hauler-cpu, verify-evolution, verify-evolution-policy plus persistent scout-routing diagnostic passed."
+    },
+    {
+      "name": "Legacy retrospective W005 check",
+      "result": "failed",
+      "detail": "Bootstrap fixture TypeError before W005; no game runtime error inferred."
     }
   ],
   "next": [
-    "继续轻量观察；不到完整1500tick不提出候选。",
-    "完成scout CPU独立审视，登记原Issue。"
+    "Next scheduled run must verify root/worker parent stopped before ownership takeover.",
+    "Continue same baseline until74046506; waiting is normal, no candidate/deployment.",
+    "At complete valid baseline use independent evidence and bounded proposals; defer/start if controlled batchWeight cannot solve a supported problem.",
+    "Track X003/legacy fixture under Issue7; maintain separation of reproducible code mechanism and live CPU attribution."
   ],
   "references": [
     {
       "label": "Issue14",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
+    },
+    {
+      "label": "Issue7",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
+    },
+    {
+      "label": "Issue4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
     }
   ]
 }
