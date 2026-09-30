@@ -3,7 +3,8 @@
 - 唯一源码new-colony；AdamZmy / shard1 / frontier24；不操作Arena。
 - root=01a0f456-09bd-79c3-91e6-5f95351cd296 active：API、evolution state/experiments、Issue14/4/7、检查点/日志、CURRENT_STATE与Git；本轮仅先监控，无游戏源码写入者。
 - 2026-09-30本轮逐一wait_threads：上一root01a0f43a idle/completed；Issue owners01a0dd13/01a0e59f notLoaded/latestTurn completed；首次写入前重读归属未变。
-- hauler_review parent=01a0f43a-9236-7b41-ba14-8022a98b399e completed/released；仅写本日Hauler基线与history两个诊断报告，无API/凭据/Git/游戏源码权限。
+- 前轮hauler_review parent=01a0f43a-9236-7b41-ba14-8022a98b399e completed/released；仅写本日Hauler基线与history两个诊断报告，无API/凭据/Git/游戏源码权限。
+- cpu_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296 running，只读Issue7/X003及root脱敏聚合证据；无文件/API/Git权限。
 - 游戏2026-09-30.1，工具版本0.6.4；仅受控policy实验id/revision上传，weight0不变。19模块身份与哈希检查通过，备份/上传/回读verified。
 - 当前实验hauler-20260930T214108514416Z，phase=baseline，batchWeight=0，窗口74046577→74048077；latest74046668，91/1500ticks，errors0/invalidReasons[]。
 - 新基线91tick实测540energy/12events/182haulerTicks；observedAt2026-09-30T21:47:47Z，固定评价observe/incomplete_baseline。
