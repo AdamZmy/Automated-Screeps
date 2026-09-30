@@ -3,11 +3,11 @@
   "id": "2026-09-30T22-02-14Z-hauler-e2594abcaa4c",
   "kind": "scheduled",
   "startedAt": "2026-09-30T22:02:14.194Z",
-  "updatedAt": "2026-09-30T22:06:14.705Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-30T22:09:02.142Z",
+  "completedAt": "2026-09-30T22:09:02.112Z",
+  "status": "completed",
   "title": "Hauler 新配对基线持续采样",
-  "summary": "新配对基线继续：350/1500ticks，权重0；Scout峰值后CPU恢复，独立审视进行中，无候选或部署。",
+  "summary": "本轮结束：新基线350/1500ticks，权重0保持；独立审视确认当前无需紧急维护，Scout具体峰值因果待证。无候选或部署。",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -31,7 +31,7 @@
     {
       "severity": "warning",
       "title": "既有Scout间歇CPU峰值再次出现",
-      "detail": "74046880 scout max186.2718，CPU mean22.6586；后续74046900 mean13.5907/scout max0.3973，bucket9847升9924。具体峰值因果仍未证实；复用X003，由独立只读审视者核查紧急性。",
+      "detail": "既有Scout峰值后CPU恢复；独立审视未发现需中断基线的紧急故障。X003机制复现通过，但缺峰值同tick候选/内部计时，不确认本次归因。",
       "evidence": [
         "两房无module errors/敌人/掉落；主房持续20/t升级。W23短窗升级0后恢复，ledger event74046913实际upgrade12与plannedbuild40。"
       ],
@@ -51,9 +51,17 @@
       "issue": 7,
       "title": "复核已有Scout CPU峰值",
       "status": "verifying",
-      "progress": "cpu_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296，无文件/API/Git写权限。",
-      "next": "独立检查X003因果与紧急性；基线期间保持游戏源码。",
-      "owner": "cpu_review"
+      "progress": "cpu_review completed/released；X003离线诊断通过，线上具体归因仍未证；CPU及消费已恢复。",
+      "next": "保留Issue7，后续维护边界取同tick调用分段证据。",
+      "owner": "01a0f456-09bd-79c3-91e6-5f95351cd296"
+    },
+    {
+      "issue": 4,
+      "title": "持续能源利用率验收",
+      "status": "verifying",
+      "progress": "74046900两房U1500分别95.35%/94.22%，完整且eligible；W21短窗仍pending，W23实际消费已恢复。",
+      "next": "继续观察续代与主窗口，不用重叠滚动窗关闭验收。",
+      "owner": "01a0f456-09bd-79c3-91e6-5f95351cd296"
     }
   ],
   "actions": [
@@ -68,6 +76,12 @@
       "description": "cycle、两次status与只读Game快照回读",
       "status": "done",
       "result": "apiSnapshot74046923 > 前次74046474；接受排队响应未充当执行证据。无游戏代码部署。"
+    },
+    {
+      "at": "2026-09-30T22:09:02.112Z",
+      "description": "完成独立审视、保存公开聚合报告及实验/交接记录",
+      "status": "done",
+      "result": "审视者已完成并释放；Issue4/7更新，Issue14保留verifying；起始f37e5e3/进展67522d0已推送，结束记录随本次显式发布。"
     }
   ],
   "checks": [
@@ -90,10 +104,22 @@
       "name": "完整1500tick效益验收",
       "result": "pending",
       "detail": "尚未到74048077，无候选/收益结论。"
+    },
+    {
+      "name": "独立既有Scout诊断",
+      "result": "passed",
+      "detail": "cpu_review实际重跑verify-scout-routing-diagnostic.cjs；safe4/unsafe5270 callback仅离线机制证据。"
+    },
+    {
+      "name": "实验状态与源码一致性",
+      "result": "passed",
+      "detail": "state与experiment相等；19模块本地哈希等于已核验deployedHashes；自前轮64881e9游戏源码无diff。"
     }
   ],
   "next": [
-    "运行cycle并读取新API各房摘要；不完整窗口维持verifying。"
+    "核验本root停止后cycle同一基线至74048077；未满保持verifying。",
+    "完整diagnose后只以实际非紧急决策与交付证据选问题，无证据则defer并重采。",
+    "Scout具体峰值因果仍待同tick数据；当前无紧急生产损害，不并行部署backlog。"
   ],
   "references": [
     {
@@ -103,6 +129,10 @@
     {
       "label": "Scout Issue7",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
+    },
+    {
+      "label": "Sustainable energy Issue4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
     }
   ]
 }

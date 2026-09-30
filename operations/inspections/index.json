@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T22:06:14.705Z",
+  "updatedAt": "2026-09-30T22:09:02.142Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -14,13 +14,14 @@
       "id": "2026-09-30T22-02-14Z-hauler-e2594abcaa4c",
       "kind": "scheduled",
       "startedAt": "2026-09-30T22:02:14.194Z",
-      "updatedAt": "2026-09-30T22:06:14.705Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-30T22:09:02.142Z",
+      "completedAt": "2026-09-30T22:09:02.112Z",
+      "status": "completed",
       "title": "Hauler 新配对基线持续采样",
-      "summary": "新配对基线继续：350/1500ticks，权重0；Scout峰值后CPU恢复，独立审视进行中，无候选或部署。",
+      "summary": "本轮结束：新基线350/1500ticks，权重0保持；独立审视确认当前无需紧急维护，Scout具体峰值因果待证。无候选或部署。",
       "tick": 74046923,
       "issueNumbers": [
+        4,
         7,
         14
       ]
