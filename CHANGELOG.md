@@ -6,6 +6,17 @@ incompatible architecture/configuration changes, minor versions add behavior,
 and patch versions correct existing behavior. Development commits remain
 individually reviewable; tested releases receive immutable version tags.
 
+## 0.6.4 — 2026-09-30
+
+- Preserve completed experiment archives when preparing a successor baseline.
+  The active preparation still supports hash-proven crash recovery; failed
+  candidate history now remains available to enforce the three-pair limit.
+- Add regressions for all terminal phases, preparation interruption, failed
+  checks, uncertain upload readback without another POST, and retry counting.
+- Repair the first affected archive using verified successor deployment hashes.
+  Game build remains `2026-09-30.1`; the new baseline retains `batchWeight=0`.
+  No transport improvement is claimed from this controller correction.
+
 ## 0.6.3 — 2026-09-29
 
 - Game build `2026-09-29.3` sizes standard workers from room energy capacity

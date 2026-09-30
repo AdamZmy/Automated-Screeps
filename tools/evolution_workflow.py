@@ -80,19 +80,19 @@ def set_config(c):
     POLICY.write_text(updated)
 
 
-def save(state):
+def save(state, archive=True):
     state['updatedAt']=now()
     atomic(STATE,state)
-    atomic(RECORDS/'experiments'/(state['id']+'.json'),state)
+    if archive: atomic(RECORDS/'experiments'/(state['id']+'.json'),state)
 
 
-def prepare_policy(state,c):
+def prepare_policy(state,c,archive=True):
     old=POLICY.read_text();code=sources()
     rendered=re.sub(r'Object.freeze\(\{[^\n]+\}\)',lambda _: 'Object.freeze('+json.dumps(c,separators=(',',':'))+')',old,count=1)
     code['hauler-policy']=rendered
     atomic(CACHE/(state['id']+'-preparing.json'),{'policy':old})
     state['localPreparation']={'targetHashes':hashes(code),'previousPhase':state['phase']}
-    state['phase']='preparing';save(state)
+    state['phase']='preparing';save(state,archive=archive)
     POLICY.write_text(rendered)
     return old
 
@@ -172,7 +172,9 @@ def start(client,state=None):
     incumbent=sources() if any(n not in code for n in MODULES) else {n:code[n] for n in MODULES}
     ident='hauler-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     c.update(id=ident,stage='baseline',revision=ident+'-baseline',variant='batch-preference' if weight else 'control')
-    old=prepare_policy(state,c) if state else POLICY.read_text()
+    # Keep the predecessor's terminal evidence for history/retry limits. Only
+    # active STATE needs this transient recovery record until the new ID exists.
+    old=prepare_policy(state,c,archive=False) if state else POLICY.read_text()
     if not state:set_config(c)
     try: verified_checks=checks()
     except Exception:

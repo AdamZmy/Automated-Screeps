@@ -1,22 +1,25 @@
 # Screeps World 当前交接
 
 - 唯一源码new-colony；AdamZmy / shard1 / frontier24；不操作Arena。
-- root=01a0f43a-9236-7b41-ba14-8022a98b399e active: API、evolution state/config、Issue14/4/7、CURRENT_STATE、本轮日志、Git/部署。
+- root=01a0f43a-9236-7b41-ba14-8022a98b399e active: API、evolution state/config/tools、Issue14/4/7、检查点/日志与Git；正在结束归档。
 - 旧root01a0f41f及Issue owners01a0dd13/01a0e59f已逐一wait_threads核验notLoaded/latestTurn completed；首次写入前重读归属未变。
-- hauler_review parent=01a0f43a-9236-7b41-ba14-8022a98b399e running；仅写operations/diagnostics/2026-09-30-hauler-baseline-review.md；只读相关源码/脱敏证据，无API/凭据/Git权限。
-- 游戏2026-09-30.1，19受管模块身份/远端/本地哈希检查通过；当前未改游戏源码或部署。用户遗留inspect-worker-pool.js未跟踪，保留。
-- 实验hauler-20260930T195223821086Z phase=diagnose，incumbent batchWeight=0；state.json为唯一状态，experiment同步。
-- 完整基线74045006→74046506，1500ticks/coverage1，delivered25320/217events/3040haulerTicks，throughput8.328947。
-- carryMean18.24、workerWorkMean19.08、minerWorkMean10.0667；roomCPU3.610795/t，bucket9646→9833/min9480，errors0，invalidReasons[]，validator ready。
-- payload0.287739仅诊断；waitingPickup216、blocked93、spawnStarved0/101demandTicks；无收益结论。
-- API74046500/fetched2026-09-30T21:36:41Z：两房RCL5/peace/drop0/errors0；W21progress997134、upgrade16/t、0工地；W23progress10493、upgrade7.8/t、10工地。
-- W21U150098.06%/stock-526 ineligible；W23U150098.10%/stock+452 eligible单滚动窗；不验收持续90%。
-- CPU74046500 mean22.6514/max195.7673，scoutmax181.8961(W23N29)，bucket9814；74046480 mean13.735。已知Issue7/X003后续保留，不归因Hauler，不并行修复。
-- Read-only Game诊断真实新tick74046474：无敌人；main正常Hauler续代，worker20WORK；accepted后已读回证据。
-- 本轮日志2026-09-30T21-32-17Z-hauler-a2fa2ba135e0；initialdbc1568/progress58e975b已推送；本次完整基线进度另提交。
+- hauler_review parent=01a0f43a-9236-7b41-ba14-8022a98b399e completed/released；仅写本日Hauler基线与history两个诊断报告，无API/凭据/Git/游戏源码权限。
+- 游戏2026-09-30.1，工具版本0.6.4；仅受控policy实验id/revision上传，weight0不变。19模块身份与哈希检查通过，备份/上传/回读verified。
+- 当前实验hauler-20260930T214108514416Z，phase=baseline，batchWeight=0，窗口74046577→74048077；latest74046620，43/1500ticks，errors0/invalidReasons[]。
+- state.json为唯一活跃状态，当前experiment一致；前次hauler-20260930T195223821086Z已inconclusive/deferred，无proposal/trial。
+- 前完整基线74045006→74046506：1500ticks/coverage1，25320energy/217events/3040haulerTicks，throughput8.328947；CARRY均18.24、workerWORK19.08、minerWORK10.0667，validator ready。
+- 独立审视：payload0.287739是载货移动尝试占用，waitingPickup含正常取货；没有支持新非紧急路线评分问题的决策时证据，不为制造优化改权重。
+- O002已确认并修复：start写preparing覆盖旧终态，导致三次失败仍可第四次提案。save/prepare分离active与archive；保留哈希证明中断恢复与只读不重POST。
+- 旧档案经旧deployed=新incumbent、旧target=verified新baseline哈希双证恢复inconclusive；活跃状态及旧完整基线数据未变，档案保存修复provenance。
+- npm test:evolution通过：23workflow/22evaluator+collector/policy；start必经hauler/API通过；审视独立重放三次rollback→第四次拒绝、外部改动拒绝恢复/no POST。
+- API74046620/fetched2026-09-30T21:45:26Z：两房RCL5/peace/drop0/errors0；W21progress997744、短窗upgrade0/t、20WORK、0sites；W23progress11933、upgrade12/t、10sites。
+- W21U150094.84%/stock+441 eligible；W23U150096.30%/stock+992 eligible；均完整覆盖但仅滚动单窗，不关闭持续90%验收。
+- CPU74046620 mean14.1236/max19.2381,bucket10000；先前scout峰值181.8961(W23N29)仍记Issue7/X003，实际具体归因未证；旧retrospective fixture问题尚未修复。
+- 本轮日志2026-09-30T21-32-17Z-hauler-a2fa2ba135e0；initialdbc1568/partial58e975b/complete-baseline a4d17b5已推送；本次修复进度另提交。
+- 用户遗留new-colony/tools/inspect-worker-pool.js未跟踪，保留不提交；网站与调度未改。
 
 ## 下一步
 
-- 等独立审视完成；最多两个有证据的方案，先propose再trial；无可由batchWeight解决的问题则defer→start新基线。
-- 仅W21N26新非紧急取货batchWeight[0,2]开放；priority≤2、其他房间、Link/出生/扩张保留；安全紧急维护先由控制器结束实验。
-- 后续轮先核验本root及审视者父任务实际状态；不得用新代理树为空推断释放。
+- 先核验本root及审视者父任务实际停止，再cycle当前新基线；不足保持verifying，不部署候选/其他游戏源码。
+- 下次diagnose需有界取新非紧急任务及可行同优先级route-pair证据、下一tick持能/实际交付；不能只重复聚合payload推断问题。
+- 仅W21N26非紧急取货batchWeight[0,2]开放；priority≤2、其他房间、Link/出生/扩张保留。紧急维护先经控制器结束实验。

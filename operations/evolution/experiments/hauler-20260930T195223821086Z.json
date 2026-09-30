@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "hauler-20260930T195223821086Z",
   "room": "W21N26",
-  "phase": "diagnose",
+  "phase": "inconclusive",
   "createdAt": "2026-09-30T19:52:25Z",
   "config": {
     "id": "hauler-20260930T195223821086Z",
@@ -136,7 +136,7 @@
   "decisions": [],
   "lastTick": 74046506,
   "incumbentWeight": 0,
-  "updatedAt": "2026-09-30T21:36:38Z",
+  "updatedAt": "2026-09-30T21:44:12Z",
   "deployments": [
     {
       "at": "2026-09-30T19:52:48Z",
@@ -176,5 +176,38 @@
   "baselineValidation": {
     "decision": "ready",
     "reasons": []
+  },
+  "deferredReason": "No evidence-supported hypothesis on the allowed control surface",
+  "diagnosis": {
+    "at": "2026-09-30T21:41:01Z",
+    "reviewer": "hauler_review",
+    "parentTask": "01a0f43a-9236-7b41-ba14-8022a98b399e",
+    "report": "operations/diagnostics/2026-09-30-hauler-baseline-review.md",
+    "decision": "defer",
+    "reason": "Complete valid baseline does not identify a suboptimal new nonurgent route ranking. Partial loaded-travel payload and pickup-state ticks mix legitimate urgency, supply, reservations and actions. No decision-time feasible alternate route evidence supports a candidate in [0,2].",
+    "alternatives": [],
+    "nextEvidence": "At a future diagnosis boundary, capture bounded new nonurgent assignments and feasible same-priority candidate amounts/scores, then next-tick cargo and actual delivery events. Preserve urgency, do not force fullness.",
+    "checks": [
+      {
+        "command": "node new-colony/verify-logistics.cjs",
+        "passed": true
+      },
+      {
+        "command": "node new-colony/verify-evolution-policy.cjs",
+        "passed": true
+      },
+      {
+        "command": "node new-colony/verify-evolution.cjs",
+        "passed": true
+      }
+    ],
+    "ownershipReleased": true
+  },
+  "historyRecovery": {
+    "at": "2026-09-30T21:44:12Z",
+    "reason": "Successor preparation incorrectly overwrote terminal archive; original terminal phase and diagnosis retained, restored only after successor hashes and verified deployment matched.",
+    "successor": "hauler-20260930T214108514416Z",
+    "previousRecordedPhase": "preparing",
+    "restoredPhase": "inconclusive"
   }
 }

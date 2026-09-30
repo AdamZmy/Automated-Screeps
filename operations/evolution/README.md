@@ -20,7 +20,7 @@ start → baseline(1500tick) → diagnose → propose → ready → trial(300+15
 - `python3 tools/evolution_workflow.py defer`：完整基线没有可验证问题时记录延期，再采新基线。
 - `python3 tools/evolution_workflow.py rollback`：实验中停止候选，验证快照后恢复原policy代码与开关。
 
-`state.json` 为单个活跃实验记录；`experiments/<id>.json` 保存每轮公开聚合证据、假设、检查、代码哈希、部署与结论。精确incumbent代码位于忽略的 `new-colony/state/evolution/`，每次API部署另保留原有远端备份。原hauler Memory不变。POST结果不明时状态保留 deploying（检查前改配置的中断保留preparing，可只恢复哈希证明匹配的原policy）；cycle仅回读核对，无法确认则停止，不自动重试。
+`state.json` 为单个活跃实验记录；`experiments/<id>.json` 保存每轮公开聚合证据、假设、检查、代码哈希、部署与结论。新基线准备时，state.json保留可恢复的preparing阶段，前一轮experiments档案保留原终态，避免覆盖失败历史与三次重试限制。精确incumbent代码位于忽略的 `new-colony/state/evolution/`，每次API部署另保留原有远端备份。原hauler Memory不变。POST结果不明时状态保留 deploying（检查前改配置的中断保留preparing，可只恢复哈希证明匹配的原policy）；cycle仅回读核对，无法确认则停止，不自动重试。
 
 采集冻结完整的首个1500tick窗口，外部检查即使错过边界仍能读取。攻击、RCL/工况/明显运力变化、漏tick等使样本不可比；精确以模块/评价器字段为准。完整窗口内平均活跃Hauler数量、CARRY、消费/采矿WORK变化超过20%归为混杂，短暂普通续代允许纳入曝光。下一tickEVENT_TRANSFER中实际hauler发出的能源才计为delivered，withdraw不是delivery。输出/hauler存活tick为主目标，载荷率只作诊断。评价器阈值在 `tools/evolution_evaluation.py` 固定，窗口中性先回滚再重采相等长度，不选择性延长单侧或重复读冻结数据。监督者对同一假设至多重试三对窗口。
 

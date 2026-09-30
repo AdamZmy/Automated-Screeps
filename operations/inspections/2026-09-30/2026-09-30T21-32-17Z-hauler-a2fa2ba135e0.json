@@ -3,11 +3,11 @@
   "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:32:17.166Z",
-  "updatedAt": "2026-09-30T21:38:35.909Z",
+  "updatedAt": "2026-09-30T21:47:19.279Z",
   "completedAt": null,
   "status": "running",
   "title": "Hauler基线验收与闭环推进",
-  "summary": "Complete baseline passed fixed validation at74046506. Independent problem review is running; no candidate proposed.",
+  "summary": "Independent review deferred unsupported Hauler candidate; new weight0 baseline running. Reproduced and fixed external controller terminal-archive corruption and three-failure guard bypass.",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -15,8 +15,8 @@
       "W23N26"
     ],
     "version": "2026-09-30.1",
-    "tick": 74046500,
-    "fetchedAt": "2026-09-30T21:36:41Z"
+    "tick": 74046620,
+    "fetchedAt": "2026-09-30T21:45:26Z"
   },
   "findings": [
     {
@@ -46,6 +46,26 @@
         "Global bucket9814; no causal claim tying scout spike to Hauler output or X003 alone."
       ],
       "issue": 7
+    },
+    {
+      "severity": "warning",
+      "title": "O002 terminal experiment archive overwritten on restart",
+      "detail": "Single-owner restart changed completed predecessor to preparing; FakeAPI reproduction allowed a fourth identical candidate after three failed pairs. Fixed external controller preserves terminal archives while active preparing recovery remains intact.",
+      "evidence": [
+        "Original baseline archive restored to inconclusive only after predecessor deployed=successor incumbent and predecessor target=verified successor baseline hashes. No baseline data or active state changed by repair.",
+        "Full evolution suite passes:23workflow/22evaluator tests plus collector/policy. Independent original cycle-rollback oracle now rejects fourth candidate; foreign-edit recovery refuses without POST."
+      ],
+      "issue": 14
+    },
+    {
+      "severity": "info",
+      "title": "New baseline collecting without policy change",
+      "detail": "hauler-20260930T214108514416Z, batchWeight0. Controller deployed only policy id/revision with required checks, backup and verified readback.",
+      "evidence": [
+        "Collector74046584→74046620;7→43valid ticks; errors0/invalidReasons[]. No trial or claimed improvement.",
+        "Post-start status74046620: both roomsRCL5/peace/drop0/errors0; W21U150094.84% stock+441 eligible and W23U150096.30% stock+992 eligible. Single rolling windows do not close sustained acceptance. CPUmean14.1236/max19.2381,bucket10000."
+      ],
+      "issue": 14
     }
   ],
   "tasks": [
@@ -53,8 +73,8 @@
       "issue": 14,
       "title": "Hauler self-evolution",
       "status": "verifying",
-      "progress": "Baseline complete; independent reviewer checks causality and allowed control surface.",
-      "next": "Propose only with supported hypothesis; otherwise defer and start new baseline.",
+      "progress": "Old baseline deferred; new valid baseline43/1500ticks. O002 controller defect fixed and reviewed.",
+      "next": "Continue cycle on new baseline; at later diagnose capture actual nonurgent route-choice evidence before proposing.",
       "owner": "01a0f43a-9236-7b41-ba14-8022a98b399e"
     }
   ],
@@ -76,6 +96,18 @@
       "description": "Start independent bounded diagnosis after completed baseline",
       "status": "done",
       "result": "hauler_review parent01a0f43a-9236-7b41-ba14-8022a98b399e owns only operations/diagnostics/2026-09-30-hauler-baseline-review.md. Root owns API/integration; read-only Game snapshot executed74046474, beyond prior74046274."
+    },
+    {
+      "at": "2026-09-30T21:47:19Z",
+      "description": "Complete independent Hauler diagnosis and defer/start through controller",
+      "status": "done",
+      "result": "No supported nonurgent route-pair evidence. Weight remains0, successor verified and collector advanced. hauler_review released report ownership."
+    },
+    {
+      "at": "2026-09-30T21:47:19Z",
+      "description": "Repair and independently verify external controller history",
+      "status": "done",
+      "result": "Root changed tools/evolution_workflow.py and added bounded recovery/history regressions. Same reviewer independently reproduced impact and approved patch; report ownership released. O002 recorded, version0.6.4. No further game deployment."
     }
   ],
   "checks": [
@@ -88,15 +120,40 @@
       "name": "Fixed baseline evaluator",
       "result": "passed",
       "detail": "ready; complete1500ticks,217actual delivery events, errors0 and no confounder flags."
+    },
+    {
+      "name": "New baseline deployment and live collector",
+      "result": "passed",
+      "detail": "19module hash/identity preflight passed; deploy verified only hauler-policy changed; baseline id/stage/revision matched; new ticks advanced."
+    },
+    {
+      "name": "Controller and evaluator regressions",
+      "result": "passed",
+      "detail": "npm run test:evolution passes:23workflow+22evaluator and collector/policy. Start additionally ran test:hauler and test:api successfully."
+    },
+    {
+      "name": "Independent diagnosis and fix review",
+      "result": "passed",
+      "detail": "Hauler reviewer ran3 relevant regressions. Independent history reproduction confirmed original three-failure bypass, fixed rejection and foreign-edit no-POST guard. No actionable findings."
     }
   ],
   "next": [
-    "Fetch new API room summary and run cycle; preserve experiment lock and controlled scope."
+    "Verify this root stopped before takeover, then cycle current experiment until1500valid ticks.",
+    "At diagnose use independent review and bounded nonurgent candidate-route evidence; unchanged aggregate payload alone cannot justify weight changes.",
+    "Preserve Issue4 sustained energy and Issue7 scout/legacy fixture follow-ups; no parallel game-source changes during baseline/trial."
   ],
   "references": [
     {
       "label": "Issue 14",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
+    },
+    {
+      "label": "Hauler baseline review",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/operations/diagnostics/2026-09-30-hauler-baseline-review.md"
+    },
+    {
+      "label": "Controller history review",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/blob/main/operations/diagnostics/2026-09-30-evolution-history-review.md"
     }
   ]
 }

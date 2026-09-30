@@ -332,3 +332,10 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 ## 2026-09-30 - Scout routing mechanism recorded; baseline unchanged
 
 Independent review reproduced X003: an unsafe scout destination reaches the engine route search before rejection. Synthetic callback counts are not live CPU; the actual peak at74046200 remains unattributed. At74046220/240 CPU recovered and bucket rose; snapshot74046274 shows moving scouts. No emergency or gameplay deployment. See operations/diagnostics/2026-09-30-scout-cpu-review.md and Issue7. Hauler baseline remains1245/1500ticks with zero collector errors.
+
+
+## 2026-09-30 — Complete Hauler baseline and controller history correction
+
+- Issue14 first complete window74045006–74046506:25320 actual delivered energy/217events/3040haulerTicks,8.328947 energy per hauler tick; coverage1/errors0. Independent review found no supported nonurgent route-ranking hypothesis; retained weight0 and deferred without a trial.
+- Controller started verified successorhauler-20260930T214108514416Z with only policy id/revision changed; new collector advanced74046584→74046620 (7→43ticks), no invalid reasons. Await1500ticks; no measured optimization benefit.
+- Confirmed O002: successor preparation overwrote terminal experiment history and bypassed the three-failure guard. External-only fix preserves archives and recovery; full evolution suite passes (23workflow/22evaluator plus collector/policy). Previous archive recovered to inconclusive after exact predecessor/successor hash proof. Build2026-09-30.1 remains unchanged; tooling version0.6.4.

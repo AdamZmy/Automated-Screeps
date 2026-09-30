@@ -128,6 +128,78 @@ class WorkflowTests(unittest.TestCase):
         with patch.object(w,'evaluate',return_value={'decision':'keep','reasons':['better'],'metrics':{}}):w.cycle(self.api,self.state())
         self.assertEqual(w.config()['stage'],'retained');self.assertEqual(self.state()['phase'],'kept')
         w.start(self.api,self.state());self.assertEqual(w.config()['batchWeight'],1);self.assertEqual(w.config()['variant'],'batch-preference')
+    def test_new_baseline_preserves_terminal_predecessor_archive(self):
+        for phase in ('kept','rolled_back','inconclusive','invalid_baseline'):
+            with self.subTest(phase=phase):
+                state=self.state();state['phase']=phase;w.save(state)
+                predecessor=w.RECORDS/'experiments'/(state['id']+'.json')
+                before=predecessor.read_bytes()
+                w.start(self.api,state)
+                self.assertEqual(predecessor.read_bytes(),before)
+                self.assertNotEqual(self.state()['id'],state['id'])
+                self.assertEqual(self.state()['phase'],'baseline')
+
+    def test_interrupted_restart_keeps_terminal_archive_and_recovers_without_post(self):
+        state=self.state();state['phase']='inconclusive';w.save(state)
+        predecessor=w.RECORDS/'experiments'/(state['id']+'.json');before=predecessor.read_bytes()
+        count=self.api.posts;policy=w.POLICY.read_text()
+        with patch.object(w,'checks',side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):w.start(self.api,state)
+        self.assertEqual(self.state()['phase'],'preparing')
+        self.assertEqual(predecessor.read_bytes(),before)
+        self.assertNotEqual(w.POLICY.read_text(),policy)
+        w.cycle(self.api,self.state())
+        self.assertEqual(self.api.posts,count)
+        self.assertEqual(self.state()['phase'],'inconclusive')
+        self.assertEqual(w.POLICY.read_text(),policy)
+
+    def test_restart_check_failure_restores_terminal_state_without_post(self):
+        state=self.state();state['phase']='inconclusive';state['diagnosis']={'decision':'defer'};w.save(state)
+        predecessor=w.RECORDS/'experiments'/(state['id']+'.json')
+        count=self.api.posts;policy=w.POLICY.read_text()
+        with patch.object(w,'checks',side_effect=ValueError('check failed')):
+            with self.assertRaisesRegex(ValueError,'check failed'):w.start(self.api,state)
+        self.assertEqual(self.api.posts,count);self.assertEqual(w.POLICY.read_text(),policy)
+        self.assertEqual(self.state()['phase'],'inconclusive')
+        self.assertEqual(w.read(predecessor)['phase'],'inconclusive')
+        self.assertEqual(w.read(predecessor)['diagnosis'],{'decision':'defer'})
+        self.assertNotIn('localPreparation',self.state())
+
+    def test_restart_interruption_after_checks_recovers_predecessor_without_post(self):
+        state=self.state();state['phase']='invalid_baseline';w.save(state)
+        predecessor=w.RECORDS/'experiments'/(state['id']+'.json');before=predecessor.read_bytes()
+        count=self.api.posts;policy=w.POLICY.read_text();write=w.atomic
+        def interrupt_snapshot(path,value):
+            if path.name.endswith('-incumbent.json'):raise KeyboardInterrupt
+            return write(path,value)
+        with patch.object(w,'atomic',side_effect=interrupt_snapshot):
+            with self.assertRaises(KeyboardInterrupt):w.start(self.api,state)
+        self.assertEqual(self.state()['phase'],'preparing')
+        self.assertEqual(predecessor.read_bytes(),before)
+        w.cycle(self.api,self.state())
+        self.assertEqual(self.api.posts,count);self.assertEqual(w.POLICY.read_text(),policy)
+        self.assertEqual(self.state()['phase'],'invalid_baseline')
+
+    def test_uncertain_restart_keeps_predecessor_and_readback_never_reposts(self):
+        state=self.state();state['phase']='rolled_back';w.save(state)
+        predecessor=w.RECORDS/'experiments'/(state['id']+'.json');before=predecessor.read_bytes()
+        self.api.uncertain=True
+        with self.assertRaises(w.APIError):w.start(self.api,state)
+        self.assertEqual(self.state()['phase'],'deploying')
+        self.assertEqual(predecessor.read_bytes(),before)
+        count=self.api.posts;w.cycle(self.api,self.state())
+        self.assertEqual(self.api.posts,count);self.assertEqual(self.state()['phase'],'baseline')
+        self.assertEqual(predecessor.read_bytes(),before)
+
+    def test_three_failed_pairs_remain_counted_after_restarts(self):
+        for _ in range(3):
+            self.ready();w.trial(self.api,self.state())
+            w.restore(self.api,self.state(),'rolled_back','no improvement')
+            w.start(self.api,self.state())
+        self.api.memory_value={'evolution':self.sample()};w.cycle(self.api,self.state())
+        with self.assertRaisesRegex(ValueError,'failed three paired experiments'):
+            w.propose(self.api,self.state(),w.CACHE/'proposal.json')
+
     def test_corrupt_rollback_snapshot_refuses(self):
         self.ready();w.trial(self.api,self.state());state=self.state()
         w.atomic(w.CACHE/(state['id']+'-incumbent.json'),{'modules':{}})

@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T21:38:35.909Z",
+  "updatedAt": "2026-09-30T21:47:19.279Z",
   "day": "2026-09-30",
   "runs": [
     {
       "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
       "kind": "scheduled",
       "startedAt": "2026-09-30T21:32:17.166Z",
-      "updatedAt": "2026-09-30T21:38:35.909Z",
+      "updatedAt": "2026-09-30T21:47:19.279Z",
       "completedAt": null,
       "status": "running",
       "title": "Hauler基线验收与闭环推进",
-      "summary": "Complete baseline passed fixed validation at74046506. Independent problem review is running; no candidate proposed.",
-      "tick": 74046500,
+      "summary": "Independent review deferred unsupported Hauler candidate; new weight0 baseline running. Reproduced and fixed external controller terminal-archive corruption and three-failure guard bypass.",
+      "tick": 74046620,
       "issueNumbers": [
         4,
         7,
