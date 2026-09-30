@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
+  "kind": "scheduled",
+  "startedAt": "2026-09-30T20:26:01.036Z",
+  "updatedAt": "2026-09-30T20:26:01.071Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "Hauler自进化：基线窗口核验",
+  "summary": "已核验上一协调者及Issue owners停止，本轮接管单实验基线观察。",
+  "game": null,
+  "findings": [],
+  "tasks": [
+    {
+      "issue": 14,
+      "title": "Hauler自进化基线验收",
+      "status": "verifying",
+      "progress": "上一轮基线72/1500tick为历史证据，本轮尚未调用游戏API。",
+      "next": "控制器cycle核验身份、19模块哈希及新鲜样本。",
+      "owner": "01a0f3fd-8af3-7d83-8d2f-39d623e92b6f"
+    }
+  ],
+  "actions": [],
+  "checks": [
+    {
+      "name": "真实owner状态",
+      "result": "passed",
+      "detail": "01a0f3cb idle/completed；01a0dd13及01a0e59f notLoaded/latestTurn completed。相关工作者已有释放检查点。"
+    }
+  ],
+  "next": [
+    "读取新API各房间摘要并运行cycle；按唯一state.json阶段行动。"
+  ],
+  "references": [
+    {
+      "label": "Issue14",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
+    }
+  ]
+}

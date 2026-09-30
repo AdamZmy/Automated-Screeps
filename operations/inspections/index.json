@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T19:58:29.855Z",
+  "updatedAt": "2026-09-30T20:26:01.071Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -10,6 +10,20 @@
     "2026-09-25"
   ],
   "runs": [
+    {
+      "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
+      "kind": "scheduled",
+      "startedAt": "2026-09-30T20:26:01.036Z",
+      "updatedAt": "2026-09-30T20:26:01.071Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler自进化：基线窗口核验",
+      "summary": "已核验上一协调者及Issue owners停止，本轮接管单实验基线观察。",
+      "tick": null,
+      "issueNumbers": [
+        14
+      ]
+    },
     {
       "id": "2026-09-30T19-34-03Z-hauler-24484670ec84",
       "kind": "setup",
@@ -806,21 +820,6 @@
       "status": "skipped",
       "title": "周期巡检：并发协调者接管后让行",
       "summary": "本轮确认另一协调者active后让行；未调用游戏API、修改源码或部署。独立日志和审视结果已准备移交，共享发布尚待唯一协调者完成。",
-      "tick": null,
-      "issueNumbers": [
-        4,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T06-49-45Z-run-e47bdd014765",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T06:49:45.046Z",
-      "updatedAt": "2026-09-26T07:10:32.726Z",
-      "completedAt": "2026-09-26T06:58:38.631Z",
-      "status": "skipped",
-      "title": "周期巡检：核验协调者归属",
-      "summary": "首次共享写入前复查发现新协调者01a0dc5e-78e0-7412-8f71-16b514713719已接管；即时状态active/inProgress，因此本轮让行。未调用游戏API、没有新tick/版本或能效结论，未修改或部署代码。日志起止记录在本地通过校验，公开提交推送移交唯一发布者，尚未确认发布。",
       "tick": null,
       "issueNumbers": [
         4,

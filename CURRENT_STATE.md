@@ -2,8 +2,9 @@
 
 - 唯一源码new-colony；AdamZmy / shard1 / frontier24；W21N26主房、W23N26辅房。
 - 本轮实施Issue14：单房间Hauler自进化。游戏2026-09-30.1、19受管模块已API上传/回读verified；真实新版本Game74045015与采集74045014→74045036已核验。
-- root=01a0f3cb-fa35-7860-ae1d-7bad076c2dcb；先查真实任务状态再接管，本轮集成部署已结束，文件归属释放。collector/evaluation/workflow_review parent同root，均完成并释放文件。
-- 上轮root01a0ef23-5c14-7cc0-9930-d922406065d2已核验completed/notLoaded，未竞争；遗留用户tools/inspect-worker-pool.js不混入提交。
+- root=01a0f3fd-8af3-7d83-8d2f-39d623e92b6f；先查真实任务状态再接管，本轮接管API、实验state/experiments、Issue14及巡检日志；上一root与其collector/evaluation/workflow_review已完成释放。
+- 上轮root01a0f3cb-fa35-7860-ae1d-7bad076c2dcb已实查idle/completed；旧Issue owners01a0dd13/01a0e59f均completed。
+- 更早root01a0ef23-5c14-7cc0-9930-d922406065d2已核验completed/notLoaded，未竞争；遗留用户tools/inspect-worker-pool.js不混入提交。
 - 工作流见operations/evolution/README.md，公开state.json为唯一实验状态，角色提示词在prompts。固定baseline1500tick、trial预热300+观察1500；实际EVENT_TRANSFER计交付，满载率仅诊断。
 - 首版只允许W21N26非紧急取货batchWeight [0,2]自进化；不强制满载/等待，priority≤2及其他房间不变。未开放Link、出生、扩张或旧haul Memory。
 - 名义工况和拓扑一致，实际Hauler数量/CARRY/消费/采矿WORK窗均值变化>20%不可比。普通续代计入曝光，攻击/RCL/漏测/错误/布局变化等使样本不可比。

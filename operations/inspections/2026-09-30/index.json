@@ -1,8 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T19:58:29.855Z",
+  "updatedAt": "2026-09-30T20:26:01.071Z",
   "day": "2026-09-30",
   "runs": [
+    {
+      "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
+      "kind": "scheduled",
+      "startedAt": "2026-09-30T20:26:01.036Z",
+      "updatedAt": "2026-09-30T20:26:01.071Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler自进化：基线窗口核验",
+      "summary": "已核验上一协调者及Issue owners停止，本轮接管单实验基线观察。",
+      "tick": null,
+      "issueNumbers": [
+        14
+      ]
+    },
     {
       "id": "2026-09-30T19-34-03Z-hauler-24484670ec84",
       "kind": "setup",
