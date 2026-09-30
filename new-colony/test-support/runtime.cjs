@@ -16,6 +16,7 @@ const localModules = new Set([
   'main', 'runtime', 'development', 'logistics', 'workforce',
   'infrastructure', 'metrics', 'planner', 'plans', 'expansion',
   'monitor', 'ledger', 'colony', 'mining', 'movement', 'defense', 'links',
+  'evolution', 'hauler-policy',
 ]);
 
 // Load Screeps-style modules inside one VM context. Overrides keep integration

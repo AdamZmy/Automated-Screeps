@@ -1,6 +1,6 @@
 'use strict';
 // Frontier composition root. Each action has exactly one business owner.
-const VERSION='2026-09-29.3';
+const VERSION='2026-09-30.1';
 const runtime=require('runtime'),metrics=require('metrics');
 const colony=require('colony'),mining=require('mining'),development=require('development');
 const logistics=require('logistics'),workforce=require('workforce');
@@ -35,6 +35,7 @@ module.exports.loop=function(){
     guarded('ledger',null,()=>require('ledger').observe(owned));
     for(const name in Memory.creeps)if(!Game.creeps[name])delete Memory.creeps[name];
     guarded('context',null,()=>runtime.contexts(owned));
+    guarded('evolutionBegin',null,()=>require('evolution').begin(owned));
     // All-room safety precedes every room's optional work.
     for(const room of owned)guarded('defense',room,()=>defense.defend(room));
     guarded('safeMode',null,()=>defense.arbitrateSafeMode(owned));
@@ -84,5 +85,6 @@ module.exports.loop=function(){
                 energy:r.energyAvailable,capacity:r.energyCapacityAvailable,creeps:runtime.roomContext(r).creepsByHome.length,storage:r.storage?energy(r.storage):0};})};
     }
     if(!Game.cpu||Game.cpu.bucket>500)for(const r of owned)r.visual.text('Frontier | RCL '+r.controller.level+' | '+Math.round((r.controller.progress||0)/(r.controller.progressTotal||1)*100)+'% | '+runtime.roomContext(r).creepsByPosition.length+' creeps',25,1,{font:.6,color:'#a8efbd'});
+    guarded('evolutionFinish',null,()=>require('evolution').finish(metrics.currentRoomCpu(require('hauler-policy').config.room)));
     finishCpu(start);
 };

@@ -322,3 +322,9 @@ API诊断tick73927311：远处退役矿工已改builder，4WORK、TTL27、能量
 - 真实tick74026531/539已运行.3；W23仍11旧worker/20WORK，模板8+8+4；W21旧三只8+8+4/20WORK，模板10+10。tick539两房能源满额，固定worker-pool请求reason=worker-work-cap，pending空，无新碎片出生；新策略已在线等待自然释放。
 - 遥测74026560核验新版本；74026540模块健康spawn/creeps均ok、无module error。纯新版本74026540–560窗口，W21/W23真实升级19/15.65/t；CPU既有告警仍存在，不作性能收益结论。临时workerCapacityProbe已清理并回读null。
 - 完整自然数量收敛和线上矿工交班仍待后续生命周期验收；Issue4保留verifying。automation继续PAUSED。本轮本地记录未推送GitHub。
+
+## 2026-09-30 · 单房间Hauler自进化闭环上线（Issue14）
+
+发布2026-09-30.1：19受管模块经API备份、上传和回读；新增实际事件采集evolution、受控hauler-policy、外部单实验状态机和五角色提示词。W21N26仅非紧急取货评分可进化，baseline权重0不改行为。Game74045015已核验新版本、9完整样本tick、50actual delivery energy/1事件/18haulerTicks、零错误/不可比较原因；随后74045036采样30tick。完整1500基线/候选300+1500效果待定时任务，未宣称优化收益。
+
+唯一screeps-world任务恢复ACTIVE、正确World项目每30分钟执行，保留原模型/推理及通知设置。采集/参数隔离、22评价/17工作流/24API及Hauler回归通过；独立采集→评价真实schema桥接通过。普通续代纳入曝光，明显Hauler数量/CARRY/WORK均值变化>20%不可比；代码哈希、runtime故障/丢遥测、preparing与deploying中断、精确policy回滚均有防护。暂未开放Link/扩张实验，不修改旧haul Memory或已确认Worker规则。

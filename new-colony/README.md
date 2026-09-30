@@ -8,7 +8,7 @@
 
 服务器每 tick 执行 `main.loop`。开发子代理按需启动，分别处理战略、能源和布局；它们不充当永久运行的游戏进程。持续运行的是已经部署的 JavaScript 模块。
 
-当前运行架构为 game `2026-09-29.3`。API 受管17个模块，其中 `infrastructure.js` 仅保留兼容导出，实际业务由16个职责文件完成。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
+当前运行架构为 game `2026-09-30.1`。API受管19个模块；`evolution.js`采集单房间运输实验，`hauler-policy.js`是受控进化参数。`infrastructure.js`仅保留兼容导出。下方带旧构建号的段落为历史记录，当前接口和执行规则以本节及源码为准。
 
 | 文件 | 职责 |
 | --- | --- |
@@ -25,6 +25,7 @@
 | `planner.js` / `plans.js` | 已审核布局与候选工地、精确冷计划归档恢复；不创建工地 |
 | `expansion.js` | 情报、命名扩张政策、任务阶段、出生/首spawn请求、自主运营验收和交接 |
 | `ledger.js` | 独立逐tick真实事件与300/1500/6000窗口，意图不等于实际产出 |
+| `evolution.js` / `hauler-policy.js` | W21N26 Hauler实际交付与同窗口实验采集；房间级非紧急评分参数；外部控制器见 `../operations/evolution/README.md` |
 | `monitor.js` / `metrics.js` | 有界诊断、房间/模块/角色CPU、状态与原因；不控制游戏行为 |
 | `infrastructure.js` | 旧测试/导入的兼容导出；无第二条动作执行路径 |
 
@@ -36,7 +37,7 @@
 
 Hauler只保留 `memory.haul={state,task,origin}`；旧 `loaded/haulPickup/haulDelivery` 在首次执行时迁移并移除。`creep.store` 是实际货物权威；`task.intent` 仅表示本tick接受的请求，下一tick重新核对。空车先预约完整取送任务，已携货车辆优先获得未覆盖需求；Storage与矿点/Hub一同竞选来源。已有任务通常保留，紧急需求、失效、耗尽和真实堵塞才改派。卸货按当前实际空位与本tick其他已接受意图计算，空车未来预约可被实货回收，不要求装至90%。
 
-出生与施工同样区分 accepted 与 observed。规划与任务只发布请求，实际游戏写入只由workforce/development各自负责。Rampart在规划候选和统一施工入口双重禁止，已有建筑和归档坐标保留。巡检自动任务仍暂停；部署不会恢复调度。
+出生与施工同样区分 accepted 与 observed。规划与任务只发布请求，实际游戏写入只由workforce/development各自负责。Rampart在规划候选和统一施工入口双重禁止，已有建筑和归档坐标保留。本次自进化实施将唯一巡检任务改为每30分钟推进实验；调度状态由Codex automation工具控制，部署本身不恢复调度。
 
 `.1` 的 Hauler CPU 修复：稳定任务直接复用，物理货物每房统一核对；同tick的到货容量和紧急需求仍即时检查。精确起点→来源和来源→目的地的可达性使用有界heap缓存，结构身份/位置/通行变化使缓存失效。卸货口的房内占位和近场租约按tile共享索引；缓存口被占立即尝试合法备用口，只有所有口暂占才有界等待，空闲车仍清理卸货通道。标准Hauler保持房容量50%的CARRY/MOVE体型；续代按未来CARRY与串行/并行Spawn期限规划，仅实际安全开工期限到达且标准买不起时用应急体型，不主动淘汰旧车。
 

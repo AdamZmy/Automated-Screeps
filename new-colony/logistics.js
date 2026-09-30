@@ -347,7 +347,7 @@ function assignTask(c,requests) {
             // candidate. Overflowing mining buffers receive a pressure benefit.
             const estimate=Math.max(0,range(c,node)-1)+Math.max(0,range(node,destination.node)-1)+2;
             const pressure=node.structureType===STRUCTURE_STORAGE?0:energy(node);
-            return {node,destination,free,amount,estimate,score:estimate/Math.max(1,amount)/(1+pressure/1000)};
+            return {node,destination,free,amount,estimate,score:require('hauler-policy').routeScore(c.room,destination.priority,amount,capacity,estimate/Math.max(1,amount)/(1+pressure/1000))};
         })).filter(r=>r.amount>0).sort((a,b)=>a.score-b.score||a.estimate-b.estimate||a.node.id.localeCompare(b.node.id));
         for(const route of routes){
             if(!routePossible(c,route.node,route.destination.node))continue;

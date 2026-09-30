@@ -246,6 +246,17 @@ class APITests(unittest.TestCase):
         self.assertEqual(report["modules"]["monitor"]["remote_state"], "missing_or_nontext")
         self.assertNotIn("PRIVATE SOURCE", output)
 
+    def test_experiment_expected_hashes_guard_fresh_deploy_read_before_post(self):
+        _, remote, _ = self.deployment_data()
+        expected = {n: hashlib.sha256(remote[n].encode()).hexdigest() for n in api.MODULES}
+        remote["links"] += "// concurrent change"
+        self.responses({"ok": 1, "username": "AdamZmy"}, self.code_response(remote))
+        client = api.ScreepsAPI(token_file=self.token_file)
+        with self.assertRaisesRegex(api.APIError, "changed since experiment preflight"):
+            client.deploy(apply=True, expected_hashes=expected)
+        self.assertEqual(self.post_requests(), [])
+        self.assertFalse((self.directory / "backups").exists())
+
     def test_console_payload_is_exact_and_only_acceptance_is_printed(self):
         expression = 'console.log("literal `$()` and unicode 中文");\nMemory.example = 1;\n'
         expression_file = self.directory / "expression.js"

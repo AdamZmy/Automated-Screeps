@@ -2,12 +2,14 @@
 // Published every 20 ticks so subsequent CPU investigations have attribution.
 let cpuWindow=null;
 let logisticsFrame=null;
+let roomFrameCpu={};
 function cpuNow(){return Game.cpu&&typeof Game.cpu.getUsed==='function'?Game.cpu.getUsed():null;}
 function movementCount(name){if(cpuWindow)cpuWindow.movement[name]=(cpuWindow.movement[name]||0)+1;}
 function cpuAdd(group,name,value){
     if(!cpuWindow||value===null)return;
     const bucket=cpuWindow[group],stat=bucket[name]||(bucket[name]={calls:0,total:0,max:0});
     stat.calls++;stat.total+=value;stat.max=Math.max(stat.max,value);
+    if(group==='rooms')roomFrameCpu[name]=(roomFrameCpu[name]||0)+value;
 }
 function measured(group,name,run){
     const start=cpuNow();
@@ -41,7 +43,9 @@ function finishCpu(start){
 
 function startCpu(){
     const start=cpuNow();
+    roomFrameCpu={};
     if(start!==null&&!cpuWindow)cpuWindow={from:Game.time,samples:0,totals:{},stages:{},roles:{},rooms:{},logistics:{},movement:{}};
     return start;
 }
-module.exports={startCpu,cpuNow,movementCount,cpuAdd,measured,finishCpu};
+function currentRoomCpu(room){return cpuNow()===null?null:(roomFrameCpu[room]??null);}
+module.exports={currentRoomCpu,startCpu,cpuNow,movementCount,cpuAdd,measured,finishCpu};

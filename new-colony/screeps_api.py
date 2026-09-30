@@ -41,6 +41,7 @@ MODULES = (
     "main", "runtime", "development", "logistics", "workforce",
     "infrastructure", "metrics", "planner", "expansion", "monitor",
     "ledger", "plans", "colony", "mining", "movement", "defense", "links",
+    "evolution", "hauler-policy",
 )
 DEPLOY_BRANCH = "frontier24"
 DEPLOY_USERNAME = "AdamZmy"
@@ -239,7 +240,7 @@ class ScreepsAPI:
             raise APIError("Console request was not acknowledged; acceptance is unknown.")
         return {"accepted": True}
 
-    def deploy(self, apply=False, branch=DEPLOY_BRANCH):
+    def deploy(self, apply=False, branch=DEPLOY_BRANCH, expected_hashes=None):
         if branch != DEPLOY_BRANCH:
             raise APIError("Deployment is restricted to branch frontier24.")
         if self.identity().get("username") != DEPLOY_USERNAME:
@@ -248,6 +249,11 @@ class ScreepsAPI:
         remote = current.get("modules")
         if current.get("branch") != DEPLOY_BRANCH or not isinstance(remote, dict):
             raise APIError("Deployment refused: remote branch or modules could not be verified.")
+        if expected_hashes is not None:
+            actual_hashes = {name: hashlib.sha256(remote[name].encode("utf-8")).hexdigest()
+                             for name in MODULES if isinstance(remote.get(name), str)}
+            if actual_hashes != expected_hashes:
+                raise APIError("Deployment refused: managed remote code changed since experiment preflight; no write made.")
         try:
             local = {name: (PROJECT_DIR / (name + ".js")).read_bytes().decode("utf-8") for name in MODULES}
         except (OSError, UnicodeError):
@@ -355,6 +361,7 @@ def status_summary(frontier, shard):
             "performance": {k: (v[-6:] if k == "history" and isinstance(v, list) else v) for k, v in (frontier.get("performance") or {}).items() if not k.startswith("_")},
             "rooms": rooms, "alerts": telemetry.get("alerts", {}),
             "modules": frontier.get("modules", {}),
+            "evolution": {k:v for k,v in (frontier.get("evolution") or {}).items() if not k.startswith("_")},
             "candidates": frontier.get("candidates", {}), "expansion": frontier.get("expansion")}
 
 

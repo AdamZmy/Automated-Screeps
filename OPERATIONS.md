@@ -20,9 +20,9 @@ Issues 是工作状态的权威记录，Git 提交保存代码，版本 tag 标�
 `ownerKind=agent` 指当前协调树中的子代理；`thread` 指可查询的 Codex 任务；`root` 指协调者。
 这只是工作记录，脚本本身不会启动代理或在后台运行。
 
-## 每小时的协调流程
+## 每30分钟的自进化协调流程
 
-唯一调度为 `screeps-world` 独立定时任务：每 1 小时启动一个新对话，从保存的提示词恢复，不续接或复制原长对话。
+唯一调度为 `screeps-world` 独立定时任务：每30分钟启动一个新对话，从保存的提示词恢复，不续接或复制原长对话。
 源码始终在 `/Users/zmy/screepsworld`；调度的 Project Rules 工作区只是上下文目录，其 Arena 默认入口不适用于本任务。
 每轮先读 World skill、`new-colony/AGENTS.md`、本文件和 `CURRENT_STATE.md`，再读活动 Issue 最新检查点并取新 API tick。
 `CURRENT_STATE.md` 只保留最近核验版本/tick、当前风险、下一检查点和本轮负责者，保持在 80 行以内，更新替换旧状态。
@@ -119,3 +119,7 @@ Vercel 发布和游戏发布分别留证。GitHub Actions 只做离线检查，�
 
 能源目标仍是可持续总用能率 ≥90%，并保持升级与计划内建设产出。
 按照 ENERGY_METRICS 的覆盖率和库存条件验收，不靠浪费能源提高指标。
+
+## 自进化实验优先（2026-09-30授权实施）
+
+唯一`screeps-world`任务现在在World项目运行，先按 `operations/evolution/README.md` 和prompts推进闭环；不要创建第二个定时程序。先运行`evolution_workflow.py cycle`：baseline/trial阶段保持同一代码版本，不同时开始原backlog开发。监控仍覆盖各房间，只有W21N26非紧急hauler取货评分开放自进化；Link/扩张优化等阶段另行启用。紧急维护先通过控制器结束/回滚试验，再沿现有生命周期处理故障并重新采样。用户新实施请求授权恢复旧PAUSED任务并按商议每30分钟执行；后续暂停仍持续有效。
