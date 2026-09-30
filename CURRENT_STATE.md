@@ -1,7 +1,7 @@
 # Screeps World 当前交接
 
 - 唯一源码new-colony；AdamZmy / shard1 / frontier24；W21N26主房、W23N26辅房；不操作Arena。
-- root=01a0f41f-c50e-7542-8779-34b246f00ad8; completed API/experiment/Issue14,4,7/journal integration; ownership released at completion. No managed game module changes or deployment.
+- root=01a0f43a-9236-7b41-ba14-8022a98b399e; active owner of API/evolution state, controlled policy configuration, Issue14 checkpoints, CURRENT_STATE and this run journal; no worker yet. Previous root01a0f41f and old Issue owners01a0dd13/01a0e59f verified notLoaded/latestTurn completed before takeover.
 - 上轮root01a0f3fd、旧Issue owners01a0dd13/01a0e59f均实查notLoaded/latestTurn completed；setup root01a0f3cb idle/completed；首次写入前已重读归属。
 - cpu_review parent=01a0f41f-c50e-7542-8779-34b246f00ad8; completed independent report and sandbox, released files. Root persisted diagnostic regression and catalog X003; all workers stopped.
 - 游戏2026-09-30.1 / 代码72c8d56；两次cycle通过AdamZmy/frontier24和19模块本地/远端哈希核验。用户遗留tools/inspect-worker-pool.js未跟踪，保留不提交。
