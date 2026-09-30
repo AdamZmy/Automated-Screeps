@@ -1,8 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T21:48:57.399Z",
+  "updatedAt": "2026-09-30T22:02:44.417Z",
   "day": "2026-09-30",
   "runs": [
+    {
+      "id": "2026-09-30T22-02-14Z-hauler-e2594abcaa4c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-30T22:02:14.194Z",
+      "updatedAt": "2026-09-30T22:02:44.417Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler 新配对基线持续采样",
+      "summary": "已逐一核验上一协调者及活动Issue owners停止，本轮接管新配对基线的监控与记录；尚未取得本轮游戏tick。",
+      "tick": null,
+      "issueNumbers": [
+        14
+      ]
+    },
     {
       "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
       "kind": "scheduled",
