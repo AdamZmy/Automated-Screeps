@@ -1,19 +1,21 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T20:26:01.071Z",
+  "updatedAt": "2026-09-30T20:29:16.253Z",
   "day": "2026-09-30",
   "runs": [
     {
       "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
       "kind": "scheduled",
       "startedAt": "2026-09-30T20:26:01.036Z",
-      "updatedAt": "2026-09-30T20:26:01.071Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-30T20:29:16.253Z",
+      "completedAt": "2026-09-30T20:29:16.212Z",
+      "status": "completed",
       "title": "Hauler自进化：基线窗口核验",
-      "summary": "已核验上一协调者及Issue owners停止，本轮接管单实验基线观察。",
-      "tick": null,
+      "summary": "基线推进至497/1500tick；控制器observe，保持verifying。两房升级正常，无本轮部署，尚无优化收益结论。",
+      "tick": 74045503,
       "issueNumbers": [
+        4,
+        7,
         14
       ]
     },

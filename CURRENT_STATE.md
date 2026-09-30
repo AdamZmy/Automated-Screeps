@@ -1,21 +1,24 @@
 # Screeps World 当前交接
 
-- 唯一源码new-colony；AdamZmy / shard1 / frontier24；W21N26主房、W23N26辅房。
-- 本轮实施Issue14：单房间Hauler自进化。游戏2026-09-30.1、19受管模块已API上传/回读verified；真实新版本Game74045015与采集74045014→74045036已核验。
-- root=01a0f3fd-8af3-7d83-8d2f-39d623e92b6f；先查真实任务状态再接管，本轮接管API、实验state/experiments、Issue14及巡检日志；上一root与其collector/evaluation/workflow_review已完成释放。
-- 上轮root01a0f3cb-fa35-7860-ae1d-7bad076c2dcb已实查idle/completed；旧Issue owners01a0dd13/01a0e59f均completed。
-- 更早root01a0ef23-5c14-7cc0-9930-d922406065d2已核验completed/notLoaded，未竞争；遗留用户tools/inspect-worker-pool.js不混入提交。
-- 工作流见operations/evolution/README.md，公开state.json为唯一实验状态，角色提示词在prompts。固定baseline1500tick、trial预热300+观察1500；实际EVENT_TRANSFER计交付，满载率仅诊断。
-- 首版只允许W21N26非紧急取货batchWeight [0,2]自进化；不强制满载/等待，priority≤2及其他房间不变。未开放Link、出生、扩张或旧haul Memory。
-- 名义工况和拓扑一致，实际Hauler数量/CARRY/消费/采矿WORK窗均值变化>20%不可比。普通续代计入曝光，攻击/RCL/漏测/错误/布局变化等使样本不可比。
-- 独立复核阻碍已修：结构化schema、warmup、基线先验验收、collector故障独立检测、丢遥测超时、API上传即刻哈希校验、中断准备与未知POST回读。
-- 采集器及房间/紧急优先级参数验证/22评价测试/17工作流测试、7组Hauler、24API回归通过；真实采集输出→评价器桥接通过。只记相关检查，不宣称全仓npm test全绿。
-- 单一screeps-world已ACTIVE、World项目bb518859-6d74-4c13-9bfe-5da7007b3fa1每30分钟，无新增调度；原model/xhigh及通知偏好保留。先核验owner避免同轮部署。
-- Worker规则保持容量标准、20WORK总池、自然收敛；Issue4/5等仍verifying。实验期间不并行改其他源码；必要紧急维护先结束候选，再重采。
-- 初始setup日志已Git发布db2bbf5；本轮代码与末记录随自进化发布提交保存并推送。Issue14保持verifying，不能以上线代替实测收益。
+- 唯一源码new-colony；AdamZmy / shard1 / frontier24；W21N26主房、W23N26辅房；不操作Arena。
+- root=01a0f3fd-8af3-7d83-8d2f-39d623e92b6f；本轮仅API/实验记录/Issue14、4、7/日志与交接；无子代理、无源码改动、无部署。结束后释放归属；下一轮须先查真实任务状态。
+- 上轮root01a0f3cb实查idle/completed；旧Issue owners01a0dd13、01a0e59f均notLoaded/latestTurn completed；setup workers已完成释放。
+- 游戏2026-09-30.1 / 代码72c8d56；两次cycle核验AdamZmy/frontier24、19模块本地/远端哈希一致。用户遗留tools/inspect-worker-pool.js保持未跟踪，不混入提交。
+- 实验hauler-20260930T195223821086Z，phase=baseline，batchWeight=0；state.json为唯一状态，experiments同ID记录一致。
+- 基线区间74045006→74046506；最新采集tick74045503，497/1500tick，尚差1003；observedAt=2026-09-30T20:27:16Z。
+- 实际EVENT_TRANSFER交付8933能源/70次，haulerTicks=1014；errors=0、invalidReasons=[]。评价observe/incomplete_baseline，不是收益证据。
+- 本轮collector74045489→74045503前进；id/room/stage/revision匹配，无需inspect-live。bucket start9646/min9480/end9841。
+- API房间摘要tick74045480/fetchedAt2026-09-30T20:26:34Z：两房RCL5、peace、无alerts/module errors；CPU20样本mean13.3709，bucket9950。
+- W21N26：progress982429、升级20/t、2worker/20WORK(10+10)、2hauler/18CARRY、2miner；drop0、0工地、buffer697。
+- W23N26：progress3958、升级12/t、3worker、6hauler、2miner；drop0、13工地、buffer420。未进行扩张动作。
+- 主房1500tick U98.89%/coverage1但stock-188，ineligible；辅房105.13%/stock-2186亦ineligible，不能宣称持续≥90%。主房30095%及600096.38%为eligible辅助证据。
+- Issue14/4/7已更新并保持verifying；其他backlog保留。无确认新故障，不启动重复审视、不追加普通LIVE_STATUS、不部署网页。
+- 仅W21N26非紧急取货batchWeight[0,2]开放实验；priority≤2、其他房间、Link/出生/扩张不进入控制面。基线/试验期间不并行部署backlog。
+- 唯一screeps-world每30分钟新对话；本轮未修改或新增调度。日志2026-09-30T20-26-01Z-hauler-5d429007fdfe，起始d330073已推送，末态随本交接提交。
 
 ## 下一步
 
-- 当前实验hauler-20260930T195223821086Z，baseline权重0；截至74045078采72tick，下一轮先cycle读取新鲜状态。
-- 已有真实事件50energy/1次交付/18haulerTicks（74045015的9tick早期样本），无module error/invalidReasons；这是采集验收，非吞吐收益。
-- baseline完整前不提案/不部署行为改动；到diagnose由独立审视、监督、优化选择一项证据充分的候选。
+- 先核验本root及Issue owners已停止，再cycle；baseline/trial等待时保持verifying、轻量观察、禁止提案/改权重。
+- 到完整有效1500tick才diagnose：检索fault-catalog、独立审视、多因与反证，最多两方案，先propose再trial300+1500。
+- 无证据支持受控面问题则defer→start新配对基线；终态按cycle动作推进；runtime失败先诊断修复，不盲重采。
+- 攻击/RCL/道路/Link/建设或明显工况变化、漏测、错误不算收益；普通续代按haulerTicks及完整CARRY/WORK均值评价；哈希冲突停止自动部署。

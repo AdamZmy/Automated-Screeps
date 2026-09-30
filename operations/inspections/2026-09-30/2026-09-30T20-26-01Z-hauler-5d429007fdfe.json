@@ -3,38 +3,133 @@
   "id": "2026-09-30T20-26-01Z-hauler-5d429007fdfe",
   "kind": "scheduled",
   "startedAt": "2026-09-30T20:26:01.036Z",
-  "updatedAt": "2026-09-30T20:26:01.071Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-30T20:29:16.253Z",
+  "completedAt": "2026-09-30T20:29:16.212Z",
+  "status": "completed",
   "title": "Hauler自进化：基线窗口核验",
-  "summary": "已核验上一协调者及Issue owners停止，本轮接管单实验基线观察。",
-  "game": null,
-  "findings": [],
+  "summary": "基线推进至497/1500tick；控制器observe，保持verifying。两房升级正常，无本轮部署，尚无优化收益结论。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-30.1",
+    "tick": 74045503,
+    "fetchedAt": "2026-09-30T20:27:16Z"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "基线尚未完成",
+      "detail": "身份与19模块哈希匹配；采集窗口继续，不启动候选或其他源码工作。",
+      "evidence": [
+        "collector74045489→74045503; 497/1500ticks; delivered8933; events70; haulerTicks1014; errors0; invalidReasons=[]",
+        "fixed evaluator: observe/incomplete_baseline; endTick74046506; batchWeight0"
+      ],
+      "issue": 14
+    },
+    {
+      "severity": "info",
+      "title": "长期能源验收仍开放",
+      "detail": "库存消耗使两房主1500tick利用率不具备可持续验收资格；当前升级、建设与采矿仍有产出，没有新故障证据。",
+      "evidence": [
+        "status74045480/fetched2026-09-30T20:26:34Z: W21RCL5 upgrade20/t,2workers20WORK,drop0,0sites; W23RCL5 upgrade12/t,drop0,13sites; peace,alerts empty,module errors0",
+        "W21U150098.89%,coverage1,stock-188; W23U1500105.13%,coverage1,stock-2186; both ineligible(stock-drawdown). W21U30095%/U600096.38% eligible auxiliary only. CPU20samples mean13.3709,bucket9950."
+      ],
+      "issue": 4
+    }
+  ],
   "tasks": [
     {
       "issue": 14,
       "title": "Hauler自进化基线验收",
       "status": "verifying",
-      "progress": "上一轮基线72/1500tick为历史证据，本轮尚未调用游戏API。",
-      "next": "控制器cycle核验身份、19模块哈希及新鲜样本。",
+      "progress": "497/1500tick，累计8933实际能源/70次交付；无候选部署。",
+      "next": "下一轮先查owner停止，再cycle继续同一基线；完整且有效后独立诊断。",
+      "owner": "01a0f3fd-8af3-7d83-8d2f-39d623e92b6f"
+    },
+    {
+      "issue": 4,
+      "title": "持续用能率验收",
+      "status": "verifying",
+      "progress": "已更新新鲜两房能效与CPU检查点，1500tick库存消耗排除验收。",
+      "next": "实验允许变更前只观察，不并行改源码或靠额外消费达标。",
+      "owner": "01a0f3fd-8af3-7d83-8d2f-39d623e92b6f"
+    },
+    {
+      "issue": 7,
+      "title": "辅房自给与建设验收",
+      "status": "verifying",
+      "progress": "W23N26 RCL5持续升级、13工地，无掉落；已更新原Issue。",
+      "next": "跨续代窗口核验自给，继续只读房间摘要。",
       "owner": "01a0f3fd-8af3-7d83-8d2f-39d623e92b6f"
     }
   ],
-  "actions": [],
+  "actions": [
+    {
+      "at": "2026-09-30T20:26:01.036Z",
+      "description": "发布起始日志并接管",
+      "status": "done",
+      "result": "实际核验上一root及Issue owners已停止；起始日志与交接d330073已推送。"
+    },
+    {
+      "at": "2026-09-30T20:27:16Z",
+      "description": "控制器cycle及各房间HTTP观察",
+      "status": "done",
+      "result": "两次cycle均返回baseline/wait；固定评价器observe；无POST/部署/策略修改。"
+    },
+    {
+      "at": "2026-09-30T20:29:16.212Z",
+      "description": "保存结束记录与Issue检查点",
+      "status": "done",
+      "result": "Issue14、4、7已更新verifying；state与同IDexperiment一致；本轮文件释放，下一轮仍须核验真实任务状态。"
+    }
+  ],
   "checks": [
     {
       "name": "真实owner状态",
       "result": "passed",
       "detail": "01a0f3cb idle/completed；01a0dd13及01a0e59f notLoaded/latestTurn completed。相关工作者已有释放检查点。"
+    },
+    {
+      "name": "身份及完整代码哈希",
+      "result": "passed",
+      "detail": "两次cycle内置preflight通过AdamZmy/frontier24和全部19模块本地/远端哈希核验。"
+    },
+    {
+      "name": "新鲜tick及固定基线评价",
+      "result": "passed",
+      "detail": "74045489→74045503；固定评价器observe/incomplete_baseline；无invalidReasons/runtime errors。"
+    },
+    {
+      "name": "完整基线与实测收益",
+      "result": "pending",
+      "detail": "497/1500tick；不能提出候选或声称收益。"
+    },
+    {
+      "name": "实验记录及本地源码完整性",
+      "result": "passed",
+      "detail": "state.json与同IDexperiments完全一致；19模块SHA256均匹配deployedHashes。源码未改，无需重复行为回归。"
     }
   ],
   "next": [
-    "读取新API各房间摘要并运行cycle；按唯一state.json阶段行动。"
+    "下一轮先核验本root与Issue owners停止，再cycle继续同一基线。",
+    "到74046506后按实际完整窗口验收；有证据才启动独立审视及受控提案。",
+    "两房持续升级及库存/用能率保持观察，禁止与baseline/trial并行部署其他工作。"
   ],
   "references": [
     {
       "label": "Issue14",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
+    },
+    {
+      "label": "Issue4",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/4"
+    },
+    {
+      "label": "Issue7",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/7"
     }
   ]
 }
