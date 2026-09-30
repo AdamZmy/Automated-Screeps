@@ -3,11 +3,11 @@
   "id": "2026-09-30T21-32-17Z-hauler-a2fa2ba135e0",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:32:17.166Z",
-  "updatedAt": "2026-09-30T21:47:19.279Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-30T21:48:57.399Z",
+  "completedAt": "2026-09-30T21:48:57.367Z",
+  "status": "completed",
   "title": "Hauler基线验收与闭环推进",
-  "summary": "Independent review deferred unsupported Hauler candidate; new weight0 baseline running. Reproduced and fixed external controller terminal-archive corruption and three-failure guard bypass.",
+  "summary": "Completed baseline independently deferred; new weight0 baseline91/1500valid ticks. Fixed and independently verified terminal-history/retry-limit defect O002; source, tests, reports and progress published as3c2d708.",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -62,7 +62,7 @@
       "title": "New baseline collecting without policy change",
       "detail": "hauler-20260930T214108514416Z, batchWeight0. Controller deployed only policy id/revision with required checks, backup and verified readback.",
       "evidence": [
-        "Collector74046584→74046620;7→43valid ticks; errors0/invalidReasons[]. No trial or claimed improvement.",
+        "Collector74046584→74046620→74046668;7→43→91valid ticks;540energy/12events/182haulerTicks,errors0/invalidReasons[]. No trial or claimed improvement.",
         "Post-start status74046620: both roomsRCL5/peace/drop0/errors0; W21U150094.84% stock+441 eligible and W23U150096.30% stock+992 eligible. Single rolling windows do not close sustained acceptance. CPUmean14.1236/max19.2381,bucket10000."
       ],
       "issue": 14
@@ -73,9 +73,9 @@
       "issue": 14,
       "title": "Hauler self-evolution",
       "status": "verifying",
-      "progress": "Old baseline deferred; new valid baseline43/1500ticks. O002 controller defect fixed and reviewed.",
+      "progress": "Old complete baseline deferred; new baseline91/1500valid ticks. O002 fixed/reviewed/published3c2d708; all reviewer/root file ownership released at completion.",
       "next": "Continue cycle on new baseline; at later diagnose capture actual nonurgent route-choice evidence before proposing.",
-      "owner": "01a0f43a-9236-7b41-ba14-8022a98b399e"
+      "owner": "01a0f43a-9236-7b41-ba14-8022a98b399e (completed; released)"
     }
   ],
   "actions": [
@@ -108,6 +108,12 @@
       "description": "Repair and independently verify external controller history",
       "status": "done",
       "result": "Root changed tools/evolution_workflow.py and added bounded recovery/history regressions. Same reviewer independently reproduced impact and approved patch; report ownership released. O002 recorded, version0.6.4. No further game deployment."
+    },
+    {
+      "at": "2026-09-30T21:48:57.367Z",
+      "description": "Final controller observation and ownership handoff",
+      "status": "done",
+      "result": "Final cycle verifies identity/19managed hashes and advances new collector to74046668. Fixed evaluator observe/incomplete_baseline. Reviewer completed/released; root releases files/API/Git after final publication. User untracked inspect-worker-pool.js preserved."
     }
   ],
   "checks": [
@@ -135,6 +141,11 @@
       "name": "Independent diagnosis and fix review",
       "result": "passed",
       "detail": "Hauler reviewer ran3 relevant regressions. Independent history reproduction confirmed original three-failure bypass, fixed rejection and foreign-edit no-POST guard. No actionable findings."
+    },
+    {
+      "name": "Final artifact consistency",
+      "result": "passed",
+      "detail": "Active state equals experiment;19local managed hashes match recorded verified deployment; CURRENT_STATE within80lines. Full archive validate95runs/6days before final commit; explicit paths only."
     }
   ],
   "next": [
