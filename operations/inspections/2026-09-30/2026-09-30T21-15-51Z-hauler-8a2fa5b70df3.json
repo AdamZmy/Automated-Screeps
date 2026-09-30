@@ -3,32 +3,90 @@
   "id": "2026-09-30T21-15-51Z-hauler-8a2fa5b70df3",
   "kind": "scheduled",
   "startedAt": "2026-09-30T21:15:51.982Z",
-  "updatedAt": "2026-09-30T21:15:52.018Z",
+  "updatedAt": "2026-09-30T21:18:10.363Z",
   "completedAt": null,
   "status": "running",
   "title": "Hauler 基线定时观察",
-  "summary": "上轮协调者和全部活动Issue旧owner已实查停止；本轮接管只读游戏观察及实验/日志记录，待运行cycle。",
-  "game": null,
-  "findings": [],
+  "summary": "基线1207/1500tick有效继续采样；独立审视scout CPU峰值，不部署或改候选。",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-30.1",
+    "tick": 74046200,
+    "fetchedAt": "2026-09-30T21:16:14Z"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "title": "基线仍未完成",
+      "detail": "cycle核验身份与19模块哈希，返回baseline/wait；样本不足并非异常。",
+      "evidence": [
+        "collector74046213:1207/1500ticks,20820actualenergy,169events,2454haulerTicks,errors0,invalidReasons[]",
+        "fixed evaluator observe/incomplete_baseline; baseline ends74046506"
+      ],
+      "issue": 14
+    },
+    {
+      "severity": "warning",
+      "title": "scout CPU峰值需独立审视",
+      "detail": "CPU余量告警；峰值主要在scout执行段，暂未证实具体根因或紧急损害。",
+      "evidence": [
+        "status74046200:mean22.7386/max200.9723 over20ticks; scout9.9768/t max187.8277; W22N28 max187.8317",
+        "EMA16.77/20,bucket9696,no module errors; main upgrade20/t; no collector errors"
+      ],
+      "issue": 7
+    }
+  ],
   "tasks": [
     {
       "issue": 14,
       "title": "Hauler 首轮基线",
       "status": "verifying",
-      "progress": "接管已确认；新API观测尚未进行。",
+      "progress": "已采集1207/1500tick，权重0。",
       "next": "身份/哈希校验后继续同一1500tick基线。",
       "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8"
+    },
+    {
+      "issue": 7,
+      "title": "scout CPU独立审视",
+      "status": "verifying",
+      "progress": "有限cpu_review子代理运行；parent01a0f41f-c50e-7542-8779-34b246f00ad8，仅报告operations/diagnostics/2026-09-30-scout-cpu-review.md。",
+      "next": "审视机制和紧急性，root补新摘要；不与baseline并行部署。",
+      "owner": "01a0f41f-c50e-7542-8779-34b246f00ad8/cpu_review"
     }
   ],
-  "actions": [],
+  "actions": [
+    {
+      "at": "2026-09-30T21:18:10Z",
+      "description": "运行cycle及API房间摘要，按异常规程启动独立只读审视",
+      "status": "done",
+      "result": "baseline继续；主房/辅房和平，掉落0；CPU审视进行中。"
+    }
+  ],
   "checks": [
     {
       "name": "真实任务状态核验",
       "result": "passed",
       "detail": "01a0f3fd、01a0dd13、01a0e59f均notLoaded/latestTurn completed；01a0f3cb idle/completed。CURRENT_STATE首次写前重新核验未变化。"
+    },
+    {
+      "name": "身份/完整代码哈希",
+      "result": "passed",
+      "detail": "cycle成功核验AdamZmy/frontier24与19个本地/远端受管模块。"
+    },
+    {
+      "name": "固定阈值评价",
+      "result": "pending",
+      "detail": "observe/incomplete_baseline；没有收益或候选部署结论。"
     }
   ],
-  "next": [],
+  "next": [
+    "继续轻量观察；不到完整1500tick不提出候选。",
+    "完成scout CPU独立审视，登记原Issue。"
+  ],
   "references": [
     {
       "label": "Issue14",

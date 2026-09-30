@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T21:15:52.018Z",
+  "updatedAt": "2026-09-30T21:18:10.363Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -14,13 +14,14 @@
       "id": "2026-09-30T21-15-51Z-hauler-8a2fa5b70df3",
       "kind": "scheduled",
       "startedAt": "2026-09-30T21:15:51.982Z",
-      "updatedAt": "2026-09-30T21:15:52.018Z",
+      "updatedAt": "2026-09-30T21:18:10.363Z",
       "completedAt": null,
       "status": "running",
       "title": "Hauler 基线定时观察",
-      "summary": "上轮协调者和全部活动Issue旧owner已实查停止；本轮接管只读游戏观察及实验/日志记录，待运行cycle。",
-      "tick": null,
+      "summary": "基线1207/1500tick有效继续采样；独立审视scout CPU峰值，不部署或改候选。",
+      "tick": 74046200,
       "issueNumbers": [
+        7,
         14
       ]
     },

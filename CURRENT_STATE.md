@@ -1,7 +1,7 @@
 # Screeps World 当前交接
 
 - 唯一源码new-colony；AdamZmy / shard1 / frontier24；W21N26主房、W23N26辅房；不操作Arena。
-- root=01a0f41f-c50e-7542-8779-34b246f00ad8；本轮运行中，接管API、operations/evolution状态和实验、Issue14/4/7、CURRENT_STATE及本轮日志；未接管游戏源码。无子代理。
+- root=01a0f41f-c50e-7542-8779-34b246f00ad8；本轮运行中，接管API、operations/evolution状态和实验、Issue14/4/7、CURRENT_STATE及本轮日志；未接管游戏源码。cpu_review(parent=本root)只写operations/diagnostics/2026-09-30-scout-cpu-review.md，进行中。
 - 上轮root01a0f3cb实查idle/completed；旧Issue owners01a0dd13、01a0e59f均notLoaded/latestTurn completed；setup workers已完成释放。
 - 游戏2026-09-30.1 / 代码72c8d56；两次cycle核验AdamZmy/frontier24、19模块本地/远端哈希一致。用户遗留tools/inspect-worker-pool.js保持未跟踪，不混入提交。
 - 实验hauler-20260930T195223821086Z，phase=baseline，batchWeight=0；state.json为唯一状态，experiments同ID记录一致。
