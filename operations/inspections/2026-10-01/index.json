@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-01T03:15:36.087Z",
+  "day": "2026-10-01",
+  "runs": [
+    {
+      "id": "2026-10-01T03-15-14Z-hauler-eab22cd5a609",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T03:15:14.891Z",
+      "updatedAt": "2026-10-01T03:15:36.087Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler基线接管与阶段核验",
+      "summary": "已逐一确认上一协调者及旧Issue owner结束，本轮root接管单实验观察与日志发布。",
+      "tick": null,
+      "issueNumbers": [
+        14
+      ]
+    }
+  ]
+}

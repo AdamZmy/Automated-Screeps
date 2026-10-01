@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-10-01T03-15-14Z-hauler-eab22cd5a609",
+  "kind": "scheduled",
+  "startedAt": "2026-10-01T03:15:14.891Z",
+  "updatedAt": "2026-10-01T03:15:36.087Z",
+  "completedAt": null,
+  "status": "running",
+  "title": "Hauler基线接管与阶段核验",
+  "summary": "已逐一确认上一协调者及旧Issue owner结束，本轮root接管单实验观察与日志发布。",
+  "game": null,
+  "findings": [],
+  "tasks": [
+    {
+      "issue": 14,
+      "title": "受控Hauler基线",
+      "status": "verifying",
+      "progress": "接管前历史590/1500tick；等待新API与cycle核验，不当作当前观测。",
+      "next": "身份与19模块哈希核验后运行cycle。",
+      "owner": "01a0f574-9a3d-7372-9f8c-791b9832bc3f"
+    }
+  ],
+  "actions": [],
+  "checks": [
+    {
+      "name": "owner真实任务状态",
+      "result": "passed",
+      "detail": "01a0f456 idle/completed；01a0dd13与01a0e59f notLoaded/latestTurn completed。原审视者已释放文件，首次写入前复读交接。"
+    }
+  ],
+  "next": [],
+  "references": [
+    {
+      "label": "Issue14",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
+    }
+  ]
+}

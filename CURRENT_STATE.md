@@ -1,7 +1,8 @@
 # Screeps World current handoff
 
 - World only: AdamZmy / shard1 / frontier24; source new-colony; never Arena.
-- root=01a0f456-09bd-79c3-91e6-5f95351cd296 finished manual low-load investigation; release API/files/Git after final publication. Next run must verify actual task state.
+- root=01a0f574-9a3d-7372-9f8c-791b9832bc3f ACTIVE; owns API, evolution state/records, CURRENT_STATE, inspection journal/indexes and Git. No game source ownership until phase permits.
+- Prior root01a0f456 idle/completed; old Issue owners01a0dd13/01a0e59f notLoaded/latestTurn completed; handoff reread before takeover.
 - Previous root/Issue owners were individually verified completed; latest Issue14/4/7 owner was this same root. Ownership reread before manual writes.
 - lowload_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296 completed/released; only isolated ignored sandbox writes, no game source/API/Git permission. Earlier cpu_review also completed.
 - Game2026-09-30.1 / tools0.6.4. Mandatory cycle identity/frontier24/19managed hashes passed. No gameplay change or deployment.
