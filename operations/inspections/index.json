@@ -654,6 +654,27 @@
       ]
     },
     {
+      "id": "2026-09-27T14-22-37Z-run-a57bd758747c",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:37.220Z",
+      "updatedAt": "2026-09-27T14:22:37.254Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "任务归属待核验：本轮巡检暂停接管",
+      "summary": "本轮已读取交接和活动Issue；跨任务即时状态工具不可用，旧协调者与子代理父任务状态未知，暂不接管。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
       "id": "2026-09-27T14-22-33Z-run-0f0fc09bd151",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:33.373Z",
@@ -795,24 +816,6 @@
       "tick": null,
       "issueNumbers": [
         5,
-        9
-      ]
-    },
-    {
-      "id": "2026-09-27T14-21-34Z-run-194ea3cba231",
-      "kind": "scheduled",
-      "startedAt": "2026-09-27T14:21:34.085Z",
-      "updatedAt": "2026-09-27T14:27:42.921Z",
-      "completedAt": "2026-09-27T14:23:24.883Z",
-      "status": "skipped",
-      "title": "协调者运行中，本轮让行",
-      "summary": "现有协调者及Issue #9父任务仍active/inProgress，本轮已让行。无游戏API、新tick、代码、部署、Issue或CURRENT_STATE改动；隔离起止日志已校验并本地提交，公开串行发布待现有协调者处理。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5,
-        6,
         9
       ]
     }
