@@ -397,6 +397,27 @@
       ]
     },
     {
+      "id": "2026-09-27T14-21-46Z-run-ff1155b9f9ef",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:46.683Z",
+      "updatedAt": "2026-09-27T14:22:53.589Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "负责人即时状态无法核验，本轮跳过",
+      "summary": "已创建独立批次；任务即时状态工具不可用，保留既有文件归属，未开始游戏观测。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
       "id": "2026-09-27T14-21-46Z-run-235458b0aa9c",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:21:46.551Z",
