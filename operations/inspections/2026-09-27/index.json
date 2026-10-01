@@ -165,6 +165,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-23-01Z-run-f421377afff2",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:01.690Z",
+      "updatedAt": "2026-09-27T14:23:01.725Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态无法核验，本轮等待交接",
+      "summary": "本轮已读取操作规则及活动Issue；即时任务查询工具不可用，正在记录交接核验受阻。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-22-59Z-run-d81faa63cd30",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:59.362Z",

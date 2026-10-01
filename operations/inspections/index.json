@@ -634,6 +634,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-23-01Z-run-f421377afff2",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:01.690Z",
+      "updatedAt": "2026-09-27T14:23:01.725Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态无法核验，本轮等待交接",
+      "summary": "本轮已读取操作规则及活动Issue；即时任务查询工具不可用，正在记录交接核验受阻。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-22-59Z-run-d81faa63cd30",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:59.362Z",
@@ -809,21 +827,6 @@
       "tick": null,
       "issueNumbers": [
         4,
-        5,
-        9
-      ]
-    },
-    {
-      "id": "2026-09-27T14-21-46Z-run-235458b0aa9c",
-      "kind": "scheduled",
-      "startedAt": "2026-09-27T14:21:46.551Z",
-      "updatedAt": "2026-09-27T14:27:42.532Z",
-      "completedAt": "2026-09-27T14:24:05.244Z",
-      "status": "blocked",
-      "title": "周期巡检：协调者状态待核验",
-      "summary": "本轮因旧协调者及Issue owner即时状态无法核验而受阻结束。保留所有原归属；未调用游戏API、无新tick、无游戏或网站部署。起始及终态已在隔离档案校验，提交仅本地，公共发布待同步。",
-      "tick": null,
-      "issueNumbers": [
         5,
         9
       ]
