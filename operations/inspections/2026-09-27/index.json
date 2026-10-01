@@ -272,6 +272,18 @@
       ]
     },
     {
+      "id": "2026-09-27T14-22-25Z-run-745e05e6bec6",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:25.420Z",
+      "updatedAt": "2026-09-27T14:22:25.454Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "巡检待核验：上轮任务状态不可用",
+      "summary": "本轮先核验跨任务归属。即时任务查询工具不可用，现有协调者和Issue owner状态未知；保留原归属，仅在隔离档案记录本轮，不执行游戏API或共享Git写入。",
+      "tick": null,
+      "issueNumbers": []
+    },
+    {
       "id": "2026-09-27T14-22-11Z-run-df1e6492730d",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:11.115Z",
