@@ -290,6 +290,27 @@
       ]
     },
     {
+      "id": "2026-09-27T14-22-02Z-run-434d18b727a8",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:02.570Z",
+      "updatedAt": "2026-09-27T14:23:13.098Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者即时状态无法核验，保留归属",
+      "summary": "本轮仅核验操作规则与活动 Issue。上轮协调者及旧工作者的即时运行状态无法查询，保留原归属；隔离日志待安全发布。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
       "id": "2026-09-27T14-21-51Z-run-8743d9ca56ac",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:21:51.724Z",
