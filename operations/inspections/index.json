@@ -583,6 +583,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-23-12Z-run-780485c14b99",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:12.562Z",
+      "updatedAt": "2026-09-27T14:24:18.265Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态待核验",
+      "summary": "协调者及 Issue owner 的即时任务状态无法核验，保留既有归属；准备本轮独立跳过记录，公开同步待唯一发布者确认。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-23-11Z-run-d73e31e56d21",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:23:11.936Z",
@@ -798,21 +816,6 @@
       "status": "skipped",
       "title": "协调者状态待核验，本轮跳过接管",
       "summary": "本轮结束：无法即时核验既有协调者及Issue owner是否停止，按规则跳过接管。未取游戏新tick；起始和终态只保存在隔离本地Git，公开发布待归属核验。",
-      "tick": null,
-      "issueNumbers": [
-        5,
-        9
-      ]
-    },
-    {
-      "id": "2026-09-27T14-21-35Z-run-365a416029d2",
-      "kind": "scheduled",
-      "startedAt": "2026-09-27T14:21:35.560Z",
-      "updatedAt": "2026-09-27T14:27:42.241Z",
-      "completedAt": "2026-09-27T14:23:10.689Z",
-      "status": "skipped",
-      "title": "上轮协调者仍运行，本轮让行",
-      "summary": "现有协调者仍active/inProgress，本轮按并发规则让行。起始及跳过终态已隔离校验并本地Git留痕，公开发布待当前协调者串行处理。无新游戏观测、代码修改或部署。",
       "tick": null,
       "issueNumbers": [
         5,

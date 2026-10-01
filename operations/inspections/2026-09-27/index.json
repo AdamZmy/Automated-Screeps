@@ -114,6 +114,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-23-12Z-run-780485c14b99",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:23:12.562Z",
+      "updatedAt": "2026-09-27T14:24:18.265Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "周期巡检：协调者状态待核验",
+      "summary": "协调者及 Issue owner 的即时任务状态无法核验，保留既有归属；准备本轮独立跳过记录，公开同步待唯一发布者确认。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-23-11Z-run-d73e31e56d21",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:23:11.936Z",
