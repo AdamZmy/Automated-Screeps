@@ -275,13 +275,17 @@
       "id": "2026-09-27T14-22-25Z-run-745e05e6bec6",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:25.420Z",
-      "updatedAt": "2026-09-27T14:22:25.454Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-09-27T14:23:21.766Z",
+      "completedAt": "2026-09-27T14:23:21.734Z",
+      "status": "skipped",
       "title": "巡检待核验：上轮任务状态不可用",
-      "summary": "本轮先核验跨任务归属。即时任务查询工具不可用，现有协调者和Issue owner状态未知；保留原归属，仅在隔离档案记录本轮，不执行游戏API或共享Git写入。",
+      "summary": "本轮因上轮任务即时状态无法核验而跳过。活动Issue已读取；未接管任何共享文件或调用游戏API，无新tick及能效结论。起始和结束日志在隔离本地Git留痕，公共提交推送待唯一发布者确认后同步。",
       "tick": null,
-      "issueNumbers": []
+      "issueNumbers": [
+        4,
+        5,
+        9
+      ]
     },
     {
       "id": "2026-09-27T14-22-11Z-run-df1e6492730d",
