@@ -18,6 +18,21 @@
       ]
     },
     {
+      "id": "2026-10-01T02-56-01Z-hauler-e964c5bddb54",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T02:56:01.669Z",
+      "updatedAt": "2026-10-01T02:56:01.701Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler自进化巡检：协调者运行中让行",
+      "summary": "Owner核验确认当前协调者仍active/inProgress；本轮仅隔离记录，不接管共享文件、API、Git或部署。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        14
+      ]
+    },
+    {
       "id": "2026-10-01T01-35-13Z-run-77973b8d0ed9",
       "kind": "scheduled",
       "startedAt": "2026-10-01T01:35:13.978Z",

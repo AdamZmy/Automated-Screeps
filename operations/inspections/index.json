@@ -26,6 +26,21 @@
       ]
     },
     {
+      "id": "2026-10-01T02-56-01Z-hauler-e964c5bddb54",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T02:56:01.669Z",
+      "updatedAt": "2026-10-01T02:56:01.701Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler自进化巡检：协调者运行中让行",
+      "summary": "Owner核验确认当前协调者仍active/inProgress；本轮仅隔离记录，不接管共享文件、API、Git或部署。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        14
+      ]
+    },
+    {
       "id": "2026-10-01T01-35-13Z-run-77973b8d0ed9",
       "kind": "scheduled",
       "startedAt": "2026-10-01T01:35:13.978Z",
@@ -809,22 +824,6 @@
         1,
         4,
         6,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T07-01-12Z-run-bd5b8a3175b7",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T07:01:12.533Z",
-      "updatedAt": "2026-09-26T07:10:32.910Z",
-      "completedAt": "2026-09-26T07:02:48.649Z",
-      "status": "skipped",
-      "title": "当前协调者运行中，本轮让行",
-      "summary": "已完成所有权核验并让行；无游戏API、代码、部署或共享状态改动。两阶段日志本地保留，交唯一发布者同步。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
         12
       ]
     }
