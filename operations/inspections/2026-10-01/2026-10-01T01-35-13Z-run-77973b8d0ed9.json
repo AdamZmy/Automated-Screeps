@@ -3,11 +3,11 @@
   "id": "2026-10-01T01-35-13Z-run-77973b8d0ed9",
   "kind": "scheduled",
   "startedAt": "2026-10-01T01:35:13.978Z",
-  "updatedAt": "2026-10-01T01:35:14.014Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-10-01T02:58:47.759Z",
+  "completedAt": "2026-10-01T02:58:47Z",
+  "status": "skipped",
   "title": "自进化巡检让行：上一协调者仍在运行",
-  "summary": "本轮01a0f471-fe1b-7430-a578-509b96cb1a4f已核验上一协调者仍active/inProgress；仅记录让行，不接管游戏API、源码、实验状态、Issues或Git。",
+  "summary": "已核验上一协调者仍active/inProgress，本轮依规则让行。无游戏API观察、cycle、候选、源码变更或部署；独立scheduled起始及终态日志本地验证通过，Git发布待唯一发布者串行处理。",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -61,6 +61,12 @@
       "description": "初始化隔离scheduled日志并保留起始修订",
       "status": "done",
       "result": "独立run ID仅写本轮隔离archive；共享档案、索引与Git不写入。"
+    },
+    {
+      "at": "2026-10-01T02:58:47Z",
+      "description": "结束本轮并保留发布材料",
+      "status": "done",
+      "result": "同一真实run ID标记skipped，保存initial-publication.json及final-publication.json；未修改共享CURRENT_STATE、Issue、evolution state/experiments或共享档案/Git。"
     }
   ],
   "checks": [
@@ -78,6 +84,11 @@
       "name": "起始及结束Git发布",
       "result": "pending",
       "detail": "唯一Git发布者仍运行，本轮保留隔离初始/终态JSON待后续串行导入；未commit或push。"
+    },
+    {
+      "name": "隔离日志一致性",
+      "result": "passed",
+      "detail": "起始及终态均经inspection_log write/validate验证；单轮JSON、Markdown和两级索引一致。"
     }
   ],
   "next": [
