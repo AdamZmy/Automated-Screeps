@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-01T03:22:45.933Z",
+  "updatedAt": "2026-10-01T03:25:20.411Z",
   "day": "2026-10-01",
   "runs": [
     {
       "id": "2026-10-01T03-15-14Z-hauler-eab22cd5a609",
       "kind": "scheduled",
       "startedAt": "2026-10-01T03:15:14.891Z",
-      "updatedAt": "2026-10-01T03:22:45.933Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-10-01T03:25:20.411Z",
+      "completedAt": "2026-10-01T03:25:20.371Z",
+      "status": "completed",
       "title": "Hauler基线接管与阶段核验",
       "summary": "Complete baseline reviewed and deferred without a weight candidate; a fresh weight0 baseline is collecting. Fifteen pending inspection histories were published.",
-      "tick": 74051380,
+      "tick": 74051440,
       "issueNumbers": [
         4,
         5,

@@ -3,9 +3,9 @@
   "id": "2026-10-01T03-15-14Z-hauler-eab22cd5a609",
   "kind": "scheduled",
   "startedAt": "2026-10-01T03:15:14.891Z",
-  "updatedAt": "2026-10-01T03:22:45.933Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-10-01T03:25:20.411Z",
+  "completedAt": "2026-10-01T03:25:20.371Z",
+  "status": "completed",
   "title": "Hauler基线接管与阶段核验",
   "summary": "Complete baseline reviewed and deferred without a weight candidate; a fresh weight0 baseline is collecting. Fifteen pending inspection histories were published.",
   "game": {
@@ -15,8 +15,8 @@
       "W23N26"
     ],
     "version": "2026-09-30.1",
-    "tick": 74051380,
-    "fetchedAt": "2026-10-01T03:18:23Z"
+    "tick": 74051440,
+    "fetchedAt": "2026-10-01T03:21:58Z"
   },
   "findings": [
     {
@@ -47,6 +47,16 @@
         "U30079.50%/83.50% is diagnostic; no artificial spending or forced-full waiting."
       ],
       "issue": 4
+    },
+    {
+      "severity": "info",
+      "title": "Final all-room observation",
+      "detail": "status74051440:bothRCL5/peace/security74051445,drop0,moduleerrors0. W21progress1068253/upgrade20t/20WORK/0sites;W23progress44566/upgrade10t/20WORK/2Linksites. CPUmean17.6126/max46.0038/bucket9992.",
+      "evidence": [
+        "W21U1500100.69%/stock-1368 remains ineligible;W23U150097.20%/stock+633 is one eligible rolling window.",
+        "New baseline tick74051476:47ticks/944actualenergy/6events/94haulerTicks;errors0/invalidReasons[]."
+      ],
+      "issue": 4
     }
   ],
   "tasks": [
@@ -54,7 +64,7 @@
       "issue": 14,
       "title": "Fresh controlled Hauler baseline",
       "status": "verifying",
-      "progress": "hauler-20261001T032036679669Z baseline/weight0, 14/1500ticks at74051443. Previous complete experiment inconclusive/deferred.",
+      "progress": "hauler-20261001T032036679669Z baseline/weight0, 47/1500ticks at74051476. Previous complete experiment inconclusive/deferred.",
       "next": "Run guarded cycle; preserve verifying until complete. No other code deployment during baseline/trial.",
       "owner": "01a0f574-9a3d-7372-9f8c-791b9832bc3f"
     },
@@ -69,7 +79,7 @@
   ],
   "actions": [
     {
-      "at": "2026-10-01T03:22:45.900Z",
+      "at": "2026-10-01T03:25:20.371Z",
       "description": "Independent review, controller defer/start and serial publication",
       "status": "done",
       "result": "No candidate proposed. Only hauler-policy experiment id/revision uploaded; backup and readback verified03:20:55Z. Fifteen prior tasks individually verified completed; their genuine initial/final records committed and pushed separately."
@@ -94,7 +104,7 @@
     {
       "name": "New collector",
       "result": "passed",
-      "detail": "Expected new experiment id/stage/revision at74051443, errors0/invalidReasons[]. Fixed evaluator observe/incomplete_baseline."
+      "detail": "Expected new experiment id/stage/revision at74051476, errors0/invalidReasons[]. Fixed evaluator observe/incomplete_baseline."
     },
     {
       "name": "Archive recovery",
