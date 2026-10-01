@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-30T22:23:27.717Z",
+  "updatedAt": "2026-10-01T02:58:35.184Z",
   "days": [
     "2026-09-30",
     "2026-09-29",
@@ -14,14 +14,15 @@
       "id": "2026-09-30T22-22-54Z-hauler-c3d28f4367ca",
       "kind": "manual",
       "startedAt": "2026-09-30T22:22:54.226Z",
-      "updatedAt": "2026-09-30T22:23:27.717Z",
+      "updatedAt": "2026-10-01T02:58:35.184Z",
       "completedAt": null,
       "status": "running",
       "title": "两房Hauler低载运输专项诊断",
-      "summary": "用户指出两房长期低载；本轮专项核对现行取货额度、来源库存、配送需求及实际下一tick持能。基线保持。",
-      "tick": null,
+      "summary": "Actual nonurgent low-load long-haul delivery observed; within-trip old pickup quota identified for independent reproduction. A later snapshot GET timed out; no missing evidence inferred.",
+      "tick": 74047175,
       "issueNumbers": [
-        5
+        5,
+        14
       ]
     },
     {

@@ -3,13 +3,41 @@
   "id": "2026-09-30T22-22-54Z-hauler-c3d28f4367ca",
   "kind": "manual",
   "startedAt": "2026-09-30T22:22:54.226Z",
-  "updatedAt": "2026-09-30T22:23:27.717Z",
+  "updatedAt": "2026-10-01T02:58:35.184Z",
   "completedAt": null,
   "status": "running",
   "title": "两房Hauler低载运输专项诊断",
-  "summary": "用户指出两房长期低载；本轮专项核对现行取货额度、来源库存、配送需求及实际下一tick持能。基线保持。",
-  "game": null,
-  "findings": [],
+  "summary": "Actual nonurgent low-load long-haul delivery observed; within-trip old pickup quota identified for independent reproduction. A later snapshot GET timed out; no missing evidence inferred.",
+  "game": {
+    "shard": "shard1",
+    "rooms": [
+      "W21N26",
+      "W23N26"
+    ],
+    "version": "2026-09-30.1",
+    "tick": 74047175,
+    "fetchedAt": null
+  },
+  "findings": [
+    {
+      "severity": "warning",
+      "title": "Nonurgent low-load trip",
+      "detail": "W23 carrier capacity350 held40 (11.43%), source13,25 to controller42,42, priority4. Another carrier held350/350 in the same snapshot; full loads do occur.",
+      "evidence": [
+        "Game74047175 > previous74046923. Source currently350, destination free910; carrier already departed, so this does not reconstruct exact withdrawal-time availability."
+      ],
+      "issue": 5
+    },
+    {
+      "severity": "info",
+      "title": "Baseline continues",
+      "detail": "Mandatory identity and19hash checks passed, baseline weight0, observe/incomplete_baseline.",
+      "evidence": [
+        "Collector74047167:590/1500ticks,10469actualenergy,77events,1200haulerTicks,errors0,invalidReasons[]."
+      ],
+      "issue": 14
+    }
+  ],
   "tasks": [
     {
       "issue": 5,
@@ -26,10 +54,34 @@
       "description": "接管专项API诊断、Issue5/14、日志和Git",
       "status": "done",
       "result": "不修改游戏源码；用户未跟踪文件保留。"
+    },
+    {
+      "at": "2026-10-01T02:58:35.153Z",
+      "description": "Read API status and executed Game diagnostic, inspect pickup code",
+      "status": "done",
+      "result": "retainTask and assignTask cap by old task.amount; collectTask withdraw capped again. Independent multi-tick review ongoing."
     }
   ],
-  "checks": [],
-  "next": [],
+  "checks": [
+    {
+      "name": "Fresh Game snapshot",
+      "result": "passed",
+      "detail": "74047175 actually read back; physical cargo observed."
+    },
+    {
+      "name": "Subsequent snapshot read",
+      "result": "failed",
+      "detail": "GET connection failed or timed out; no sample obtained. Later accepted diagnostic submission has no readback and is not evidence."
+    },
+    {
+      "name": "Independent reproduction",
+      "result": "pending",
+      "detail": "lowload_review parent01a0f456, isolated sandbox only."
+    }
+  ],
+  "next": [
+    "Complete independent mechanism review and control-surface assessment. Preserve active baseline and gameplay code."
+  ],
   "references": [
     {
       "label": "运输周期Issue5",

@@ -4,6 +4,7 @@
 - root=01a0f456-09bd-79c3-91e6-5f95351cd296 active：用户跟进两房Hauler低载，接管API只读诊断、Issue5/14、手动日志与Git；现有baseline保持，无游戏源码写入。
 - 上一root01a0f43a已逐一wait_threads核验idle/completed；Issue owners01a0dd13/01a0e59f为notLoaded/latestTurn completed；首次写入前重读归属未变。
 - cpu_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296 completed/released；独立只读既有Issue7/X003及root聚合证据，无文件/API/Git写权限。
+- lowload_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296 running；仅忽略目录state/lowload-review-c3d28f4367ca诊断脚本独占，无游戏源码/API/Git权限。
 - 游戏build2026-09-30.1；工具0.6.4；本轮两次cycle身份/frontier24及19模块本地/远端哈希通过，无游戏源码变更或部署。
 - 当前实验hauler-20260930T214108514416Z，phase=baseline，batchWeight=0；窗口74046577→74048077，latest74046927，350/1500ticks，observedAt2026-09-30T22:05:33Z。
 - 实际交付6165energy/44events/700haulerTicks，carryTicks6300/workerWorkTicks7000/minerWorkTicks3565；errors0/invalidReasons[]；固定评价observe/incomplete_baseline。
