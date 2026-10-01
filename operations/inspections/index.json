@@ -775,6 +775,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-22-10Z-run-0095c2a80ddc",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:10.670Z",
+      "updatedAt": "2026-09-27T14:23:11.148Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态待核验，本轮暂缓接管",
+      "summary": "本轮协调者01a0dda5-f5a0-7643-a567-3e53b0c135f7已读取必需规则和活动Issue；旧协调者即时状态无法核验，隔离记录本轮，保留原归属。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-22-03Z-run-13b5b143c5c1",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:03.026Z",
@@ -811,24 +829,6 @@
         8,
         9,
         10
-      ]
-    },
-    {
-      "id": "2026-09-27T14-21-51Z-run-8743d9ca56ac",
-      "kind": "scheduled",
-      "startedAt": "2026-09-27T14:21:51.724Z",
-      "updatedAt": "2026-09-27T14:27:42.369Z",
-      "completedAt": "2026-09-27T14:24:08.454Z",
-      "status": "skipped",
-      "title": "任务状态不可核验，本轮暂缓接管",
-      "summary": "旧协调者及Issue工作者的即时状态不可核验，本轮结束并保留原归属。无新游戏观测；起止日志只在隔离本地Git保存，公共发布待串行所有权核验。",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        5,
-        6,
-        9
       ]
     }
   ]

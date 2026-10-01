@@ -306,6 +306,24 @@
       ]
     },
     {
+      "id": "2026-09-27T14-22-10Z-run-0095c2a80ddc",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:22:10.670Z",
+      "updatedAt": "2026-09-27T14:23:11.148Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "协调者状态待核验，本轮暂缓接管",
+      "summary": "本轮协调者01a0dda5-f5a0-7643-a567-3e53b0c135f7已读取必需规则和活动Issue；旧协调者即时状态无法核验，隔离记录本轮，保留原归属。",
+      "tick": null,
+      "issueNumbers": [
+        1,
+        4,
+        5,
+        6,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-22-03Z-run-13b5b143c5c1",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:22:03.026Z",
