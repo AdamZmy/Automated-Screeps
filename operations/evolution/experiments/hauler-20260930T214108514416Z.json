@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "hauler-20260930T214108514416Z",
   "room": "W21N26",
-  "phase": "baseline",
+  "phase": "inconclusive",
   "createdAt": "2026-09-30T21:41:10Z",
   "config": {
     "id": "hauler-20260930T214108514416Z",
@@ -82,7 +82,7 @@
     "startedTick": 74046577,
     "fromTick": 74046577,
     "endTick": 74048077,
-    "tick": 74047167,
+    "tick": 74051357,
     "signature": {
       "rcl": 5,
       "energyCapacity": 1800,
@@ -96,42 +96,47 @@
       "sources": 2,
       "sites": 0
     },
-    "complete": false,
-    "frozen": false,
+    "complete": true,
+    "frozen": true,
     "invalidReasons": [],
-    "observedTicks": 590,
-    "coverage": 0.3933333333333333,
+    "observedTicks": 1500,
+    "coverage": 1,
     "bucketStart": 10000,
-    "bucketEnd": 10000,
+    "bucketEnd": 9974,
     "bucketMin": 9580,
-    "haulerCountMin": 2,
+    "haulerCountMin": 1,
     "haulerCountMax": 3,
-    "metrics": null,
-    "ticks": 590,
-    "haulerTicks": 1200,
-    "carryTicks": 10800,
-    "workerWorkTicks": 11800,
-    "minerWorkTicks": 5965,
-    "delivered": 10469,
-    "deliveryEvents": 77,
-    "travelTicks": 654,
-    "payloadSum": 222.3066666666669,
+    "metrics": {
+      "deliveredPerHaulerTick": 8.959893934371893,
+      "averageTravelPayload": 0.3090379403794012,
+      "blockedFraction": 0.029499502817368246,
+      "roomCpuPerTick": 3.624941731067003
+    },
+    "ticks": 1500,
+    "haulerTicks": 3017,
+    "carryTicks": 27153,
+    "workerWorkTicks": 28620,
+    "minerWorkTicks": 15040,
+    "delivered": 27032,
+    "deliveryEvents": 220,
+    "travelTicks": 1640,
+    "payloadSum": 506.822222222218,
     "idle": 0,
-    "waitingPickup": 77,
-    "blocked": 34,
-    "spawnDemandTicks": 0,
+    "waitingPickup": 218,
+    "blocked": 89,
+    "spawnDemandTicks": 149,
     "spawnStarvedTicks": 0,
-    "roomCpu": 2187.334064000028,
-    "cpuTicks": 590,
+    "roomCpu": 5437.412596600505,
+    "cpuTicks": 1500,
     "errors": 0
   },
   "trial": null,
   "proposal": null,
   "attempt": 1,
   "decisions": [],
-  "lastTick": 74047167,
+  "lastTick": 74051357,
   "incumbentWeight": 0,
-  "updatedAt": "2026-09-30T22:24:11Z",
+  "updatedAt": "2026-10-01T03:20:23Z",
   "deployments": [
     {
       "at": "2026-09-30T21:41:26Z",
@@ -163,11 +168,10 @@
       }
     }
   ],
-  "observedAt": "2026-09-30T22:24:11Z",
+  "observedAt": "2026-10-01T03:15:59Z",
   "baselineValidation": {
-    "decision": "observe",
-    "reasons": [
-      "incomplete_baseline"
-    ]
-  }
+    "decision": "ready",
+    "reasons": []
+  },
+  "deferredReason": "No evidence-supported hypothesis on the allowed control surface"
 }

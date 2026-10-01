@@ -1,29 +1,28 @@
 # Screeps World current handoff
 
 - World only: AdamZmy / shard1 / frontier24; source new-colony; never Arena.
-- root=01a0f574-9a3d-7372-9f8c-791b9832bc3f ACTIVE; owns API, evolution state/records, CURRENT_STATE, inspection journal/indexes and Git. No game source ownership until phase permits.
-- Prior root01a0f456 idle/completed; old Issue owners01a0dd13/01a0e59f notLoaded/latestTurn completed; handoff reread before takeover.
-- Previous root/Issue owners were individually verified completed; latest Issue14/4/7 owner was this same root. Ownership reread before manual writes.
-- lowload_review parent=01a0f456-09bd-79c3-91e6-5f95351cd296 completed/released; only isolated ignored sandbox writes, no game source/API/Git permission. Earlier cpu_review also completed.
-- Game2026-09-30.1 / tools0.6.4. Mandatory cycle identity/frontier24/19managed hashes passed. No gameplay change or deployment.
-- Active experiment hauler-20260930T214108514416Z remains baseline, weight0, window74046577-74048077; latest74047167 at2026-09-30T22:24:11Z,590/1500ticks.
-- Actual10469energy/77events/1200haulerTicks,errors0,invalidReasons[]; fixed evaluator observe/incomplete_baseline. state equals current experiment; predecessor inconclusive/deferred intact.
-- USER PRIORITY: two-room persistent low loads require causal investigation; do not keep deferring merely because payload is a diagnostic metric.
-- L009 confirmed: retained within-trip pickup amount can only shrink. Capacity450 assigned9, source grows99 by arrival, actual takes9; safe sandbox arrival refresh takes99 and preserves another90 claim from189 source.
-- L009 differs from fixed cross-trip L008;9-to450 next-trip control passes. batchWeight cannot refresh retained quotas, aggregate extension requests, or affect W23.
-- Issue5 raised priority:p1/status:ready. Next permitted maintenance boundary: end experiment via controller before quota fix; preserve same-tick intents, peer reservations, urgent priorities; independently review and recollect baseline. Do not parallel-deploy while baseline/trial active.
-- Diagnostic9scenarios and existing verify-logistics passed independently; root persisted/reran tools/verify-hauler-pickup-quota-diagnostic.cjs. This is mechanism evidence, not live benefit or deployed fix.
-- Report operations/diagnostics/2026-09-30-hauler-lowload-review.md; fault catalog L009; material LIVE_STATUS note saved.
-- Fresh status74047160/fetched2026-09-30T22:24:24Z; executed Game snapshot74047175>old74046923. W23 physical40/350 nonurgent priority4 trip from13,25 to42,42; another350/350 full.
-- At74047175 W23 destination free910/all tasks856, only54 unreserved; source340/peer reservations210 permits130 for old110 task. Other growth competes for same54; do not sum independently or ignore reservations.
-- W21 actual232/450; other courier physical0 with accepted116 pickup and source116. That intent's actual cargo not verified; cannot call it available-energy waste.
-- Snapshot2 GET failed with connection timeout; no continuous evidence. Later readonly diagnostic accepted but not read back, not claimed executed. Stop repeated sampling this turn; no auth failure claimed.
-- Prior CPU review:74046880 scout186.2718 spike,74046900 mean13.5907/bucket9924 recovered; X003 actual peak attribution unproven; retrospective fixture gap unchanged.
-- Manual run2026-09-30T22-22-54Z-hauler-c3d28f4367ca: start37dd73c/progressbc2ebc5 pushed; final same-ID journal/report/checks explicitly committed/pushed at finish.
-- Earlier scheduled rune2594abcaa4c finald6bb231 pushed. No website/schedule changes. Preserve user untracked new-colony/tools/inspect-worker-pool.js.
+- root=01a0f574-9a3d-7372-9f8c-791b9832bc3f ACTIVE; owns API, controller-managed hauler-policy config, evolution state/records, journal/indexes, checkpoints and Git until final publication.
+- Prior root01a0f456 individually idle/completed; old Issue owners01a0dd13/01a0e59f notLoaded/latestTurn completed. Handoff reread before takeover.
+- baseline_review parent=01a0f574-9a3d-7372-9f8c-791b9832bc3f completed/released its sole operations/diagnostics/2026-10-01-hauler-baseline-review-eab22cd5a609.md; no API/game-source/Git access.
+- Game2026-09-30.1 / tools0.6.4. Controller identity/frontier24/19module hashes passed. Only hauler-policy experiment id/revision deployed and readback verified03:20:55Z; weight remains0.
+- Previous hauler-20260930T214108514416Z completed window74046577-74048077,1500ticks,27032actualenergy/220events/3017haulerTicks,throughput8.9598939344.
+- Full-window carryMean18.102/workerWORK19.08/minerWORK10.0267,coverage1/errors0/invalidReasons[]; fixed validation ready. Independent review found no supported weight candidate; controller defer archived it inconclusive.
+- Two identical weight0 controls differ+7.575% naturally; not an optimization gain. No proposal/trial. Both predecessor terminal archives remain intact.
+- New experiment hauler-20261001T032036679669Z baseline/weight0, window74051429-74052929. Latest collector74051443:14/1500ticks,276actualenergy/2events/28haulerTicks,errors0/invalidReasons[].
+- Fixed evaluator observe/incomplete_baseline; state equals current experiment. Continue verifying without backlog deployment or another candidate.
+- test:evolution/test:hauler/test:api passed through controller. Independent existing quota9-scenario diagnostic and verify-logistics passed; diagnostic success means known L009 still reproduces, not a fix.
+- Fresh API fetched2026-10-01T03:21:58Z/status74051440: bothRCL5/peace/security74051445,ground0,moduleerrors0; W21progress1068253/upgrade20t/20WORK/0sites; W23progress44566/upgrade10t/20WORK/2Linksites.
+- W21U1500100.69%/stock-1368 ineligible; W23U150097.20%/stock+633 eligible single window. No sustained90% acceptance; no extra spending to inflate U.
+- Earlier74051340 scoutmax187.0728/W23N29/loopmax197.8595; recovered74051380mean13.2868/max15.9408/bucket10000. Latest74051440mean17.6126/max46.0038/bucket9992. X003 exact peak cause remains unproven.
+- Executed read-only Game snapshot74051376 newer than74047175; W23hostiles1 then security74051392peace/count0/armed0. No confirmed armed damage; no stale or accepted-only inference.
+- L009 confirmed prior and rerun: retained same-trip quota9 cannot grow when source reaches99; sandbox refresh99 preserves peer90. batchWeight cannot repair quota or W23; Issue5 stays priority:p1/ready.
+- User priority remains both-room low loads. L009 maintenance needs a separate allowed boundary: end experiment through controller first; preserve peer source/destination claims, accepted intents and urgent priorities; independently verify and recollect baseline.
+- Missing weight evidence: actual W21 new priority>2 assignments, same-priority feasible alternatives/scores after claims/intents, actual next-tick pickup and complete delivery. Payload alone never authorizes tuning or force-full waiting.
+- Fifteen historical pending tasks individually verified completed; genuine initial/final journal pairs serially imported, validated, explicitly committed/pushed. Archive113runs/7days. No historical identity/timestamp fabrication or isolated-index overwrite.
+- Current scheduled run2026-10-01T03-15-14Z-hauler-eab22cd5a609: start59f5f1c; historical publications throughff48288; progress/final same-ID journal publication follows.
+- Preserve user untracked new-colony/tools/inspect-worker-pool.js. No site/schedule changes; no material LIVE_STATUS append for an unchanged strategy.
 
 ## Next
 
-- Verify this root stopped, cycle same baseline; insufficient remains verifying. Full baseline does not authorize arbitrary weight changes to fix L009.
-- Prioritize proven quota refresh at an allowed maintenance boundary. Live before/after must cover actual delivery/haulerTicks, consumer fuel, source stock, CPU and replacement cost.
-- Both-room load frequency and source/link cadence still need bounded full-cycle evidence; not all low loads share one cause, and waiting for full is not the proposed fix.
+- Verify this root stopped before takeover; run guarded cycle toward74052929. Insufficient samples remain verifying.
+- Keep L009 in Issue5, scout X003 in Issue7 and sustainable primary-window checks in Issue4; no competing source deployment during baseline/trial.
