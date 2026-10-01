@@ -387,6 +387,21 @@
       ]
     },
     {
+      "id": "2026-09-27T14-21-30Z-run-1e0fe4c7e0d7",
+      "kind": "scheduled",
+      "startedAt": "2026-09-27T14:21:30.027Z",
+      "updatedAt": "2026-09-27T14:22:32.481Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "上轮协调者仍运行，本轮让行",
+      "summary": "即时任务核验发现既有协调者仍 active/inProgress；本轮让行，只保留隔离日志。尚未采集游戏数据。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        9
+      ]
+    },
+    {
       "id": "2026-09-27T14-21-28Z-run-37bb97fcb0cb",
       "kind": "scheduled",
       "startedAt": "2026-09-27T14:21:28.732Z",
