@@ -18,6 +18,21 @@
       ]
     },
     {
+      "id": "2026-10-01T02-58-20Z-hauler-3ec1d29c2cfe",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T02:58:20.402Z",
+      "updatedAt": "2026-10-01T02:59:03.399Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler闭环让行：协调者仍运行",
+      "summary": "已核验既有协调者仍 active/inProgress；本轮让行，准备隔离日志。尚未接管共享文件或Git发布。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        14
+      ]
+    },
+    {
       "id": "2026-10-01T02-56-01Z-hauler-e964c5bddb54",
       "kind": "scheduled",
       "startedAt": "2026-10-01T02:56:01.669Z",

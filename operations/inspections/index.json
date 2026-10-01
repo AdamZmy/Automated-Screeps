@@ -26,6 +26,21 @@
       ]
     },
     {
+      "id": "2026-10-01T02-58-20Z-hauler-3ec1d29c2cfe",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T02:58:20.402Z",
+      "updatedAt": "2026-10-01T02:59:03.399Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler闭环让行：协调者仍运行",
+      "summary": "已核验既有协调者仍 active/inProgress；本轮让行，准备隔离日志。尚未接管共享文件或Git发布。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        14
+      ]
+    },
+    {
       "id": "2026-10-01T02-56-01Z-hauler-e964c5bddb54",
       "kind": "scheduled",
       "startedAt": "2026-10-01T02:56:01.669Z",
@@ -807,23 +822,6 @@
         8,
         9,
         10,
-        12
-      ]
-    },
-    {
-      "id": "2026-09-26T07-22-27Z-run-f7d856068c06",
-      "kind": "scheduled",
-      "startedAt": "2026-09-26T07:22:27.586Z",
-      "updatedAt": "2026-09-26T07:33:04.858Z",
-      "completedAt": "2026-09-26T07:26:18.560Z",
-      "status": "skipped",
-      "title": "周期巡检与协调者核验",
-      "summary": "Current coordinator remains active/inProgress. This inspection yielded all shared/API/Git/deploy ownership; no new game observation. Initial and final journals are isolated and pending public publication.",
-      "tick": null,
-      "issueNumbers": [
-        1,
-        4,
-        6,
         12
       ]
     }
