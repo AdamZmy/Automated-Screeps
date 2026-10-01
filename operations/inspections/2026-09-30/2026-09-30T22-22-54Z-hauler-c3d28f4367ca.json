@@ -3,11 +3,11 @@
   "id": "2026-09-30T22-22-54Z-hauler-c3d28f4367ca",
   "kind": "manual",
   "startedAt": "2026-09-30T22:22:54.226Z",
-  "updatedAt": "2026-10-01T02:58:35.184Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-10-01T03:03:13.292Z",
+  "completedAt": "2026-10-01T03:03:13.263Z",
+  "status": "completed",
   "title": "两房Hauler低载运输专项诊断",
-  "summary": "Actual nonurgent low-load long-haul delivery observed; within-trip old pickup quota identified for independent reproduction. A later snapshot GET timed out; no missing evidence inferred.",
+  "summary": "L009 confirmed: retained pickup quotas cannot grow within a trip. Issue5 raised to priority:p1/ready. Independent9-case reproduction passes; live low-load cargo observed, exact loss still unmeasured. No game deployment; baseline590/1500 continues.",
   "game": {
     "shard": "shard1",
     "rooms": [
@@ -36,15 +36,32 @@
         "Collector74047167:590/1500ticks,10469actualenergy,77events,1200haulerTicks,errors0,invalidReasons[]."
       ],
       "issue": 14
+    },
+    {
+      "severity": "warning",
+      "title": "L009 within-trip quota confirmed",
+      "detail": "450capacity assigned9, source grows99 by arrival, physical pickup remains9. Sandbox refresh takes99 without stealing peer90; scarce-source and L008 controls pass.",
+      "evidence": [
+        "Nine independent diagnostic cases and existing verify-logistics passed; root persisted/reran same diagnostic. Not a live throughput result or gameplay fix."
+      ],
+      "issue": 5
     }
   ],
   "tasks": [
     {
       "issue": 5,
       "title": "两房Hauler低载机制",
-      "status": "in-progress",
-      "progress": "当前root恢复只读专项诊断，活动协调者仍为本任务；此前owners已核验完成，当前Issue归属无变化。",
-      "next": "核对实际货量与任务量，独立复现限制来源。",
+      "status": "ready",
+      "progress": "Independent review completed and released; L009 catalog/report/diagnostic saved. Issue5 priority:p1.",
+      "next": "At permitted maintenance boundary end experiment via controller before safe arrival-time quota refresh; independently verify, deploy and recollect baseline.",
+      "owner": "01a0f456-09bd-79c3-91e6-5f95351cd296"
+    },
+    {
+      "issue": 14,
+      "title": "Controlled baseline",
+      "status": "verifying",
+      "progress": "590/1500ticks;10469actualenergy/77events/1200haulerTicks; errors0/invalidReasons[].",
+      "next": "Continue same window; batchWeight cannot repair retained quotas.",
       "owner": "01a0f456-09bd-79c3-91e6-5f95351cd296"
     }
   ],
@@ -60,6 +77,12 @@
       "description": "Read API status and executed Game diagnostic, inspect pickup code",
       "status": "done",
       "result": "retainTask and assignTask cap by old task.amount; collectTask withdraw capped again. Independent multi-tick review ongoing."
+    },
+    {
+      "at": "2026-10-01T03:03:13.263Z",
+      "description": "Persist confirmed mechanism and prioritize repair",
+      "status": "done",
+      "result": "Issue5 priority:p1/ready, L009 catalog and report/diagnostic saved; no gameplay source edit or deployment. Start37dd73c/progressbc2ebc5 pushed; final records published separately."
     }
   ],
   "checks": [
@@ -75,17 +98,28 @@
     },
     {
       "name": "Independent reproduction",
-      "result": "pending",
-      "detail": "lowload_review parent01a0f456, isolated sandbox only."
+      "result": "passed",
+      "detail": "lowload_review completed9cases and existing verify-logistics; root persisted/reran9cases. Both tasks released file ownership."
+    },
+    {
+      "name": "Unchanged managed game modules",
+      "result": "passed",
+      "detail": "19local hashes match controller verified deployedHashes; state equals current experiment."
     }
   ],
   "next": [
-    "Complete independent mechanism review and control-surface assessment. Preserve active baseline and gameplay code."
+    "Verify root stopped; continue baseline to74048077.",
+    "At permitted experiment boundary prioritize L009 safe arrival quota refresh, independent verification and new baseline.",
+    "Collect real full-cycle load/delivery/cost evidence; no forced-full waiting and no claim all low loads share L009."
   ],
   "references": [
     {
       "label": "运输周期Issue5",
       "url": "https://github.com/AdamZmy/Automated-Screeps/issues/5"
+    },
+    {
+      "label": "Hauler evolution Issue14",
+      "url": "https://github.com/AdamZmy/Automated-Screeps/issues/14"
     }
   ]
 }

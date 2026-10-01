@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-01T02:58:35.184Z",
+  "updatedAt": "2026-10-01T03:03:13.292Z",
   "day": "2026-09-30",
   "runs": [
     {
       "id": "2026-09-30T22-22-54Z-hauler-c3d28f4367ca",
       "kind": "manual",
       "startedAt": "2026-09-30T22:22:54.226Z",
-      "updatedAt": "2026-10-01T02:58:35.184Z",
-      "completedAt": null,
-      "status": "running",
+      "updatedAt": "2026-10-01T03:03:13.292Z",
+      "completedAt": "2026-10-01T03:03:13.263Z",
+      "status": "completed",
       "title": "两房Hauler低载运输专项诊断",
-      "summary": "Actual nonurgent low-load long-haul delivery observed; within-trip old pickup quota identified for independent reproduction. A later snapshot GET timed out; no missing evidence inferred.",
+      "summary": "L009 confirmed: retained pickup quotas cannot grow within a trip. Issue5 raised to priority:p1/ready. Independent9-case reproduction passes; live low-load cargo observed, exact loss still unmeasured. No game deployment; baseline590/1500 continues.",
       "tick": 74047175,
       "issueNumbers": [
         5,
