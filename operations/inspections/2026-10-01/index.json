@@ -18,6 +18,21 @@
       ]
     },
     {
+      "id": "2026-10-01T02-59-56Z-hauler-33c5da45597e",
+      "kind": "scheduled",
+      "startedAt": "2026-10-01T02:59:56.853Z",
+      "updatedAt": "2026-10-01T03:00:34.904Z",
+      "completedAt": null,
+      "status": "running",
+      "title": "Hauler自进化巡检：核验活动负责人后让行",
+      "summary": "上一协调者及Issue5/14负责人仍active/inProgress；本轮让行，仅保存隔离日志，待唯一Git发布者同步。",
+      "tick": null,
+      "issueNumbers": [
+        5,
+        14
+      ]
+    },
+    {
       "id": "2026-10-01T02-58-20Z-hauler-3ec1d29c2cfe",
       "kind": "scheduled",
       "startedAt": "2026-10-01T02:58:20.402Z",
