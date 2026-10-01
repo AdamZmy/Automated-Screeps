@@ -3,11 +3,11 @@
   "id": "2026-09-27T14-23-12Z-run-780485c14b99",
   "kind": "scheduled",
   "startedAt": "2026-09-27T14:23:12.562Z",
-  "updatedAt": "2026-09-27T14:24:18.265Z",
-  "completedAt": null,
-  "status": "running",
+  "updatedAt": "2026-09-27T14:26:25.333Z",
+  "completedAt": "2026-09-27T14:25:23.531Z",
+  "status": "skipped",
   "title": "周期巡检：协调者状态待核验",
-  "summary": "协调者及 Issue owner 的即时任务状态无法核验，保留既有归属；准备本轮独立跳过记录，公开同步待唯一发布者确认。",
+  "summary": "本轮已结束：协调者/Issue owner/子代理父任务即时状态未知，按交接规则跳过游戏观察与接管。独立起止日志经校验并留存本地 Git，公开发布待唯一发布者核验归属。",
   "game": null,
   "findings": [
     {
@@ -71,6 +71,12 @@
       "description": "读取 World 规则、短交接与活动 Issue 检查点，初始化隔离日志。",
       "status": "done",
       "result": "github_ops.py list 成功；#1/#4/#6 verifying，#5/#9 in-progress，#7/#8/#10 planned。保留全部既有共享文件归属。"
+    },
+    {
+      "at": "2026-09-27T14:25:23.531Z",
+      "description": "完成本轮隔离跳过记录，保留原 id 和 startedAt；保留所有共享文件与 Issue 归属。",
+      "status": "done",
+      "result": "起始记录本地提交 6a133fc，init/write/validate 通过。本轮没有游戏 API、新 tick、代码/Issue/CURRENT_STATE 修改或部署；没有重启调度或重复派工。公开推送因归属未知暂缓，不是 GitHub 请求失败。"
     }
   ],
   "checks": [
@@ -93,6 +99,16 @@
       "name": "日志公开发布",
       "result": "pending",
       "detail": "为避免与未知状态的发布者竞争，仅写独立 state 档案；开始和结束修订待唯一发布者串行导入并推送。"
+    },
+    {
+      "name": "隔离日志校验",
+      "result": "passed",
+      "detail": "本轮初始修订经官方 write/validate 通过，1 run / 1 day。结束修订再次执行 write/validate，成功后单独本地提交。"
+    },
+    {
+      "name": "共享档案保留",
+      "result": "passed",
+      "detail": "结束核验发现旧批次 2026-09-26T09-38-51Z-rcl4-1aa7cbe95156 的 JSON/Markdown 和两个共享索引出现外部未提交变动；未修改、暂存或提交这些文件，不据此推断 owner 即时状态。"
     }
   ],
   "next": [
